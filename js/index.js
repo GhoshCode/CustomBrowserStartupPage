@@ -8,10 +8,17 @@ CONFIG.showKeys = localStorage.getItem('showKeysCookie') ?
   JSON.parse(localStorage.getItem('showKeysCookie')) :
   CONFIG.showKeys;
 
+// Load commands from SettingsStore (localStorage) instead of static CONFIG
+const storedCommands = SettingsStore.getCommands();
+// Merge: keep the '*' catch-all from CONFIG, plus all stored categorized commands
+const allCommands = [
+  ...CONFIG.commands.filter(c => !c.category), // the '*' default
+  ...storedCommands
+];
 
 
 const queryParser = new QueryParser({
-  commands: CONFIG.commands,
+  commands: allCommands,
   pathDelimiter: CONFIG.pathDelimiter,
   searchDelimiter: CONFIG.searchDelimiter,
 });
@@ -26,7 +33,7 @@ const influencers = CONFIG.influencers.map(influencerConfig => {
     defaultSuggestions: CONFIG.defaultSuggestions,
     limit: influencerConfig.limit,
     parseQuery: queryParser.parse,
-    commands: CONFIG.commands
+    commands: allCommands
   });
 });
 
@@ -37,7 +44,7 @@ const suggester = new Suggester({
 });
 
 const help = new Help({
-  commands: CONFIG.commands,
+  commands: allCommands,
   newTab: CONFIG.newTab,
   suggester,
   invertedColors: CONFIG.invertedColors,
@@ -62,3 +69,6 @@ new Clock({
   toggleHelp: help.toggle,
   twentyFourHourClock: CONFIG.twentyFourHourClock,
 });
+
+// Initialize the settings panel (replaces old themeSwitcher)
+// This runs on DOMContentLoaded via settingsPanel.js init()

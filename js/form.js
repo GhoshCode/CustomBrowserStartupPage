@@ -26,7 +26,7 @@ class Form {
       this.invert();
       this.isCtrlEnter = false;
     }
-  
+
     hide() {
       $.bodyClassRemove('form');
       this._inputEl.value = '';
@@ -34,40 +34,40 @@ class Form {
       this._suggester.suggest('');
       this._setBackgroundFromQuery('');
     }
-  
+
     show() {
       $.bodyClassAdd('form');
       this._inputEl.focus();
     }
-  
+
     invert() {
       if (this._invertColors) {
         const bgcolor = getComputedStyle(document.documentElement).getPropertyValue('--background');
         const fgcolor = getComputedStyle(document.documentElement).getPropertyValue('--foreground');
         document.documentElement.style.setProperty('--background', fgcolor);
-        document.documentElement.style.setProperty('--foreground', bgcolor);    
+        document.documentElement.style.setProperty('--foreground', bgcolor);
       }
     }
-  
+
     _invertConfig() {
       let isInverted = !CONFIG.invertedColors;
       localStorage.removeItem('invertColorCookie');
       localStorage.setItem('invertColorCookie', JSON.stringify(isInverted));
       location.reload();
     }
-  
+
     _showKeysConfig() {
       let isShowKeys = !CONFIG.showKeys;
       localStorage.removeItem('showKeysCookie');
       localStorage.setItem('showKeysCookie', JSON.stringify(isShowKeys));
       location.reload();
     }
-  
+
     _clearPreview() {
       this._previewValue(this._inputElVal);
       this._inputEl.focus();
     }
-  
+
     _isCategoryLaunch(num){
       if(/^\d/.test(num[0]) && num[1] === '!'){
         return true
@@ -75,7 +75,7 @@ class Form {
         return false;
       }
     }
-  
+
     _handleInput() {
       const newQuery = this._inputEl.value;
       const isHelp = newQuery === '?';
@@ -101,12 +101,19 @@ class Form {
     }
 
     _handleKeydown(e) {
+      // Don't hijack typing in the settings panel, command palette, or any other input
+      const t = e.target;
+      if (document.body.classList.contains('palette-open')) return;
+      if (t && t !== this._inputEl) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return;
+        if (t.closest && (t.closest('#sp-settings-panel') || t.closest('#cmd-palette'))) return;
+      }
       if ($.isUp(e) || $.isDown(e) || $.isRemove(e)) return;
-      
+
       switch ($.key(e)) {
         case 'alt':
         case 'ctrl':
-        case 'enter':       
+        case 'enter':
         case 'shift':
         case 'super':
           return;
@@ -116,43 +123,43 @@ class Form {
         case 'c-enter':
           this.isCtrlEnter = true;
       }
-  
+
       this.show();
     }
-  
+
     _loadQueryParam() {
       const q = new URLSearchParams(window.location.search).get('q');
       if (q) this._submitWithValue(q);
     }
-  
+
     _previewValue(value) {
       this._inputEl.value = value;
       this._setBackgroundFromQuery(value);
     }
-  
+
     _redirect(redirect) {
       if (this._newTab) window.open(redirect, '_blank');
       else window.location.href = redirect;
     }
-  
+
     _registerEvents() {
       document.addEventListener('keyup', this._handleKeyup);
       document.addEventListener('keydown', this._handleKeydown);
       this._inputEl.addEventListener('input', this._handleInput);
       this._formEl.addEventListener('submit', this._submitForm, false);
-  
+
       if (this._suggester) {
         this._suggester.setOnClick(this._submitWithValue);
         this._suggester.setOnHighlight(this._previewValue);
         this._suggester.setOnUnhighlight(this._clearPreview);
       }
     }
-  
+
     _setBackgroundFromQuery(query) {
       if (!this._colors) return;
       this._formEl.style.background = this._parseQuery(query).color;
     }
-  
+
     _submitForm(e) {
       if (e) e.preventDefault();
       let query = this._inputEl.value;
@@ -161,7 +168,7 @@ class Form {
       if (this.isCtrlEnter) query += '.com';
       this._redirect(this._parseQuery(query).redirect);
     }
-  
+
     _submitWithValue(value) {
       this._inputEl.value = value;
       this._submitForm();

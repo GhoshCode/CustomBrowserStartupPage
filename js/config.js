@@ -13,7 +13,7 @@ const CONFIG = {
       search: '/search?q={}'
     },
     {
-      category: 'General',
+      category: 'Frequently Accessed',
       name: 'Mail',
       key: 'm',
       url: 'https://gmail.com',
