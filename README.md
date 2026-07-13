@@ -16,7 +16,7 @@
 
 ---
 
-![Preview](assets/screenshot.png)
+
 
 ---
 
