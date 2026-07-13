@@ -166,7 +166,8 @@ const Palette = (function () {
   // ── Global keys (capture phase so the search form doesn't hijack) ─────────
   document.addEventListener('keydown', (e) => {
     const mod = e.ctrlKey || e.metaKey;
-    if (mod && (e.key === 'k' || e.key === 'K')) {
+    // Alt+K fallback: on the new-tab page Chrome reserves Ctrl+K for the omnibox
+    if ((mod || e.altKey) && (e.key === 'k' || e.key === 'K')) {
       e.preventDefault();
       e.stopPropagation();
       toggle();

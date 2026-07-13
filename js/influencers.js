@@ -94,21 +94,17 @@ class DuckDuckGoInfluencer extends Influencer {
     const { query } = this._parseQuery(rawQuery);
     if (!query) return Promise.resolve([]);
 
-    return new Promise(resolve => {
-      const endpoint = 'https://duckduckgo.com/ac/';
-      const callback = 'autocompleteCallback';
-
-      window[callback] = res => {
+    // fetch instead of JSONP — required for Chrome extension (MV3) CSP
+    return fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json`)
+      .then(r => r.json())
+      .then(res => {
         const suggestions = res
           .map(i => i.phrase)
           .filter(s => !$.ieq(s, query))
           .slice(0, this._limit);
-
-        resolve(this._addSearchPrefix(suggestions, rawQuery));
-      };
-
-      $.jsonp(`${endpoint}?callback=${callback}&q=${query}`);
-    });
+        return this._addSearchPrefix(suggestions, rawQuery);
+      })
+      .catch(() => []);
   }
 }
 
