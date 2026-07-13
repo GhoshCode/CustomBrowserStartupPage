@@ -1150,6 +1150,7 @@ const SettingsPanel = (function () {
     // Quick theming — always visible
     _renderPresetSection(container);
     _renderThemeSection(container);
+    _renderClockSection(container);
 
     // Everything else: collapsed groups
     _collapsible(container, 'Background', _renderBackgroundSection);
@@ -1163,6 +1164,25 @@ const SettingsPanel = (function () {
       _renderDataSection(body);
       _renderResetSection(body);
     });
+  }
+
+  function _renderClockSection(container) {
+    const group = _el('div', 'sp-field-group');
+    group.innerHTML = '<label class="sp-field-label">Clock Style</label>';
+    const row = _el('div', 'sp-mode-select');
+    const current = SettingsStore.getClockStyle();
+    [['flip', '🕰 Flip Clock'], ['digital', '⏰ Digital']].forEach(([v, label]) => {
+      const btn = _el('button', `sp-mode-btn${v === current ? ' sp-mode-active' : ''}`);
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        SettingsStore.setClockStyle(v);
+        if (typeof FlipClock !== 'undefined') FlipClock.apply();
+        renderTab('appearance');
+      });
+      row.appendChild(btn);
+    });
+    group.appendChild(row);
+    container.appendChild(group);
   }
 
   function _renderIconStyleSection(container) {
@@ -1421,7 +1441,8 @@ const SettingsPanel = (function () {
       Object.values(SettingsStore).forEach(() => {}); // no-op
       ['sp-commands', 'sp-bg-mode', 'sp-bg-solid', 'sp-bg-gradient',
        'sp-active-bg', 'sp-uploads', 'sp-theme', 'sp-icon-style',
-       'sp-container-style', 'sp-categories', 'sp-effects', 'sp-widgets'].forEach(k => localStorage.removeItem(k));
+       'sp-container-style', 'sp-categories', 'sp-effects', 'sp-widgets',
+       'sp-clock'].forEach(k => localStorage.removeItem(k));
       location.reload();
     });
 
