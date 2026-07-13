@@ -40,13 +40,23 @@ const Widgets = (function () {
     const greet = h < 5 ? 'Late night hacking?' :
                   h < 12 ? 'Good morning' :
                   h < 18 ? 'Good afternoon' : 'Good evening';
+    const user = (SettingsStore.getWidgets().githubUser || '').trim();
+    const who = user && h >= 5 ? ', ' + esc(user) : '';
     const date = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
     const quote = QUOTES[dayOfYear % QUOTES.length];
     card.innerHTML = `
-      <div class="dw-title">${esc(date)}</div>
-      <div class="dw-greet-line">${esc(greet)}</div>
-      <div class="dw-greet-sub">${esc(quote)}</div>`;
+      <div class="dw-greet-wrap">
+        <div class="dw-greet-text">
+          <div class="dw-title">${esc(date)}</div>
+          <div class="dw-greet-line">${esc(greet)}${who}</div>
+          <div class="dw-greet-sub">${esc(quote)}</div>
+        </div>
+        <div id="mini-clock-slot"></div>
+      </div>`;
+    if (typeof FlipClock !== 'undefined') {
+      FlipClock.mountMini(card.querySelector('#mini-clock-slot'));
+    }
     return card;
   }
 

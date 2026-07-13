@@ -27,6 +27,7 @@ const SettingsStore = (function () {
     categories:     'sp-categories',
     effects:        'sp-effects',
     widgets:        'sp-widgets',
+    clock:          'sp-clock',
   };
 
   // ── One-time migration to the v2 visual design ─────────────────────────────
@@ -330,6 +331,16 @@ const SettingsStore = (function () {
     _set(KEYS.widgets, w);
   }
 
+  // ── Clock ('flip' | 'digital') ─────────────────────────────────────────────
+
+  function getClockStyle() {
+    return _get(KEYS.clock, 'flip') || 'flip';
+  }
+
+  function setClockStyle(style) {
+    _set(KEYS.clock, style);
+  }
+
   // ── Export / Import ────────────────────────────────────────────────────────
 
   const ALL_KEYS = Object.values(KEYS).concat(['invertColorCookie', 'showKeysCookie']);
@@ -415,6 +426,8 @@ const SettingsStore = (function () {
     // Effects & Widgets
     getEffects, setEffects,
     getWidgets, setWidgets,
+    // Clock
+    getClockStyle, setClockStyle,
     // Export / Import
     exportAll, importAll, downloadExport,
     // Helpers
