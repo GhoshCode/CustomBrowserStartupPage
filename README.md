@@ -205,6 +205,6 @@ Cool Startup Page/
 
 *"There's no place like 127.0.0.1"*
 
-**Built by [Ghosh](https://github.com/YOUR_USERNAME)**
+**Built by [Ghosh](https://github.com/GhoshCode)**
 
 </div>
