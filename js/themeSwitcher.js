@@ -10,6 +10,7 @@
     { id: 'w1',     label: 'Image 1', src: 'assets/wallpapers/Image1.jpg' },
     { id: 'w2',     label: 'Image 2', src: 'assets/wallpapers/image2.jpg' },
     { id: 'w3',     label: 'Image 3', src: 'assets/wallpapers/image3.jpg' },
+    { id: 'w4',     label: 'Image 4', src: 'assets/wallpapers/image4.png' },
   ];
 
   const STORAGE_THEME_KEY    = 'sp-theme';

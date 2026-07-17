@@ -40,7 +40,9 @@ const Widgets = (function () {
     const greet = h < 5 ? 'Late night hacking?' :
                   h < 12 ? 'Good morning' :
                   h < 18 ? 'Good afternoon' : 'Good evening';
-    const user = (SettingsStore.getWidgets().githubUser || '').trim();
+    // display name first, GitHub username as fallback
+    const wSet = SettingsStore.getWidgets();
+    const user = ((wSet.displayName || '').trim() || (wSet.githubUser || '').trim());
     const who = user && h >= 5 ? ', ' + esc(user) : '';
     const date = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
@@ -54,9 +56,9 @@ const Widgets = (function () {
         </div>
         <div id="mini-clock-slot"></div>
       </div>`;
-    if (typeof FlipClock !== 'undefined') {
-      FlipClock.mountMini(card.querySelector('#mini-clock-slot'));
-    }
+    // NOTE: the mini clock is mounted by the caller AFTER the card is in the
+    // DOM. Mounting here (before append) makes tickOnce() drop it from the
+    // registry — document.contains() is false — so it never renders.
     return card;
   }
 
@@ -150,7 +152,15 @@ const Widgets = (function () {
     const wrapper = help.querySelector('.categories-wrapper');
     help.insertBefore(bar, wrapper || null);
 
-    if (w.greeting) bar.appendChild(buildGreeting());
+    if (w.greeting) {
+      const greetCard = buildGreeting();
+      bar.appendChild(greetCard);
+      // Mount only once the card is attached, so the clock survives tickOnce's
+      // document.contains() filter and actually paints.
+      if (typeof FlipClock !== 'undefined') {
+        FlipClock.mountMini(greetCard.querySelector('#mini-clock-slot'));
+      }
+    }
     if (showGh) bar.appendChild(buildGithub(w.githubUser.trim()));
     if (w.hn) bar.appendChild(buildHN());
   }

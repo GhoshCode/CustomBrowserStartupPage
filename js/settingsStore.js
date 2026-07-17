@@ -302,6 +302,8 @@ const SettingsStore = (function () {
   function getEffects() {
     return Object.assign({
       aurora: true,
+      texture: true,
+      backdrop: 'video', // 'video' | 'still'
       sheen: true,
       tilt: true,
       entrance: true,
@@ -323,6 +325,7 @@ const SettingsStore = (function () {
       greeting: true,
       github: false,
       githubUser: '',
+      displayName: '',
       hn: false,
     }, _get(KEYS.widgets, {}));
   }
@@ -334,7 +337,11 @@ const SettingsStore = (function () {
   // ── Clock ('flip' | 'digital') ─────────────────────────────────────────────
 
   function getClockStyle() {
-    return _get(KEYS.clock, 'flip') || 'flip';
+    const v = _get(KEYS.clock, 'flip') || 'flip';
+    // migrate removed styles to the closest surviving one
+    if (v === 'split' || v === 'glass') return 'flip';
+    if (['casio', 'digital', 'flip'].indexOf(v) === -1) return 'digital';
+    return v;
   }
 
   function setClockStyle(style) {
@@ -391,6 +398,7 @@ const SettingsStore = (function () {
     { id: 'w1',   label: 'Image 1', src: 'assets/wallpapers/Image1.jpg' },
     { id: 'w2',   label: 'Image 2', src: 'assets/wallpapers/image2.jpg' },
     { id: 'w3',   label: 'Image 3', src: 'assets/wallpapers/image3.jpg' },
+    { id: 'w4',   label: 'Image 4', src: 'assets/wallpapers/image4.png' },
   ];
 
   function getAllWallpapers() {

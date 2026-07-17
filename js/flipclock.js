@@ -20,7 +20,13 @@ const FlipClock = (function () {
       ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
     }
-    return { h: $.pad(h), m: $.pad(d.getMinutes()), ampm };
+    return {
+      h: $.pad(h),
+      m: $.pad(d.getMinutes()),
+      s: $.pad(d.getSeconds()),
+      sec: d.getSeconds(),
+      ampm,
+    };
   }
 
   // ── Flip card ──────────────────────────────────────────────────────────────
@@ -66,17 +72,104 @@ const FlipClock = (function () {
   }
 
   // ── Builders ───────────────────────────────────────────────────────────────
-  function buildInto(container, sizeClass) {
+  // Three styles: 'casio' (clean digits), 'digital' (bold + small secs), 'flip' (Fliqlo).
+  // All show HH:MM:SS; the ':' separators alternate accent color every second.
+
+  // ── True 7-segment LCD digits (for the 'casio' style) ─────────────────────
+  const SEG_MAP = {
+    '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc',
+    '5': 'afgcd', '6': 'afgcde', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg',
+  };
+
+  function makeSegDigit() {
+    const d = document.createElement('span');
+    d.className = 'seg7';
+    d.innerHTML = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+      .map(s => `<i class="sg sg-${s}"></i>`).join('');
+    d.dataset.v = '';
+    return d;
+  }
+
+  function setSeg(el, ch) {
+    if (el.dataset.v === ch) return;
+    el.dataset.v = ch;
+    const on = SEG_MAP[ch] || '';
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(s => {
+      const seg = el.querySelector('.sg-' + s);
+      if (seg) seg.classList.toggle('on', on.indexOf(s) !== -1);
+    });
+  }
+
+  // secondsMode: 'none' = HH:MM, 'small' = HH:MM + small :SS, 'full' = HH:MM:SS same size
+  // seg: digits render as 7-segment LCD elements instead of text
+  function buildDigits(parent, secondsMode, seg) {
+    const digits = [];
+    const seps = [];
+    let tokens;
+    if (secondsMode === 'small') {
+      tokens = ['d', 'd', ':', 'd', 'd', ':s', 'ds', 'ds'];
+    } else if (secondsMode === 'full') {
+      tokens = ['d', 'd', ':', 'd', 'd', ':', 'd', 'd'];
+    } else {
+      tokens = ['d', 'd', ':', 'd', 'd'];
+    }
+    tokens.forEach(k => {
+      if (k === ':' || k === ':s') {
+        const sp = document.createElement('span');
+        sp.className = 'dg-sep' + (k === ':s' ? ' dg-sep-small' : '') + (seg ? ' dg-sep-led' : '');
+        sp.textContent = seg ? '' : ':';
+        parent.appendChild(sp);
+        seps.push(sp);
+      } else if (seg) {
+        const d = makeSegDigit();
+        parent.appendChild(d);
+        digits.push(d);
+      } else {
+        const d = document.createElement('span');
+        d.className = 'dg' + (k === 'ds' ? ' dg-small' : '');
+        parent.appendChild(d);
+        digits.push(d);
+      }
+    });
+    let ampmEl = null;
+    if (!is24()) {
+      ampmEl = document.createElement('span');
+      ampmEl.className = 'lc-ampm';
+      parent.appendChild(ampmEl);
+    }
+    return { digits, seps, ampmEl };
+  }
+
+  function buildSep() {
+    const sp = document.createElement('span');
+    sp.className = 'fc-sep';
+    sp.textContent = ':';
+    return sp;
+  }
+
+  // noSeconds: when true, render HH:MM only (used for the docked/dashboard mini clock)
+  function buildInto(container, sizeClass, forceStyle, noSeconds) {
     container.innerHTML = '';
-    const style = SettingsStore.getClockStyle();
+    const style = forceStyle || SettingsStore.getClockStyle();
 
     if (style === 'flip') {
       const root = document.createElement('div');
-      root.className = 'flip-clock ' + sizeClass;
+      root.className = 'flip-clock ' + sizeClass + ' fc-skin-flip';
       const hCard = buildFlipCard();
       const mCard = buildFlipCard();
+      const sep1 = buildSep();
       root.appendChild(hCard);
+      root.appendChild(sep1);
       root.appendChild(mCard);
+      let sCard = null;
+      let seps = [sep1];
+      if (!noSeconds) {
+        const sep2 = buildSep();
+        sCard = buildFlipCard();
+        root.appendChild(sep2);
+        root.appendChild(sCard);
+        seps = [sep1, sep2];
+      }
       let ampmEl = null;
       if (!is24()) {
         ampmEl = document.createElement('span');
@@ -84,47 +177,101 @@ const FlipClock = (function () {
         hCard.appendChild(ampmEl);
       }
       container.appendChild(root);
-      registry.push({ root, type: 'flip', hCard, mCard, ampmEl });
-    } else {
+      registry.push({ root, type: 'card', hCard, mCard, sCard, seps, ampmEl });
+    } else if (style === 'casio') {
+      // True 7-segment LCD digits — no box, color matches page text
       const root = document.createElement('time');
-      root.className = 'lc-digital ' + sizeClass;
-      const text = document.createElement('span');
-      const ampmEl = document.createElement('span');
-      ampmEl.className = 'lc-ampm';
-      root.appendChild(text);
-      root.appendChild(ampmEl);
+      root.className = 'digi-clock ' + sizeClass + ' dg-skin-led';
+      const parts = buildDigits(root, noSeconds ? 'none' : 'full', true);
       container.appendChild(root);
-      registry.push({ root, type: 'digital', text, ampmEl });
+      registry.push({ root, type: 'text', digits: parts.digits, seps: parts.seps, ampmEl: parts.ampmEl });
+    } else {
+      // bold HH:MM with small seconds on the upper-right (seconds dropped when noSeconds)
+      const root = document.createElement('time');
+      root.className = 'digi-clock ' + sizeClass + ' dg-skin-digital';
+      const parts = buildDigits(root, noSeconds ? 'none' : 'small');
+      container.appendChild(root);
+      registry.push({ root, type: 'text', digits: parts.digits, seps: parts.seps, ampmEl: parts.ampmEl });
     }
     tickOnce();
+  }
+
+  // The dashboard mini clock never uses the flip cards: 'casio' stays casio,
+  // everything else (digital, flip) renders as the digital skin.
+  function miniStyleFor() {
+    return SettingsStore.getClockStyle() === 'casio' ? 'casio' : 'digital';
   }
 
   function tickOnce() {
     const t = now();
     registry = registry.filter(c => document.contains(c.root));
     registry.forEach(c => {
-      if (c.type === 'flip') {
+      if (c.type === 'card') {
         setCard(c.hCard, t.h);
         setCard(c.mCard, t.m);
-        if (c.ampmEl) c.ampmEl.textContent = t.ampm;
+        if (c.sCard) setCard(c.sCard, t.s);
       } else {
-        c.text.textContent = t.h + (CONFIG.clockDelimiter || ' ') + t.m;
-        c.ampmEl.textContent = t.ampm;
+        const str = t.h + t.m + t.s;
+        c.digits.forEach((d, i) => {
+          if (d.classList.contains('seg7')) {
+            setSeg(d, str[i]);
+          } else if (d.textContent !== str[i]) {
+            d.textContent = str[i];
+            d.classList.remove('dg-change');
+            void d.offsetWidth;
+            d.classList.add('dg-change');
+          }
+        });
       }
+      // ':' color alternates every second
+      if (c.seps) c.seps.forEach(sp => sp.classList.toggle('sep-alt', t.sec % 2 === 1));
+      if (c.ampmEl) c.ampmEl.textContent = t.ampm;
     });
   }
 
-  // ── Landing clock + docking animation ─────────────────────────────────────
+  // ── Landing clock + hover transition + docking ────────────────────────────
+  let hovered = false; // tracks if we've transitioned to casio on hover
+
   function mountLanding() {
     const center = document.querySelector('body > .center');
     if (!center) return;
+    
+    let blurOverlay = document.getElementById('bg-blur-overlay');
+    if (!blurOverlay) {
+      blurOverlay = document.createElement('div');
+      blurOverlay.id = 'bg-blur-overlay';
+      document.body.insertBefore(blurOverlay, document.body.firstChild);
+    }
+    document.body.classList.add('landing-blur');
+
     landingEl = document.createElement('div');
     landingEl.id = 'landing-clock';
     landingEl.title = 'Open dashboard';
     center.appendChild(landingEl);
     buildInto(landingEl, 'fc-lg');
+    // Hovering the clock opens the dashboard — the clock shrinks and flies
+    // into the header, landing as the casio mini clock there.
     landingEl.addEventListener('mouseenter', dock);
     landingEl.addEventListener('click', dock);
+
+    // When the dashboard closes (Esc), fully reset the landing layer:
+    // restore the background blur, clear stuck inline styles from a dock
+    // that may have been interrupted, and rebuild the chosen clock style.
+    let wasHelp = document.body.classList.contains('help');
+    new MutationObserver(() => {
+      const inHelp = document.body.classList.contains('help');
+      if (wasHelp && !inHelp) {
+        hovered = false;
+        document.body.classList.add('landing-blur');
+        if (landingEl) {
+          landingEl.style.transition = 'none';
+          landingEl.style.transform = '';
+          landingEl.style.opacity = '';
+          buildInto(landingEl, 'fc-lg');
+        }
+      }
+      wasHelp = inHelp;
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
   let docking = false;
@@ -132,6 +279,8 @@ const FlipClock = (function () {
   function dock() {
     if (docking || document.body.classList.contains('help')) return;
     docking = true;
+    hovered = false;
+    document.body.classList.remove('landing-blur');
     document.body.classList.add('clock-docking');
     $.bodyClassAdd('help');
 
@@ -164,16 +313,19 @@ const FlipClock = (function () {
   }
 
   // ── Mini clock (inside the greeting card) ──────────────────────────────────
+  // Mirrors the selected style (casio → casio, digital/flip → digital),
+  // always without the seconds timer.
   function mountMini(slot) {
     if (!slot) return;
-    buildInto(slot, 'fc-sm');
+    buildInto(slot, 'fc-sm', miniStyleFor(), true);
   }
 
   // Re-render everything (after style change in Settings)
   function apply() {
+    hovered = false;
     if (landingEl) buildInto(landingEl, 'fc-lg');
     const slot = document.getElementById('mini-clock-slot');
-    if (slot) buildInto(slot, 'fc-sm');
+    if (slot) buildInto(slot, 'fc-sm', miniStyleFor(), true);
   }
 
   function init() {

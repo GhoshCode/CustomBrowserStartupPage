@@ -39,6 +39,8 @@ const SettingsPanel = (function () {
     // 1. Page Background
     const mode = SettingsStore.getBgMode();
     const body = document.body;
+    // hide the doodle backdrop over photo wallpapers
+    body.classList.toggle('bg-wallpaper', mode === 'wallpaper');
 
     body.style.backgroundImage = 'none';
     body.style.background = '';
@@ -169,47 +171,60 @@ const SettingsPanel = (function () {
     let topTierHtml = '';
     let unifiedHtml = '';
 
+    const PIN_ICON = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M16 12V4h1a1 1 0 0 0 0-2H7a1 1 0 0 0 0 2h1v8l-2 2v2h5.2v5l.8 1 .8-1v-5H18v-2l-2-2z"/></svg>';
+
+    // One command row. withPin renders the hover pin-toggle button.
+    const buildCommand = (cmd, withPin) => {
+      let iconSrc;
+      if (cmd.iconData) {
+        iconSrc = cmd.iconData;
+      } else if (cmd.iconUrl) {
+        iconSrc = cmd.iconUrl;
+      } else {
+        iconSrc = SettingsStore.getFaviconUrl(cmd.url);
+      }
+
+      const iconEl = iconSrc
+        ? `<img src="${iconSrc}" height="26px" width="26px" style="display:block;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<span style="font-size:14px;">${(cmd.name || '?')[0].toUpperCase()}</span>`;
+
+      const pinBtn = withPin
+        ? `<button class="pin-btn${cmd.pinned ? ' pin-active' : ''}" data-pin="${cmd._index}" title="${cmd.pinned ? 'Unpin' : 'Pin to top'}">${PIN_ICON}</button>`
+        : '';
+
+      return `
+        <li class="command${cmd.pinned ? ' is-pinned' : ''}">
+          <a href="${cmd.url}" target="${newTab ? '_blank' : '_self'}">
+            <span class="command-key">${iconEl}</span>
+            <span class="command-name">${cmd.name}</span>
+            ${pinBtn}
+          </a>
+        </li>`;
+    };
+
     categories.forEach(category => {
-      let cmdsInCat = commands.filter(c => c.category === category);
+      // keep the index into the stored array so the pin button can toggle it
+      const cmdsInCat = commands
+        .map((c, i) => Object.assign({}, c, { _index: i }))
+        .filter(c => c.category === category);
       if (cmdsInCat.length === 0) return;
 
-      // Sort pinned commands to the top
-      cmdsInCat.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return 0;
-      });
-
-      let commandHtml = cmdsInCat.map(cmd => {
-        let iconSrc;
-        if (cmd.iconData) {
-          iconSrc = cmd.iconData;
-        } else if (cmd.iconUrl) {
-          iconSrc = cmd.iconUrl;
-        } else {
-          iconSrc = SettingsStore.getFaviconUrl(cmd.url);
-        }
-
-        const iconEl = iconSrc
-          ? `<img src="${iconSrc}" height="26px" width="26px" style="display:block;border-radius:4px;" onerror="this.style.display='none'">`
-          : `<span style="font-size:14px;">${(cmd.name || '?')[0].toUpperCase()}</span>`;
-
-        return `
-          <li class="command">
-            <a href="${cmd.url}" target="${newTab ? '_blank' : '_self'}">
-              <span class="command-key">${iconEl}</span>
-              <span class="command-name">${cmd.name}${cmd.pinned ? ' <span style="font-size:0.75rem;opacity:0.7">📌</span>' : ''}</span>
-            </a>
-          </li>`;
-      }).join('');
-
       if (category === 'Primary') {
-        topTierHtml += `<ul class="quick-tiles">${commandHtml}</ul>`;
+        cmdsInCat.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+        topTierHtml += `<ul class="quick-tiles">${cmdsInCat.map(c => buildCommand(c, false)).join('')}</ul>`;
       } else {
+        // pinned rows live in their own strip ABOVE the scrolling list,
+        // so they stay attached to the top no matter how far you scroll
+        const pinned = cmdsInCat.filter(c => c.pinned);
+        const rest = cmdsInCat.filter(c => !c.pinned);
+        const pinnedHtml = pinned.length
+          ? `<ul class="pinned-list">${pinned.map(c => buildCommand(c, true)).join('')}</ul>`
+          : '';
         unifiedHtml += `
           <section class="category cat-card">
             <h2 class="category-name">${category}</h2>
-            <ul class="vertical-list">${commandHtml}</ul>
+            ${pinnedHtml}
+            <ul class="vertical-list">${rest.map(c => buildCommand(c, true)).join('')}</ul>
           </section>
         `;
       }
@@ -224,6 +239,24 @@ const SettingsPanel = (function () {
     }
 
     helpEl.appendChild(wrapper);
+
+    // Pin toggle — delegated, bound once so it survives rebuilds
+    if (!helpEl._pinBound) {
+      helpEl._pinBound = true;
+      helpEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.pin-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.pin, 10);
+        const cmds = SettingsStore.getCommands();
+        if (!isNaN(idx) && cmds[idx]) {
+          cmds[idx].pinned = !cmds[idx].pinned;
+          SettingsStore.setCommands(cmds);
+          rebuildHelp();
+        }
+      });
+    }
 
     // Re-mount live widgets (rebuild wiped them)
     if (typeof Widgets !== 'undefined') Widgets.mount();
@@ -623,15 +656,38 @@ const SettingsPanel = (function () {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = function (e) {
-      const upload = {
-        id: 'upload-' + Date.now(),
-        label: file.name.replace(/\.[^.]+$/, ''),
-        src: e.target.result,
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const MAX_WIDTH = 1920;
+        const MAX_HEIGHT = 1080;
+        let w = img.width;
+        let h = img.height;
+        
+        if (w > MAX_WIDTH) { h = Math.round(h * (MAX_WIDTH / w)); w = MAX_WIDTH; }
+        if (h > MAX_HEIGHT) { w = Math.round(w * (MAX_HEIGHT / h)); h = MAX_HEIGHT; }
+        
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        
+        const upload = {
+          id: 'upload-' + Date.now(),
+          label: file.name.replace(/\.[^.]+$/, ''),
+          src: dataUrl,
+        };
+        try {
+          SettingsStore.addUpload(upload);
+          SettingsStore.setActiveBg(upload.id);
+          applyThemeStyles();
+          renderTab('appearance');
+        } catch (err) {
+          alert('Storage quota exceeded! Please delete some uploaded wallpapers first.');
+        }
       };
-      SettingsStore.addUpload(upload);
-      SettingsStore.setActiveBg(upload.id);
-      applyThemeStyles();
-      renderTab('appearance');
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -1171,7 +1227,11 @@ const SettingsPanel = (function () {
     group.innerHTML = '<label class="sp-field-label">Clock Style</label>';
     const row = _el('div', 'sp-mode-select');
     const current = SettingsStore.getClockStyle();
-    [['flip', '🕰 Flip Clock'], ['digital', '⏰ Digital']].forEach(([v, label]) => {
+    [
+      ['casio', '⌚ Casio'],
+      ['digital', '⏰ Digital'],
+      ['flip', '🕰 Flip'],
+    ].forEach(([v, label]) => {
       const btn = _el('button', `sp-mode-btn${v === current ? ' sp-mode-active' : ''}`);
       btn.textContent = label;
       btn.addEventListener('click', () => {
@@ -1500,6 +1560,7 @@ const SettingsPanel = (function () {
     const group = _el('div', 'sp-field-group');
     [
       ['aurora',   'Aurora background'],
+      ['texture',  'Dev doodle backdrop'],
       ['sheen',    'Cursor sheen on glass'],
       ['tilt',     '3D tilt on hover'],
       ['entrance', 'Entrance animation'],
@@ -1523,6 +1584,26 @@ const SettingsPanel = (function () {
       group.appendChild(row);
     });
     container.appendChild(group);
+
+    // Backdrop type: looping video or the still SVG scene
+    const bdGroup = _el('div', 'sp-field-group');
+    bdGroup.innerHTML = '<label class="sp-field-label">Backdrop Type</label>';
+    const bdRow = _el('div', 'sp-mode-select');
+    const curBd = fx.backdrop === 'still' ? 'still' : 'video';
+    [['video', '🎞 Video'], ['still', '🖼 Still Image']].forEach(([v, label]) => {
+      const btn = _el('button', `sp-mode-btn${v === curBd ? ' sp-mode-active' : ''}`);
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        const cur = SettingsStore.getEffects();
+        cur.backdrop = v;
+        SettingsStore.setEffects(cur);
+        if (typeof Effects !== 'undefined') Effects.apply();
+        renderTab('appearance');
+      });
+      bdRow.appendChild(btn);
+    });
+    bdGroup.appendChild(bdRow);
+    container.appendChild(bdGroup);
 
     // Accent colors + aurora intensity
     const acc = _el('div', 'sp-field-group');
@@ -1584,6 +1665,42 @@ const SettingsPanel = (function () {
       group.appendChild(row);
     });
 
+    // Display name — shown in the header greeting (falls back to GitHub username)
+    const nameGroup = _el('div', 'sp-field-group');
+    nameGroup.style.marginTop = '0.5rem';
+    nameGroup.innerHTML = '<label class="sp-field-label">Display Name (shown in greeting)</label>';
+    const nameRow = _el('div', 'sp-color-row');
+    const nameInput = _el('input', 'sp-input');
+    nameInput.placeholder = 'e.g. Ghosh';
+    nameInput.value = w.displayName || '';
+    nameInput.style.flex = '1';
+    const nameSave = _el('button', 'sp-btn-primary sp-btn-sm');
+    nameSave.textContent = 'Save';
+    nameSave.style.width = 'auto';
+    const doNameSave = () => {
+      const cur = SettingsStore.getWidgets();
+      cur.displayName = nameInput.value.trim();
+      SettingsStore.setWidgets(cur);
+      if (typeof Widgets !== 'undefined') Widgets.mount(true);
+      nameSave.textContent = '✓ Saved';
+      setTimeout(() => { nameSave.textContent = 'Save'; }, 1500);
+    };
+    nameSave.addEventListener('click', doNameSave);
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doNameSave(); });
+    const nameDel = _el('button', 'sp-btn-ghost sp-btn-sm');
+    nameDel.textContent = '🗑';
+    nameDel.title = 'Delete display name';
+    nameDel.style.width = 'auto';
+    nameDel.addEventListener('click', () => {
+      nameInput.value = '';
+      doNameSave();
+    });
+    nameRow.appendChild(nameInput);
+    nameRow.appendChild(nameSave);
+    nameRow.appendChild(nameDel);
+    nameGroup.appendChild(nameRow);
+    group.appendChild(nameGroup);
+
     const userGroup = _el('div', 'sp-field-group');
     userGroup.style.marginTop = '0.5rem';
     userGroup.innerHTML = '<label class="sp-field-label">GitHub Username</label>';
@@ -1605,8 +1722,17 @@ const SettingsPanel = (function () {
     };
     saveBtn.addEventListener('click', doSave);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSave(); });
+    const ghDel = _el('button', 'sp-btn-ghost sp-btn-sm');
+    ghDel.textContent = '🗑';
+    ghDel.title = 'Delete GitHub username';
+    ghDel.style.width = 'auto';
+    ghDel.addEventListener('click', () => {
+      input.value = '';
+      doSave();
+    });
     userRow.appendChild(input);
     userRow.appendChild(saveBtn);
+    userRow.appendChild(ghDel);
     userGroup.appendChild(userRow);
     group.appendChild(userGroup);
     container.appendChild(group);
