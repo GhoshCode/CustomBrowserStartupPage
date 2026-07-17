@@ -46,11 +46,64 @@ const Effects = (function () {
       layer.remove();
     }
 
+    // Background texture: faint network graph + scatter plots
+    let tex = document.getElementById('bg-texture');
+    if (fx.texture) {
+      if (!tex) {
+        tex = document.createElement('div');
+        tex.id = 'bg-texture';
+        tex.innerHTML = TEXTURE_SVG;
+        body.prepend(tex);
+      }
+    } else if (tex) {
+      tex.remove();
+    }
+
     // Clear stale tilt transforms when tilt is switched off
     if (!fx.tilt) {
       document.querySelectorAll('.category').forEach(el => { el.style.transform = ''; });
     }
   }
+
+  // Faint tech texture: a network graph (bottom center) and scatter/line plots (top right)
+  const TEXTURE_SVG = (function () {
+    // network graph nodes
+    const nodes = [
+      [820, 620], [940, 560], [1060, 640], [900, 720], [1040, 760],
+      [760, 730], [1160, 700], [1180, 580], [660, 640], [880, 500],
+      [1240, 660], [980, 840], [800, 830], [1120, 830],
+    ];
+    const edges = [
+      [0, 1], [1, 2], [2, 4], [0, 3], [3, 4], [0, 5], [5, 8], [1, 9],
+      [2, 7], [7, 10], [2, 6], [6, 10], [4, 11], [3, 12], [6, 13], [4, 13], [9, 0],
+    ];
+    let net = edges.map(([a, b]) =>
+      `<line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}"/>`
+    ).join('');
+    net += nodes.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? 4 : 7}"/>`).join('');
+
+    // scatter points (deterministic pseudo-random)
+    let scatter = '';
+    let seed = 42;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let i = 0; i < 70; i++) {
+      scatter += `<circle cx="${1250 + rnd() * 300}" cy="${60 + rnd() * 220}" r="2.2"/>`;
+    }
+    for (let i = 0; i < 40; i++) {
+      scatter += `<circle cx="${1330 + rnd() * 240}" cy="${330 + rnd() * 160}" r="2.2"/>`;
+    }
+    // trend line + axes
+    const chart = `
+      <polyline points="1250,300 1310,250 1350,270 1410,190 1470,210 1530,130" fill="none"/>
+      <line x1="1240" y1="50" x2="1240" y2="310"/><line x1="1240" y1="310" x2="1560" y2="310"/>`;
+
+    return `
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <g class="tex-net">${net}</g>
+        <g class="tex-scatter">${scatter}</g>
+        <g class="tex-chart">${chart}</g>
+      </svg>`;
+  })();
 
   // ── Cursor sheen + tilt ──────────────────────────────────────────────────
   // Delegated on document so it survives help-panel rebuilds.

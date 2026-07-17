@@ -168,6 +168,9 @@ const SettingsPanel = (function () {
 
     let topTierHtml = '';
     let unifiedHtml = '';
+    let toolkitHtml = '';
+    // These categories merge into one "Toolkit & Community" card with sub-sections
+    const TOOLKIT = ['Design', 'Social', 'Resources'];
 
     categories.forEach(category => {
       let cmdsInCat = commands.filter(c => c.category === category);
@@ -205,6 +208,13 @@ const SettingsPanel = (function () {
 
       if (category === 'Primary') {
         topTierHtml += `<ul class="quick-tiles">${commandHtml}</ul>`;
+      } else if (TOOLKIT.includes(category)) {
+        toolkitHtml += `
+          <div class="sub-cat">
+            <h3 class="sub-cat-name">${category === 'Social' ? 'Social & Channels' : category}</h3>
+            <ul class="vertical-list vl-sub">${commandHtml}</ul>
+          </div>
+        `;
       } else {
         unifiedHtml += `
           <section class="category cat-card">
@@ -214,6 +224,15 @@ const SettingsPanel = (function () {
         `;
       }
     });
+
+    if (toolkitHtml) {
+      unifiedHtml += `
+        <section class="category cat-card cat-toolkit">
+          <h2 class="category-name">Toolkit &amp; Community</h2>
+          <div class="toolkit-body">${toolkitHtml}</div>
+        </section>
+      `;
+    }
 
     if (topTierHtml) {
       wrapper.insertAdjacentHTML('beforeend', topTierHtml);
@@ -1171,7 +1190,16 @@ const SettingsPanel = (function () {
     group.innerHTML = '<label class="sp-field-label">Clock Style</label>';
     const row = _el('div', 'sp-mode-select');
     const current = SettingsStore.getClockStyle();
-    [['flip', '🕰 Flip Clock'], ['digital', '⏰ Digital']].forEach(([v, label]) => {
+    row.classList.add('sp-clock-grid');
+    [
+      ['flip', 'Flip'],
+      ['split', 'Split-Flap'],
+      ['glass', 'Glass'],
+      ['digital', 'Digital'],
+      ['minimal', 'Minimal'],
+      ['nixie', 'Nixie'],
+      ['brutal', 'Cyber'],
+    ].forEach(([v, label]) => {
       const btn = _el('button', `sp-mode-btn${v === current ? ' sp-mode-active' : ''}`);
       btn.textContent = label;
       btn.addEventListener('click', () => {
@@ -1500,6 +1528,7 @@ const SettingsPanel = (function () {
     const group = _el('div', 'sp-field-group');
     [
       ['aurora',   'Aurora background'],
+      ['texture',  'Tech texture (graphs & plots)'],
       ['sheen',    'Cursor sheen on glass'],
       ['tilt',     '3D tilt on hover'],
       ['entrance', 'Entrance animation'],
@@ -1563,6 +1592,10 @@ const SettingsPanel = (function () {
     const group = _el('div', 'sp-field-group');
     [
       ['greeting', 'Greeting & dev quote'],
+      ['search',   'Integrated search bar'],
+      ['system',   'CPU & RAM monitor (extension only)'],
+      ['cve',      'CVE security alerts'],
+      ['git',      'Git repo status'],
       ['github',   'GitHub contributions'],
       ['hn',       'Hacker News top stories'],
     ].forEach(([key, label]) => {
@@ -1609,6 +1642,61 @@ const SettingsPanel = (function () {
     userRow.appendChild(saveBtn);
     userGroup.appendChild(userRow);
     group.appendChild(userGroup);
+
+    // Git repo for the status chip
+    const repoGroup = _el('div', 'sp-field-group');
+    repoGroup.style.marginTop = '0.5rem';
+    repoGroup.innerHTML = '<label class="sp-field-label">Repo for Git Status (owner/repo)</label>';
+    const repoRow = _el('div', 'sp-color-row');
+    const repoInput = _el('input', 'sp-input');
+    repoInput.placeholder = 'e.g. facebook/react';
+    repoInput.value = w.repo || '';
+    repoInput.style.flex = '1';
+    const repoSave = _el('button', 'sp-btn-primary sp-btn-sm');
+    repoSave.textContent = 'Save';
+    repoSave.style.width = 'auto';
+    const doRepoSave = () => {
+      const cur = SettingsStore.getWidgets();
+      cur.repo = repoInput.value.trim();
+      SettingsStore.setWidgets(cur);
+      if (typeof Widgets !== 'undefined') Widgets.mount(true);
+      repoSave.textContent = '✓ Saved';
+      setTimeout(() => { repoSave.textContent = 'Save'; }, 1500);
+    };
+    repoSave.addEventListener('click', doRepoSave);
+    repoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRepoSave(); });
+    repoRow.appendChild(repoInput);
+    repoRow.appendChild(repoSave);
+    repoGroup.appendChild(repoRow);
+    group.appendChild(repoGroup);
+
+    // Optional GitHub token (fine-grained, read-only recommended)
+    const patGroup = _el('div', 'sp-field-group');
+    patGroup.style.marginTop = '0.5rem';
+    patGroup.innerHTML = '<label class="sp-field-label">GitHub Token — optional, enables PR counts &amp; private repos</label>';
+    const patRow = _el('div', 'sp-color-row');
+    const patInput = _el('input', 'sp-input');
+    patInput.type = 'password';
+    patInput.placeholder = 'github_pat_… (read-only scope)';
+    patInput.value = w.pat || '';
+    patInput.style.flex = '1';
+    const patSave = _el('button', 'sp-btn-primary sp-btn-sm');
+    patSave.textContent = 'Save';
+    patSave.style.width = 'auto';
+    const doPatSave = () => {
+      const cur = SettingsStore.getWidgets();
+      cur.pat = patInput.value.trim();
+      SettingsStore.setWidgets(cur);
+      if (typeof Widgets !== 'undefined') Widgets.mount(true);
+      patSave.textContent = '✓ Saved';
+      setTimeout(() => { patSave.textContent = 'Save'; }, 1500);
+    };
+    patSave.addEventListener('click', doPatSave);
+    patInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doPatSave(); });
+    patRow.appendChild(patInput);
+    patRow.appendChild(patSave);
+    patGroup.appendChild(patRow);
+    group.appendChild(patGroup);
     container.appendChild(group);
   }
 

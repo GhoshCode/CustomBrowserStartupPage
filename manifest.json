@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DevTab — Developer Startup Page",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A developer-friendly new tab: Fliqlo-style flip clock, quick links, Ctrl+K command palette, GitHub & Hacker News widgets, full theming.",
   "chrome_url_overrides": {
     "newtab": "index.html"
@@ -11,8 +11,20 @@
     "48": "assets/ext/icon48.png",
     "128": "assets/ext/icon128.png"
   },
-  "host_permissions": [
-    "https://duckduckgo.com/*"
+  "permissions": [
+    "system.cpu",
+    "system.memory",
+    "alarms",
+    "storage"
   ],
+  "host_permissions": [
+    "https://duckduckgo.com/*",
+    "https://api.github.com/*",
+    "https://github-contributions-api.jogruber.de/*",
+    "https://hacker-news.firebaseio.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "offline_enabled": true
 }

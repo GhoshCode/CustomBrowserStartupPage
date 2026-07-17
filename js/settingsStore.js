@@ -58,6 +58,36 @@ const SettingsStore = (function () {
 
   // ── Commands (site links) ──────────────────────────────────────────────────
 
+  // Categories seeded on upgrade if the user doesn't have them yet
+  const SEED_CATS = {
+    'Design': [
+      { name: 'Figma', key: 'f', url: 'https://figma.com' },
+      { name: 'Dribbble', key: 'd', url: 'https://dribbble.com' },
+    ],
+    'Social': [
+      { name: 'Reddit', key: 'r', url: 'https://reddit.com' },
+      { name: 'Twitter', key: 't', url: 'https://twitter.com' },
+      { name: 'Discord', key: 'dc', url: 'https://discord.com/channels/@me' },
+      { name: 'Slack', key: 'sl', url: 'https://app.slack.com' },
+    ],
+    'Data Analytics': [
+      { name: 'Google Colab', key: 'co', url: 'https://colab.research.google.com' },
+      { name: 'Hugging Face', key: 'hf', url: 'https://huggingface.co' },
+      { name: 'MongoDB Atlas', key: 'mg', url: 'https://cloud.mongodb.com' },
+    ],
+    'DevOps & Infra': [
+      { name: 'CircleCI', key: 'ci', url: 'https://app.circleci.com' },
+      { name: 'AWS Console', key: 'awc', url: 'https://console.aws.amazon.com' },
+      { name: 'Cloudflare', key: 'cf', url: 'https://dash.cloudflare.com' },
+      { name: 'Docker Hub', key: 'dk', url: 'https://hub.docker.com' },
+    ],
+    'Resources': [
+      { name: 'Dev Blog Feed', key: 'dv', url: 'https://dev.to' },
+      { name: 'GitHub Trending', key: 'tr', url: 'https://github.com/trending' },
+      { name: 'roadmap.sh', key: 'rs', url: 'https://roadmap.sh' },
+    ],
+  };
+
   function getCommands() {
     const stored = _get(KEYS.commands, null);
     if (stored) {
@@ -69,17 +99,13 @@ const SettingsStore = (function () {
           migrated = true;
         }
       });
-      // Inject dummy commands for test categories if missing
-      if (!stored.find(c => c.category === 'Design')) {
-        stored.push({ category: 'Design', name: 'Figma', key: 'f', url: 'https://figma.com' });
-        stored.push({ category: 'Design', name: 'Dribbble', key: 'd', url: 'https://dribbble.com' });
-        migrated = true;
-      }
-      if (!stored.find(c => c.category === 'Social')) {
-        stored.push({ category: 'Social', name: 'Reddit', key: 'r', url: 'https://reddit.com' });
-        stored.push({ category: 'Social', name: 'Twitter', key: 't', url: 'https://twitter.com' });
-        migrated = true;
-      }
+      // Seed missing categories with starter links
+      Object.keys(SEED_CATS).forEach(cat => {
+        if (!stored.find(c => c.category === cat)) {
+          SEED_CATS[cat].forEach(l => stored.push(Object.assign({ category: cat }, l)));
+          migrated = true;
+        }
+      });
 
       if (migrated) setCommands(stored);
       return stored;
@@ -131,14 +157,12 @@ const SettingsStore = (function () {
           migrated = true;
         }
       }
-      if (!stored.includes('Design')) {
-        stored.push('Design');
-        migrated = true;
-      }
-      if (!stored.includes('Social')) {
-        stored.push('Social');
-        migrated = true;
-      }
+      ['Design', 'Social', 'Data Analytics', 'DevOps & Infra', 'Resources'].forEach(cat => {
+        if (!stored.includes(cat)) {
+          stored.push(cat);
+          migrated = true;
+        }
+      });
       if (migrated) setCategories(stored);
       return stored;
     }
@@ -306,6 +330,7 @@ const SettingsStore = (function () {
       tilt: true,
       entrance: true,
       neon: true,
+      texture: true,
       accent1: '#22d3ee',
       accent2: '#a78bfa',
       intensity: 40,
@@ -324,6 +349,12 @@ const SettingsStore = (function () {
       github: false,
       githubUser: '',
       hn: false,
+      search: true,
+      system: true,
+      cve: true,
+      git: false,
+      repo: '',
+      pat: '',
     }, _get(KEYS.widgets, {}));
   }
 
