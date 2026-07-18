@@ -1641,16 +1641,24 @@ const SettingsPanel = (function () {
 
   function _renderWidgetsSection(container) {
     const w = SettingsStore.getWidgets();
+    const isExt = typeof Widgets !== 'undefined' && Widgets.hasSystemApi && Widgets.hasSystemApi();
     const group = _el('div', 'sp-field-group');
     [
       ['greeting', 'Greeting & dev quote'],
       ['github',   'GitHub contributions'],
       ['hn',       'Hacker News top stories'],
-    ].forEach(([key, label]) => {
+      ['sysstats', 'System stats · CPU & RAM', true],
+    ].forEach(([key, label, extOnly]) => {
       const row = _el('label', 'sp-toggle-row');
       const cb = _el('input');
       cb.type = 'checkbox';
       cb.checked = !!w[key];
+      // The CPU/RAM widget needs chrome.system.*, which exists only in the
+      // packaged extension. Disable the toggle (and explain why) elsewhere.
+      if (extOnly && !isExt) {
+        cb.disabled = true;
+        row.style.opacity = '0.5';
+      }
       cb.addEventListener('change', () => {
         const cur = SettingsStore.getWidgets();
         cur[key] = cb.checked;
@@ -1658,7 +1666,7 @@ const SettingsPanel = (function () {
         if (typeof Widgets !== 'undefined') Widgets.mount();
       });
       const span = _el('span');
-      span.textContent = label;
+      span.textContent = label + (extOnly && !isExt ? ' (Chrome extension only)' : '');
       row.appendChild(cb);
       row.appendChild(_el('span', 'sp-switch'));
       row.appendChild(span);

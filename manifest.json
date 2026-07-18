@@ -13,12 +13,10 @@
   },
   "permissions": [
     "system.cpu",
-    "system.memory",
-    "alarms"
+    "system.memory"
   ],
   "host_permissions": [
     "https://duckduckgo.com/*",
-    "https://api.github.com/*",
     "https://hacker-news.firebaseio.com/*",
     "https://github-contributions-api.jogruber.de/*"
   ],

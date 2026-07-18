@@ -1958,6 +1958,51 @@ body.neon .dw-title {
   color: var(--accent1);
 }
 
+/* System stats widget (CPU / RAM) — extension only */
+.dw-sys-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.32rem 0;
+}
+
+.dw-sys-label {
+  flex: 0 0 auto;
+  width: 2.1rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted-fg, rgba(255, 255, 255, 0.6));
+}
+
+.dw-sys-bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--chip-bg, rgba(255, 255, 255, 0.09));
+  overflow: hidden;
+}
+
+.dw-sys-bar > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: 4px;
+  background: var(--accent1);
+  transition: width 0.5s ease, background 0.3s ease;
+}
+
+.dw-sys-val {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .dw-hn-pts {
   color: var(--accent2);
   font-weight: 800;

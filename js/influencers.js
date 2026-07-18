@@ -94,19 +94,33 @@ class DuckDuckGoInfluencer extends Influencer {
     const { query } = this._parseQuery(rawQuery);
     if (!query) return Promise.resolve([]);
 
+    const finish = (res, resolve) => {
+      const suggestions = (res || [])
+        .map(i => i.phrase)
+        .filter(s => !$.ieq(s, query))
+        .slice(0, this._limit);
+      resolve(this._addSearchPrefix(suggestions, rawQuery));
+    };
+
+    // MV3 extension pages enforce `script-src 'self'`, which blocks JSONP's
+    // remote <script>. Inside the extension we have host_permissions for
+    // duckduckgo.com, so fetch the JSON directly; on a plain webpage we fall
+    // back to the JSONP path (no host grant, but CORS-free via <script>).
+    const isExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+
+    if (isExtension) {
+      // Without a callback param the endpoint returns the same [{phrase}]
+      // JSON that the JSONP callback would receive.
+      return fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(res => new Promise(resolve => finish(res, resolve)))
+        .catch(() => this._addSearchPrefix([], rawQuery));
+    }
+
     return new Promise(resolve => {
       const endpoint = 'https://duckduckgo.com/ac/';
       const callback = 'autocompleteCallback';
-
-      window[callback] = res => {
-        const suggestions = res
-          .map(i => i.phrase)
-          .filter(s => !$.ieq(s, query))
-          .slice(0, this._limit);
-
-        resolve(this._addSearchPrefix(suggestions, rawQuery));
-      };
-
+      window[callback] = res => finish(res, resolve);
       $.jsonp(`${endpoint}?callback=${callback}&q=${query}`);
     });
   }

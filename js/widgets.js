@@ -8,6 +8,17 @@
 const Widgets = (function () {
   let ghCache = null; // { user, data }
   let hnCache = null; // [stories]
+  let sysTimer = null; // setInterval id for the system-stats poller
+  let cpuPrev = null;  // { total, idle } cumulative counters from the last CPU sample
+  let cpuName = '';    // processor model, fetched once
+
+  // chrome.system.* is only available inside the packaged Chrome extension,
+  // never on a plain file://  or http:// page. Every system-stats path is
+  // gated on this so the app degrades cleanly when run as a normal webpage.
+  function hasSystemApi() {
+    return typeof chrome !== 'undefined' && chrome.system &&
+           chrome.system.cpu && chrome.system.memory;
+  }
 
   const QUOTES = [
     'Talk is cheap. Show me the code. — Linus Torvalds',
@@ -135,9 +146,84 @@ const Widgets = (function () {
     return card;
   }
 
+  // ── System stats (CPU / RAM) — extension only ──────────────────────────────
+  // Uses chrome.system.cpu / chrome.system.memory (declared in manifest.json).
+  // CPU load is a delta between two cumulative samples, so the first reading
+  // appears one poll after mount; RAM is available immediately.
+  const GiB = 1073741824;
+  const fmtGiB = (b) => (b / GiB).toFixed(1);
+
+  function setBar(card, which, pct, label) {
+    const bar = card.querySelector('#dw-' + which + '-bar');
+    const val = card.querySelector('#dw-' + which + '-val');
+    if (bar) {
+      bar.style.width = Math.round(pct) + '%';
+      bar.style.background = pct >= 85 ? '#ef4444' : pct >= 60 ? '#f59e0b' : 'var(--accent1)';
+    }
+    if (val) val.textContent = label;
+  }
+
+  function buildSystemStats() {
+    const card = el('div', 'dw-card dw-sys');
+    card.innerHTML = `
+      <div class="dw-title">System</div>
+      <div class="dw-sys-row">
+        <span class="dw-sys-label">CPU</span>
+        <span class="dw-sys-bar"><i id="dw-cpu-bar"></i></span>
+        <span class="dw-sys-val" id="dw-cpu-val">…</span>
+      </div>
+      <div class="dw-sys-row">
+        <span class="dw-sys-label">RAM</span>
+        <span class="dw-sys-bar"><i id="dw-ram-bar"></i></span>
+        <span class="dw-sys-val" id="dw-ram-val">…</span>
+      </div>
+      <div class="dw-greet-sub" id="dw-sys-sub"></div>`;
+
+    const sample = () => {
+      // Stop polling once the card leaves the DOM (a re-mount replaces it).
+      if (!document.contains(card)) { clearInterval(sysTimer); sysTimer = null; return; }
+      chrome.system.cpu.getInfo((info) => {
+        let total = 0, idle = 0;
+        (info.processors || []).forEach((p) => {
+          if (p && p.usage) { total += p.usage.total; idle += p.usage.idle; }
+        });
+        if (cpuPrev) {
+          const dt = total - cpuPrev.total;
+          const di = idle - cpuPrev.idle;
+          const load = dt > 0 ? (1 - di / dt) * 100 : 0;
+          setBar(card, 'cpu', Math.max(0, Math.min(100, load)), Math.round(load) + '%');
+        }
+        cpuPrev = { total, idle };
+      });
+      chrome.system.memory.getInfo((mem) => {
+        const used = mem.capacity - mem.availableCapacity;
+        const pct = mem.capacity ? (used / mem.capacity) * 100 : 0;
+        setBar(card, 'ram', pct, Math.round(pct) + '%');
+        const sub = card.querySelector('#dw-sys-sub');
+        if (sub) {
+          sub.textContent = `${fmtGiB(used)} / ${fmtGiB(mem.capacity)} GiB` +
+                            (cpuName ? ' · ' + cpuName : '');
+        }
+      });
+    };
+
+    // Grab the CPU model once for the caption.
+    chrome.system.cpu.getInfo((info) => {
+      cpuName = ((info.modelName || '').split('@')[0].trim()) || info.archName || '';
+    });
+    cpuPrev = null; // reset the delta baseline for this fresh card
+    // Seed after the caller appends the card — sample() bails while the card
+    // is still detached (its document.contains guard), so run it next tick.
+    setTimeout(sample, 0); // seeds cpuPrev + paints RAM
+    clearInterval(sysTimer);
+    sysTimer = setInterval(sample, 1500);
+    return card;
+  }
+
   // ── Mount into the help overlay ────────────────────────────────────────────
   function mount(clearCache) {
     if (clearCache) { ghCache = null; hnCache = null; }
+    if (sysTimer) { clearInterval(sysTimer); sysTimer = null; } // kill any old poller
     const help = document.getElementById('help');
     if (!help) return;
     const existing = document.getElementById('dev-widgets');
@@ -145,7 +231,8 @@ const Widgets = (function () {
 
     const w = SettingsStore.getWidgets();
     const showGh = w.github && w.githubUser;
-    if (!w.greeting && !showGh && !w.hn) return;
+    const showSys = w.sysstats && hasSystemApi();
+    if (!w.greeting && !showGh && !w.hn && !showSys) return;
 
     const bar = el('div');
     bar.id = 'dev-widgets';
@@ -161,9 +248,10 @@ const Widgets = (function () {
         FlipClock.mountMini(greetCard.querySelector('#mini-clock-slot'));
       }
     }
+    if (showSys) bar.appendChild(buildSystemStats());
     if (showGh) bar.appendChild(buildGithub(w.githubUser.trim()));
     if (w.hn) bar.appendChild(buildHN());
   }
 
-  return { mount };
+  return { mount, hasSystemApi };
 })();

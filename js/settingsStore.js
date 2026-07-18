@@ -327,6 +327,7 @@ const SettingsStore = (function () {
       githubUser: '',
       displayName: '',
       hn: false,
+      sysstats: false, // CPU/RAM — only functional in the Chrome extension build
     }, _get(KEYS.widgets, {}));
   }
 
