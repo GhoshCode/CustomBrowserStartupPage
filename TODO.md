@@ -27,7 +27,7 @@ sub-checkboxes here and do the first.
 - [x] Seed data module built from `v1-content.json` — the user's real
       sites, quick links, and quotes — filling any gaps from SPEC §10;
       loaded on first run only
-- [ ] Design token layer per SPEC §9: Tailwind theme, CSS variables, fonts
+- [x] Design token layer per SPEC §9: Tailwind theme, CSS variables, fonts
       (Space Grotesk, Inter, DSEG7 via `dseg`), glass utility classes
 - [ ] Vitest unit tests for store logic: moveSite, reorder, delete cascades,
       togglePrimary, migrate

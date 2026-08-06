@@ -4,6 +4,73 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-08-07 — Phase 0: Design token layer
+
+**Task:** SPEC §9 token layer — Tailwind theme, CSS variables, fonts, glass utilities.
+
+### What was built
+
+- Installed **`dseg`** (the one dep this task's checkbox implies) for the
+  seven-segment clock face.
+- `src/styles/fonts.css` — self-hosted `@font-face` for `DSEG7` (400 + 700)
+  sourcing the package's `DSEG7-Classic` woff2/woff via relative
+  `../../node_modules/dseg/...` paths. Vite fingerprints and copies them into
+  `dist/assets/` (confirmed: 4 files emitted). Self-hosting means the clock works
+  offline / in the packaged extension.
+- `src/index.css` — Google Fonts `@import` for **Space Grotesk** + **Inter**
+  (Google Fonts is fine here; only `dseg` is a permitted local dep), then
+  `@import 'tailwindcss'`, then the token layer:
+  - `@theme` tokens → Tailwind utilities: surfaces (`--color-base` #0b0713,
+    `--color-base-elevated`, `--color-glass`, `--color-glass-strong`,
+    `--color-glass-border`), accent (`--color-accent` #ff2e9a,
+    `--color-accent-2` #8b5cf6), category ref colors, fonts
+    (`--font-display/-sans/-clock`), radii (`--radius-card` 24px,
+    `--radius-inner` 13px).
+  - `@layer base` — body background/color/font, full-height html/body/#root,
+    quiet dark scrollbars.
+  - `@utility` classes: `glass`, `glass-inner`, `accent-gradient`,
+    `text-gradient`.
+- `App.tsx` — dropped the inline hex (body now provides the base) and uses
+  `font-display` + `text-gradient` so the root legitimately exercises the tokens.
+
+### Gotchas / notes for later
+
+- **Live accent theming:** utilities compile to `var(--color-accent)`. The
+  Appearance task should set `--color-accent` (and `-2`) on
+  `document.documentElement.style` so every accent utility updates live — no
+  separate mirror var needed.
+- **Tailwind v4 tree-shakes theme vars:** a `--font-*`/`--color-*` token only
+  appears on `:root` once some utility references it. `--font-clock` reads empty
+  until the clock component uses `font-clock` — that's expected, not a bug. The
+  DSEG7 `@font-face` still loads fine when `font-family: 'DSEG7'` is applied.
+- **Extension CSP (Phase 7):** Google Fonts loads over the network. When writing
+  the MV3 manifest, either allow `fonts.googleapis.com`/`fonts.gstatic.com` in
+  the CSP or self-host Inter/Space Grotesk. DSEG7 is already local.
+- Glass utilities bake in radius (`glass` = card 24px, `glass-inner` = 13px);
+  compose the rest with Tailwind utilities.
+
+### Verify
+
+- `npm run typecheck` ✓, `npm run build` ✓ (DSEG7 woff2/woff in dist/assets).
+- **Browser (dev server 5173):** body bg `rgb(11,7,19)`; body font Inter; `glass`
+  computes fill `rgba(255,255,255,0.05)`, 1px `rgba(255,255,255,0.08)` border,
+  24px radius, `blur(16px) saturate(1.3)`; `text-gradient` h1 →
+  `linear-gradient(120deg,#ff2e9a,#8b5cf6)` with transparent fill; **all four
+  faces load** (DSEG7 400+700, Inter, Space Grotesk); **zero console errors**.
+
+### For the next iteration (Phase 1 — Backdrop, SPEC §3.1)
+
+- Constellation of connected nodes + stray code glyphs, very low opacity,
+  GPU-cheap, **fully static under `prefers-reduced-motion: reduce`**. Optional
+  user background image under a dark overlay whose opacity/blur come from
+  Settings (`settings.backgroundImage/overlayOpacity/backgroundBlur`).
+- **Dev server:** the preview spawner can't resolve `npm`/`node` (PATH captured
+  before nvm). Start Vite via Bash with
+  `export PATH="/c/Users/GhoshCode/AppData/Local/nvm/nodejs:$PATH"` then
+  `node node_modules/vite/bin/vite.js --port 5173 --strictPort` (run in
+  background), and `preview_start {url:'http://localhost:5173/'}` to attach.
+  This session left that server running on :5173.
+
 ## 2026-08-07 — Phase 0: Seed data module
 
 **Task:** Build the first-run seed from `v1-content.json`, filling gaps from SPEC §10.
