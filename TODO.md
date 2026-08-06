@@ -24,7 +24,7 @@ sub-checkboxes here and do the first.
 - [x] Define all types from SPEC §2 and the Zustand store with `persist`,
       `schemaVersion: 1`, and a `migrate` scaffold; implement every store
       action listed in SPEC §2
-- [ ] Seed data module built from `v1-content.json` — the user's real
+- [x] Seed data module built from `v1-content.json` — the user's real
       sites, quick links, and quotes — filling any gaps from SPEC §10;
       loaded on first run only
 - [ ] Design token layer per SPEC §9: Tailwind theme, CSS variables, fonts

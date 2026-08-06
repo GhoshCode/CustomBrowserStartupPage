@@ -4,6 +4,61 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-08-07 — Phase 0: Seed data module
+
+**Task:** Build the first-run seed from `v1-content.json`, filling gaps from SPEC §10.
+
+### What was built
+
+- Filled `getSeedState()` in `src/store/seed.ts` from a declarative
+  `SEED_CATEGORIES` structure, expanded into the flat, explicitly-ordered
+  SPEC §2 collections. Also added the `QUOTES` built-in list (exported from the
+  store barrel) for the Phase 1 header.
+- **First-run wiring is already done:** the seed flows through the store's
+  persist initial state (from the previous task), so no store changes were
+  needed — a fresh browser (empty localStorage) hydrates to this seed; existing
+  users keep their persisted data.
+
+### Reconciliation decision (v1 real data vs SPEC §10)
+
+- SPEC §10's Programming primary list (GitHub, Stack Overflow, Hacker News, MDN,
+  DevDocs, LeetCode, Vercel) is exactly the first 7 of the user's real v1 sites —
+  SPEC §10 was clearly derived from v1. So: those 7 are `primary: true` in
+  Programming's **General** group; the remaining 9 real v1 sites (AWS, ChatGPT,
+  Angular, Java, Next.js, PostgreSQL, Python, Kaggle, Jupyter) stay in General so
+  none of the user's real data is dropped; React (17th v1 site) moved into the
+  new **Frontend** subcategory. Frontend/Backend/AI subcategory picks come from
+  SPEC §10. **Design and Social** (absent from v1) are seeded wholesale from
+  SPEC §10.
+- **primary is orthogonal to grouping** (SPEC §4): a `primary` site still has a
+  `subcategoryId` (here `null` = General), so it shows in BOTH the primary row
+  and its General list. That is intended, not a bug — don't "dedupe" it.
+
+### Counts (for reference)
+
+- 3 categories, 6 subcategories, 38 sites (13 primary), 4 quick links, 20 quotes.
+- Seed ids are stable slugs (`cat-…`, `sub-…-…`, `site-…-…-…`, `ql-…`) →
+  deterministic seed, idempotent `resetToSeed`. Verified unique + referentially
+  valid via a throwaway vitest spec (removed after passing).
+
+### Verify
+
+- `npm run typecheck` ✓, `npm run build` ✓. Not yet rendered (App is still the
+  scaffold placeholder) so nothing visual to check this iteration — the Phase 1
+  shell tasks surface it.
+
+### For the next iteration (Design token layer — Phase 0)
+
+- SPEC §9: Tailwind `@theme` tokens + CSS variables, fonts (Space Grotesk, Inter
+  for UI, DSEG7 via the `dseg` npm package for the clock), glass utility classes.
+  Base `#0b0713`, glass `rgba(255,255,255,0.05)` + blur + 1px
+  `rgba(255,255,255,0.08)` border, radius 24px. Accent gradient `#ff2e9a` →
+  `#8b5cf6`. `dseg` is the ONE dependency that task's checkbox implies — its font
+  is needed by the clock; add it then.
+- The store-logic **vitest test task** is still pending (Phase 0, last item):
+  cover moveSite, reorder, delete cascades (category → subs+sites; subcategory →
+  sites to General), togglePrimary, migrate.
+
 ## 2026-08-07 — Phase 0: Types + Zustand store
 
 **Task:** Define all SPEC §2 types and the persisted Zustand store (schemaVersion 1, migrate scaffold, every store action).
