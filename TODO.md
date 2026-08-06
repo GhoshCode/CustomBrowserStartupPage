@@ -6,7 +6,7 @@ sub-checkboxes here and do the first.
 
 ## Phase 0 — Foundation
 
-- [ ] Ground zero: ensure `.gitignore` covers node_modules and build
+- [x] Ground zero: ensure `.gitignore` covers node_modules and build
       output, then commit the untouched tree as a safety snapshot
       ("chore: snapshot v1 + loop kit"). Inventory the v1 app in
       PROGRESS.md (stack, entry files, where the site list / quick links /

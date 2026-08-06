@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "description": "Real user content mined from the v1 vanilla-JS startup page before it was cleared from this branch. Consumed by the DevDeck seed-data task, which fills any gaps (e.g. Design/Social categories) from SPEC.md section 10.",
+    "extractedFrom": ["js/config.js (CONFIG.commands)", "js/widgets.js (QUOTES)", "js/settingsStore.js (accent defaults)"],
+    "notes": [
+      "v1 had exactly one real content category with its own sites: Programming. Its other 'categories' (Frequently Accessed / General) were the quick-links row, mapped to quickLinks below.",
+      "v1 had no Design or Social sites; those come from SPEC section 10 at seed time.",
+      "v1 'primary' is derived from the v1 quickLaunch flag.",
+      "v1 stored per-site gradient colors; DevDeck uses one accent color per category (SPEC), so per-site colors are preserved here only as reference."
+    ]
+  },
+  "accent": {
+    "color1": "#22d3ee",
+    "color2": "#a78bfa"
+  },
+  "quickLinks": [
+    { "name": "Mail",     "url": "https://gmail.com" },
+    { "name": "Drive",    "url": "https://drive.google.com" },
+    { "name": "Telegram", "url": "https://web.telegram.org" },
+    { "name": "LinkedIn", "url": "https://linkedin.com" }
+  ],
+  "categories": [
+    {
+      "name": "Programming",
+      "specColor": "#a78bfa",
+      "sites": [
+        { "name": "GitHub",        "url": "https://github.com",                 "key": "g",   "primary": true,  "v1Color": "#2b2b2b" },
+        { "name": "StackOverflow", "url": "https://stackoverflow.com",          "key": "st",  "primary": true,  "v1Color": "#F48024" },
+        { "name": "HackerNews",    "url": "https://news.ycombinator.com/",      "key": "h",   "primary": true,  "v1Color": "#FF6600" },
+        { "name": "MDN",           "url": "https://developer.mozilla.org/en-US","key": "md",  "primary": false, "v1Color": "#212121" },
+        { "name": "DevDocs",       "url": "https://devdocs.io",                 "key": "dd",  "primary": false, "v1Color": "#33373A" },
+        { "name": "LeetCode",      "url": "https://leetcode.com",               "key": "lc",  "primary": false, "v1Color": "#ffa116" },
+        { "name": "Vercel",        "url": "https://vercel.com",                 "key": "v",   "primary": false, "v1Color": "#000000" },
+        { "name": "AWS",           "url": "https://aws.amazon.com",             "key": "aws", "primary": false, "v1Color": "#FF9900" },
+        { "name": "ChatGPT",       "url": "https://chatgpt.com",                "key": "c",   "primary": false, "v1Color": "#10a37f" },
+        { "name": "Angular",       "url": "https://angular.io",                 "key": "an",  "primary": false, "v1Color": "#DD0031" },
+        { "name": "Java",          "url": "https://dev.java",                   "key": "ja",  "primary": false, "v1Color": "#5382A1" },
+        { "name": "React",         "url": "https://react.dev",                  "key": "re",  "primary": false, "v1Color": "#61DAFB" },
+        { "name": "Next.js",       "url": "https://nextjs.org",                 "key": "nx",  "primary": false, "v1Color": "#000000" },
+        { "name": "PostgreSQL",    "url": "https://www.postgresql.org/docs/",   "key": "pg",  "primary": false, "v1Color": "#336791" },
+        { "name": "Python",        "url": "https://docs.python.org/3/",         "key": "py",  "primary": false, "v1Color": "#3776AB" },
+        { "name": "Kaggle",        "url": "https://www.kaggle.com",             "key": "kg",  "primary": false, "v1Color": "#20BEFF" },
+        { "name": "Jupyter",       "url": "https://jupyter.org",                "key": "jp",  "primary": false, "v1Color": "#F37626" }
+      ]
+    }
+  ],
+  "quotes": [
+    "Talk is cheap. Show me the code. — Linus Torvalds",
+    "Programs must be written for people to read. — Harold Abelson",
+    "Simplicity is the soul of efficiency. — Austin Freeman",
+    "First, solve the problem. Then, write the code. — John Johnson",
+    "Make it work, make it right, make it fast. — Kent Beck",
+    "Code is like humor. When you have to explain it, it's bad. — Cory House",
+    "The best error message is the one that never shows up. — Thomas Fuchs",
+    "Deleted code is debugged code. — Jeff Sickel",
+    "Weeks of coding can save you hours of planning. — Unknown",
+    "It works on my machine. — Everyone, at some point"
+  ]
+}
