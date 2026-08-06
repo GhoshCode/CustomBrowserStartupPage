@@ -203,6 +203,11 @@ const FlipClock = (function () {
   }
 
   function tickOnce() {
+    // No point repainting digits nobody can see. The interval keeps running
+    // (throttled by the browser) and a visibilitychange handler repaints
+    // immediately on return, so the clock is never left showing a stale time.
+    if (document.hidden) return;
+
     const t = now();
     registry = registry.filter(c => document.contains(c.root));
     registry.forEach(c => {
@@ -331,6 +336,11 @@ const FlipClock = (function () {
   function init() {
     mountLanding();
     setInterval(tickOnce, 500);
+    // Repaint the moment the tab comes back, so returning never shows the
+    // time as of when the tab was hidden.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) tickOnce();
+    });
   }
 
   if (document.readyState === 'loading') {

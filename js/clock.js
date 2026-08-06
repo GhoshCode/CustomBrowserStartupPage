@@ -9,6 +9,14 @@ class Clock {
     }
   
     _setTime() {
+      // FlipClock mounts #landing-clock alongside this element and CSS hides
+      // this one, so on the default layout every tick was parsing innerHTML
+      // into a display:none node once a second, forever. offsetParent is null
+      // while hidden — skip the work, but keep the interval so the clock still
+      // comes back if a stylesheet ever reveals it again.
+      if (!this._el.offsetParent && document.body.contains(this._el)) return;
+      if (document.hidden) return;
+
       const date = new Date();
       let hours = $.pad(date.getHours());
       let amPm = '';

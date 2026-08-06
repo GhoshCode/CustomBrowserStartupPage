@@ -222,6 +222,10 @@ const Widgets = (function () {
     const sample = () => {
       // Stop polling once the card leaves the DOM (a re-mount replaces it).
       if (!document.contains(card)) { clearInterval(sysTimer); sysTimer = null; return; }
+      // Skip the chrome.system round-trips while the tab is hidden; the next
+      // visible tick refreshes the bars. cpuPrev keeps its baseline, so the
+      // first reading after returning is still a valid delta.
+      if (document.hidden) return;
       chrome.system.cpu.getInfo((info) => {
         let total = 0, idle = 0;
         (info.processors || []).forEach((p) => {

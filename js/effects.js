@@ -16,8 +16,18 @@ const Effects = (function () {
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
   }
 
+  // getEffects() reads localStorage and JSON.parses it. The mousemove handler
+  // below runs once per animation frame, so calling it there was a synchronous
+  // storage read ~60 times a second. Cache it; apply() is the only thing that
+  // changes effect settings, and it refreshes the cache.
+  let fxCache = null;
+  function currentEffects() {
+    if (!fxCache) fxCache = SettingsStore.getEffects();
+    return fxCache;
+  }
+
   function apply() {
-    const fx = SettingsStore.getEffects();
+    const fx = fxCache = SettingsStore.getEffects();
     const root = document.documentElement;
     const body = document.body;
 
@@ -390,12 +400,16 @@ const Effects = (function () {
   let lastEvent = null;
 
   document.addEventListener('mousemove', (e) => {
+    // Bail before scheduling a frame when there is nothing to draw — with both
+    // effects off this handler used to queue a frame per mouse move anyway.
+    const fxNow = currentEffects();
+    if (!fxNow.sheen && !fxNow.tilt) return;
     lastEvent = e;
     if (rafPending) return;
     rafPending = true;
     requestAnimationFrame(() => {
       rafPending = false;
-      const fx = SettingsStore.getEffects();
+      const fx = currentEffects();
       if (!fx.sheen && !fx.tilt) return;
       const ev = lastEvent;
       document.querySelectorAll('.category, .dw-card').forEach(el => {
@@ -421,7 +435,28 @@ const Effects = (function () {
     });
   }, { passive: true });
 
-  function init() { apply(); }
+  // ── Pause the backdrop while the tab is hidden ─────────────────────────────
+  // This is a new tab page, so tabs get opened and then left in the background
+  // for hours. A looping 720p video keeps decoding frames the entire time,
+  // holding decoded frame buffers and burning battery for something nobody is
+  // looking at. Chrome does not reliably stop <video> playback on its own when
+  // a tab is merely hidden, so pause it explicitly and resume on return.
+  function syncBackdropPlayback() {
+    const vid = document.querySelector('#bg-texture video');
+    if (!vid) return;
+    if (document.hidden) {
+      vid.pause();
+    } else if (vid.paused) {
+      vid.play().catch(() => {}); // autoplay policy may refuse; harmless
+    }
+  }
+
+  document.addEventListener('visibilitychange', syncBackdropPlayback);
+
+  function init() {
+    apply();
+    syncBackdropPlayback();
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
