@@ -113,13 +113,22 @@ const Palette = (function () {
     filtered.forEach((it, i) => {
       const row = document.createElement('div');
       row.className = 'cp-item' + (i === sel ? ' cp-sel' : '');
+      const glyph = it.glyph || '·';
       const iconHtml = it.icon
-        ? `<img src="${esc(it.icon)}" onerror="this.style.display='none'">`
-        : (it.glyph || '·');
+        ? `<img src="${esc(it.icon)}">`
+        : glyph;
       row.innerHTML = `
         <span class="cp-icon">${iconHtml}</span>
         <span class="cp-label">${hl(it.label, it._marks)}</span>
         <span class="cp-sub">${esc(it.sub || '')}</span>`;
+      // Favicons are fetched from each site's own origin, so a miss is normal.
+      // Fall back to the glyph rather than leaving an empty slot.
+      const iconImg = row.querySelector('.cp-icon img');
+      if (iconImg) {
+        iconImg.addEventListener('error', () => {
+          iconImg.replaceWith(document.createTextNode(glyph));
+        });
+      }
       row.addEventListener('mouseenter', () => { sel = i; markSel(); });
       row.addEventListener('click', (e) => execute(it, e.ctrlKey || e.metaKey || e.shiftKey));
       listEl.appendChild(row);

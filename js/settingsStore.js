@@ -363,10 +363,20 @@ const SettingsStore = (function () {
 
   // ── Favicon helper ─────────────────────────────────────────────────────────
 
+  // Favicons come from each site's own origin rather than a third-party
+  // favicon service. The previous implementation asked Google for every icon,
+  // which handed the user's complete list of saved sites to Google on every
+  // new tab. Requesting site.example/favicon.ico only ever contacts hosts the
+  // user already chose to visit.
+  //
+  // The trade-off is coverage: sites that serve their icon only via a <link
+  // rel="icon"> tag and nothing at the root will 404 here. Every caller already
+  // handles a failed load — the link grid and command palette hide the image,
+  // the settings rows fall back to the site's first letter — so the failure
+  // mode is cosmetic rather than broken.
   function getFaviconUrl(siteUrl) {
     try {
-      const domain = new URL(siteUrl).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      return new URL(siteUrl).origin + '/favicon.ico';
     } catch {
       return null;
     }

@@ -201,10 +201,14 @@ const SettingsPanel = (function () {
         iconSrc = SettingsStore.getFaviconUrl(cmd.url);
       }
 
+      // data-fallback carries the letter to show if the icon 404s. Favicons now
+      // come from each site's own origin, so misses are normal — degrade to the
+      // same letter used when there is no icon at all, not to an empty box.
+      const letter = esc((cmd.name || '?')[0].toUpperCase());
       const safeIcon = safeUrl(iconSrc);
       const iconEl = safeIcon
-        ? `<img src="${esc(safeIcon)}" height="26px" width="26px" style="display:block;border-radius:4px;" onerror="this.style.display='none'">`
-        : `<span style="font-size:14px;">${esc((cmd.name || '?')[0].toUpperCase())}</span>`;
+        ? `<img src="${esc(safeIcon)}" height="26px" width="26px" style="display:block;border-radius:4px;" data-fallback="${letter}">`
+        : `<span style="font-size:14px;">${letter}</span>`;
 
       const pinBtn = withPin
         ? `<button class="pin-btn${cmd.pinned ? ' pin-active' : ''}" data-pin="${cmd._index}" title="${cmd.pinned ? 'Unpin' : 'Pin to top'}">${PIN_ICON}</button>`
@@ -255,6 +259,18 @@ const SettingsPanel = (function () {
     if (unifiedHtml) {
       wrapper.insertAdjacentHTML('beforeend', `<div class="cat-grid">${unifiedHtml}</div>`);
     }
+
+    // Swap any icon that fails to load for its letter. Bound here rather than
+    // via an onerror attribute so the letter — user-supplied — never has to be
+    // interpolated into markup.
+    wrapper.querySelectorAll('img[data-fallback]').forEach(img => {
+      img.addEventListener('error', () => {
+        const span = document.createElement('span');
+        span.style.fontSize = '14px';
+        span.textContent = img.dataset.fallback || '?';
+        img.replaceWith(span);
+      });
+    });
 
     helpEl.appendChild(wrapper);
 
