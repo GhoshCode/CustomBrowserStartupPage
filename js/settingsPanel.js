@@ -201,9 +201,10 @@ const SettingsPanel = (function () {
         iconSrc = SettingsStore.getFaviconUrl(cmd.url);
       }
 
-      const iconEl = iconSrc
-        ? `<img src="${iconSrc}" height="26px" width="26px" style="display:block;border-radius:4px;" onerror="this.style.display='none'">`
-        : `<span style="font-size:14px;">${(cmd.name || '?')[0].toUpperCase()}</span>`;
+      const safeIcon = safeUrl(iconSrc);
+      const iconEl = safeIcon
+        ? `<img src="${esc(safeIcon)}" height="26px" width="26px" style="display:block;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<span style="font-size:14px;">${esc((cmd.name || '?')[0].toUpperCase())}</span>`;
 
       const pinBtn = withPin
         ? `<button class="pin-btn${cmd.pinned ? ' pin-active' : ''}" data-pin="${cmd._index}" title="${cmd.pinned ? 'Unpin' : 'Pin to top'}">${PIN_ICON}</button>`
@@ -211,9 +212,9 @@ const SettingsPanel = (function () {
 
       return `
         <li class="command${cmd.pinned ? ' is-pinned' : ''}">
-          <a href="${cmd.url}" target="${newTab ? '_blank' : '_self'}">
+          <a href="${esc(safeUrl(cmd.url))}" target="${newTab ? '_blank' : '_self'}">
             <span class="command-key">${iconEl}</span>
-            <span class="command-name">${cmd.name}</span>
+            <span class="command-name">${esc(cmd.name)}</span>
             ${pinBtn}
           </a>
         </li>`;
@@ -239,7 +240,7 @@ const SettingsPanel = (function () {
           : '';
         unifiedHtml += `
           <section class="category cat-card">
-            <h2 class="category-name">${category}</h2>
+            <h2 class="category-name">${esc(category)}</h2>
             ${pinnedHtml}
             <ul class="vertical-list">${rest.map(c => buildCommand(c, true)).join('')}</ul>
           </section>
@@ -613,7 +614,7 @@ const SettingsPanel = (function () {
 
       // Category header with rename/delete
       const catHeader = _el('div', 'sp-cat-header');
-      catHeader.innerHTML = `<span class="sp-cat-name">⠿ ${cat}</span>`;
+      catHeader.innerHTML = `<span class="sp-cat-name">⠿ ${esc(cat)}</span>`;
       catHeader.title = 'Drag to reorder categories';
 
       // Drag categories to reorder
@@ -841,16 +842,26 @@ const SettingsPanel = (function () {
 
     // Icon preview
     const iconPreview = _el('div', 'sp-site-icon');
-    let iconSrc = cmd.iconData || cmd.iconUrl || SettingsStore.getFaviconUrl(cmd.url);
+    let iconSrc = safeUrl(cmd.iconData || cmd.iconUrl || SettingsStore.getFaviconUrl(cmd.url));
     if (iconSrc) {
-      iconPreview.innerHTML = `<img src="${iconSrc}" width="24" height="24" style="border-radius:4px;" onerror="this.parentElement.textContent='${(cmd.name||'?')[0]}'">`;
+      // Built as a node with a real listener: the fallback letter comes from the
+      // site name, which must never be interpolated into an onerror attribute.
+      const img = _el('img');
+      img.width = 24;
+      img.height = 24;
+      img.style.borderRadius = '4px';
+      img.addEventListener('error', () => {
+        iconPreview.textContent = (cmd.name || '?')[0];
+      });
+      img.src = iconSrc;
+      iconPreview.appendChild(img);
     } else {
       iconPreview.textContent = (cmd.name || '?')[0].toUpperCase();
     }
 
     // Info
     const info = _el('div', 'sp-site-info');
-    info.innerHTML = `<span class="sp-site-name">${cmd.name}${cmd.pinned ? ' 📌' : ''}</span><span class="sp-site-key">${cmd.key}</span>`;
+    info.innerHTML = `<span class="sp-site-name">${esc(cmd.name)}${cmd.pinned ? ' 📌' : ''}</span><span class="sp-site-key">${esc(cmd.key)}</span>`;
 
     // Actions
     const actions = _el('div', 'sp-site-actions');
@@ -958,8 +969,9 @@ const SettingsPanel = (function () {
         const src = customIconData || customIconUrl
           || (cmd.icon ? `assets/icons/${cmd.icon.includes('.') ? cmd.icon : cmd.icon + '.' + (CONFIG.iconExtension || 'png')}` : null)
           || SettingsStore.getFaviconUrl(urlInput.value);
-        if (previewEl && src) {
-          previewEl.innerHTML = `<img src="${src}" width="32" height="32" style="border-radius:6px;" onerror="this.parentElement.textContent='?'">`;
+        const safeSrc = safeUrl(src);
+        if (previewEl && safeSrc) {
+          previewEl.innerHTML = `<img src="${esc(safeSrc)}" width="32" height="32" style="border-radius:6px;" onerror="this.parentElement.textContent='?'">`;
         }
       }
       updateIconPreview();
@@ -1587,6 +1599,28 @@ const SettingsPanel = (function () {
     const el = document.createElement(tag);
     if (className) el.className = className;
     return el;
+  }
+
+  // Site names, categories and URLs all reach innerHTML below, and
+  // SettingsStore.importAll() will load a settings JSON from anywhere — the
+  // export/import feature exists so configs get shared. Without escaping, an
+  // imported config can inject markup that runs with the page's privileges,
+  // which in the packaged extension means its system.cpu/system.memory access.
+  // Escapes ' as well as ", since several of these land in attributes.
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  // href/src values need scheme filtering on top of escaping: escaping alone
+  // still lets javascript: through, which runs on click.
+  function safeUrl(u) {
+    const s = String(u === null || u === undefined ? '' : u).trim();
+    if (/^(https?|mailto|tel|ftp):/i.test(s)) return s;
+    if (/^data:image\//i.test(s)) return s; // uploaded icons are data: images
+    if (/^[./#?]/.test(s)) return s;        // relative paths
+    return '';
   }
 
   // ── Shared field builders ──────────────────────────────────────────────────
