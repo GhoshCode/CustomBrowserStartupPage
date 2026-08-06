@@ -20,6 +20,38 @@ const Widgets = (function () {
            chrome.system.cpu && chrome.system.memory;
   }
 
+  // ── Cross-tab response cache ───────────────────────────────────────────────
+  // This is a new tab page, so every tab is a cold page load and the in-memory
+  // caches above start empty each time. Without persistence, opening ten tabs
+  // meant ten rounds of API calls. Back them with localStorage + a TTL so the
+  // network work happens once per interval instead of once per tab.
+  const CACHE_PREFIX = 'sp-cache-';
+  const TTL = { gh: 60 * 60 * 1000, hn: 10 * 60 * 1000 };
+
+  function cacheGet(name, ttl) {
+    try {
+      const raw = localStorage.getItem(CACHE_PREFIX + name);
+      if (!raw) return null;
+      const hit = JSON.parse(raw);
+      return (Date.now() - hit.t < ttl) ? hit.v : null;
+    } catch { return null; }
+  }
+
+  function cacheSet(name, value) {
+    // Caching is best-effort: a quota error must never break rendering.
+    try {
+      localStorage.setItem(CACHE_PREFIX + name, JSON.stringify({ t: Date.now(), v: value }));
+    } catch {}
+  }
+
+  function cacheClear() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.indexOf(CACHE_PREFIX) === 0)
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
+  }
+
   const QUOTES = [
     'Talk is cheap. Show me the code. — Linus Torvalds',
     'Programs must be written for people to read. — Harold Abelson',
@@ -97,12 +129,17 @@ const Widgets = (function () {
       card.appendChild(el('div', 'dw-greet-sub', `${total} contributions in the last year`));
     };
 
-    if (ghCache && ghCache.user === user) {
-      render(ghCache.data);
+    const cached = (ghCache && ghCache.user === user)
+      ? ghCache.data
+      : cacheGet('gh-' + user, TTL.gh);
+
+    if (cached) {
+      ghCache = { user, data: cached };
+      render(cached);
     } else {
       fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(user)}?y=last`)
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(data => { ghCache = { user, data }; render(data); })
+        .then(data => { ghCache = { user, data }; cacheSet('gh-' + user, data); render(data); })
         .catch(() => {
           const l = card.querySelector('.dw-loading');
           if (l) l.textContent = `Couldn't load data for "${user}".`;
@@ -127,8 +164,11 @@ const Widgets = (function () {
       });
     };
 
-    if (hnCache) {
-      render(hnCache);
+    const cached = hnCache || cacheGet('hn', TTL.hn);
+
+    if (cached) {
+      hnCache = cached;
+      render(cached);
     } else {
       fetch('https://hacker-news.firebaseio.com/v0/topstories.json')
         .then(r => r.json())
@@ -137,7 +177,7 @@ const Widgets = (function () {
             fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json())
           )
         ))
-        .then(stories => { hnCache = stories.filter(Boolean); render(hnCache); })
+        .then(stories => { hnCache = stories.filter(Boolean); cacheSet('hn', hnCache); render(hnCache); })
         .catch(() => {
           const l = card.querySelector('.dw-loading');
           if (l) l.textContent = "Couldn't load stories.";
@@ -222,7 +262,7 @@ const Widgets = (function () {
 
   // ── Mount into the help overlay ────────────────────────────────────────────
   function mount(clearCache) {
-    if (clearCache) { ghCache = null; hnCache = null; }
+    if (clearCache) { ghCache = null; hnCache = null; cacheClear(); }
     if (sysTimer) { clearInterval(sysTimer); sysTimer = null; } // kill any old poller
     const help = document.getElementById('help');
     if (!help) return;

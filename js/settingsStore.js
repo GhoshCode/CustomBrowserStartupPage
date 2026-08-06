@@ -69,18 +69,6 @@ const SettingsStore = (function () {
           migrated = true;
         }
       });
-      // Inject dummy commands for test categories if missing
-      if (!stored.find(c => c.category === 'Design')) {
-        stored.push({ category: 'Design', name: 'Figma', key: 'f', url: 'https://figma.com' });
-        stored.push({ category: 'Design', name: 'Dribbble', key: 'd', url: 'https://dribbble.com' });
-        migrated = true;
-      }
-      if (!stored.find(c => c.category === 'Social')) {
-        stored.push({ category: 'Social', name: 'Reddit', key: 'r', url: 'https://reddit.com' });
-        stored.push({ category: 'Social', name: 'Twitter', key: 't', url: 'https://twitter.com' });
-        migrated = true;
-      }
-
       if (migrated) setCommands(stored);
       return stored;
     }
@@ -130,14 +118,6 @@ const SettingsStore = (function () {
           stored[i] = 'Primary';
           migrated = true;
         }
-      }
-      if (!stored.includes('Design')) {
-        stored.push('Design');
-        migrated = true;
-      }
-      if (!stored.includes('Social')) {
-        stored.push('Social');
-        migrated = true;
       }
       if (migrated) setCategories(stored);
       return stored;
