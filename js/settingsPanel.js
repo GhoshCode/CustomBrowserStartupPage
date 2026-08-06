@@ -33,6 +33,23 @@ const SettingsPanel = (function () {
     { label: '◎ Radial',   value: 'radial' },
   ];
 
+  // ── Background swatch presets ──────────────────────────────────────────────
+  const SOLID_PRESETS = [
+    '#000000', '#0E0E0E', '#1a1a2e', '#16213e',
+    '#0f3460', '#1b1b2f', '#2d2d2d', '#121212',
+  ];
+
+  const GRADIENT_PRESETS = [
+    { c1: '#0f0c29', c2: '#302b63', dir: '135deg' },
+    { c1: '#000428', c2: '#004e92', dir: 'to right' },
+    { c1: '#1a1a2e', c2: '#e94560', dir: '135deg' },
+    { c1: '#0f3460', c2: '#533483', dir: 'to right' },
+    { c1: '#141e30', c2: '#243b55', dir: 'to bottom' },
+    { c1: '#232526', c2: '#414345', dir: 'to right' },
+    { c1: '#200122', c2: '#6f0000', dir: '135deg' },
+    { c1: '#000000', c2: '#434343', dir: 'to bottom' },
+  ];
+
   // ── Theme & Styling Application ────────────────────────────────────────────
 
   function applyThemeStyles() {
@@ -389,178 +406,45 @@ const SettingsPanel = (function () {
   function _renderBackgroundSection(container) {
     const mode = SettingsStore.getBgMode();
 
-    // Mode selector
-    const modeGroup = _el('div', 'sp-field-group');
-    modeGroup.innerHTML = '<label class="sp-field-label">Background Type</label>';
-    const modeSelect = _el('div', 'sp-mode-select');
-    ['solid', 'gradient', 'wallpaper'].forEach(m => {
-      const btn = _el('button', `sp-mode-btn${m === mode ? ' sp-mode-active' : ''}`);
-      btn.textContent = m.charAt(0).toUpperCase() + m.slice(1);
-      btn.addEventListener('click', () => {
-        SettingsStore.setBgMode(m);
-        applyThemeStyles();
-        renderTab('appearance');
-      });
-      modeSelect.appendChild(btn);
+    _typeToggle(container, 'Background Type', ['solid', 'gradient', 'wallpaper'], mode, (m) => {
+      SettingsStore.setBgMode(m);
+      applyThemeStyles();
+      renderTab('appearance');
     });
-    modeGroup.appendChild(modeSelect);
-    container.appendChild(modeGroup);
 
     if (mode === 'solid') {
       const color = SettingsStore.getBgSolid();
-      const group = _el('div', 'sp-field-group');
-      group.innerHTML = '<label class="sp-field-label">Solid Color</label>';
-      const row = _el('div', 'sp-color-row');
 
-      const picker = _el('input', 'sp-color-picker');
-      picker.type = 'color';
-      picker.value = color;
-      picker.addEventListener('input', (e) => {
-        SettingsStore.setBgSolid(e.target.value);
-        applyThemeStyles();
-        hexInput.value = e.target.value;
-      });
+      _colorField(container, 'Solid Color',
+        () => SettingsStore.getBgSolid(),
+        (v) => SettingsStore.setBgSolid(v));
 
-      const hexInput = _el('input', 'sp-hex-input');
-      hexInput.type = 'text';
-      hexInput.value = color;
-      hexInput.placeholder = '#000000';
-      hexInput.addEventListener('change', (e) => {
-        const v = e.target.value;
-        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-          SettingsStore.setBgSolid(v);
-          applyThemeStyles();
-          picker.value = v;
-        }
-      });
-
-      row.appendChild(picker);
-      row.appendChild(hexInput);
-      group.appendChild(row);
-      container.appendChild(group);
-
-      // Quick presets
-      const presets = _el('div', 'sp-field-group');
-      presets.innerHTML = '<label class="sp-field-label">Quick Presets</label>';
-      const presetRow = _el('div', 'sp-preset-row');
-      ['#000000', '#0E0E0E', '#1a1a2e', '#16213e', '#0f3460', '#1b1b2f', '#2d2d2d', '#121212'].forEach(c => {
-        const swatch = _el('div', 'sp-swatch');
-        swatch.style.background = c;
-        if (c === color) swatch.classList.add('sp-swatch-active');
-        swatch.addEventListener('click', () => {
+      _swatchRow(container, 'Quick Presets', SOLID_PRESETS.map(c => ({
+        background: c,
+        active: c === color,
+        onPick: () => {
           SettingsStore.setBgSolid(c);
           applyThemeStyles();
           renderTab('appearance');
-        });
-        presetRow.appendChild(swatch);
-      });
-      presets.appendChild(presetRow);
-      container.appendChild(presets);
+        },
+      })));
 
     } else if (mode === 'gradient') {
       const g = SettingsStore.getBgGradient();
+      const save = () => SettingsStore.setBgGradient(g);
 
-      // Color 1
-      const c1Group = _el('div', 'sp-field-group');
-      c1Group.innerHTML = '<label class="sp-field-label">Color 1</label>';
-      const c1Row = _el('div', 'sp-color-row');
-      const c1Picker = _el('input', 'sp-color-picker');
-      c1Picker.type = 'color';
-      c1Picker.value = g.color1;
-      c1Picker.addEventListener('input', (e) => {
-        g.color1 = e.target.value;
-        SettingsStore.setBgGradient(g);
-        applyThemeStyles();
-      });
-      const c1Hex = _el('input', 'sp-hex-input');
-      c1Hex.type = 'text';
-      c1Hex.value = g.color1;
-      c1Hex.addEventListener('change', (e) => {
-        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
-          g.color1 = e.target.value;
-          SettingsStore.setBgGradient(g);
-          applyThemeStyles();
-          c1Picker.value = e.target.value;
-        }
-      });
-      c1Row.appendChild(c1Picker);
-      c1Row.appendChild(c1Hex);
-      c1Group.appendChild(c1Row);
-      container.appendChild(c1Group);
+      _colorField(container, 'Color 1', () => g.color1, (v) => { g.color1 = v; save(); });
+      _colorField(container, 'Color 2', () => g.color2, (v) => { g.color2 = v; save(); });
+      _directionField(container, () => g.direction, (v) => { g.direction = v; save(); });
 
-      // Color 2
-      const c2Group = _el('div', 'sp-field-group');
-      c2Group.innerHTML = '<label class="sp-field-label">Color 2</label>';
-      const c2Row = _el('div', 'sp-color-row');
-      const c2Picker = _el('input', 'sp-color-picker');
-      c2Picker.type = 'color';
-      c2Picker.value = g.color2;
-      c2Picker.addEventListener('input', (e) => {
-        g.color2 = e.target.value;
-        SettingsStore.setBgGradient(g);
-        applyThemeStyles();
-      });
-      const c2Hex = _el('input', 'sp-hex-input');
-      c2Hex.type = 'text';
-      c2Hex.value = g.color2;
-      c2Hex.addEventListener('change', (e) => {
-        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
-          g.color2 = e.target.value;
-          SettingsStore.setBgGradient(g);
-          applyThemeStyles();
-          c2Picker.value = e.target.value;
-        }
-      });
-      c2Row.appendChild(c2Picker);
-      c2Row.appendChild(c2Hex);
-      c2Group.appendChild(c2Row);
-      container.appendChild(c2Group);
-
-      // Direction
-      const dirGroup = _el('div', 'sp-field-group');
-      dirGroup.innerHTML = '<label class="sp-field-label">Direction</label>';
-      const dirSelect = _el('select', 'sp-select');
-      GRADIENT_DIRECTIONS.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.value;
-        opt.textContent = d.label;
-        if (d.value === g.direction) opt.selected = true;
-        dirSelect.appendChild(opt);
-      });
-      dirSelect.addEventListener('change', (e) => {
-        g.direction = e.target.value;
-        SettingsStore.setBgGradient(g);
-        applyThemeStyles();
-      });
-      dirGroup.appendChild(dirSelect);
-      container.appendChild(dirGroup);
-
-      // Gradient presets
-      const presets = _el('div', 'sp-field-group');
-      presets.innerHTML = '<label class="sp-field-label">Gradient Presets</label>';
-      const presetRow = _el('div', 'sp-preset-row');
-      const gradientPresets = [
-        { c1: '#0f0c29', c2: '#302b63', dir: '135deg' },
-        { c1: '#000428', c2: '#004e92', dir: 'to right' },
-        { c1: '#1a1a2e', c2: '#e94560', dir: '135deg' },
-        { c1: '#0f3460', c2: '#533483', dir: 'to right' },
-        { c1: '#141e30', c2: '#243b55', dir: 'to bottom' },
-        { c1: '#232526', c2: '#414345', dir: 'to right' },
-        { c1: '#200122', c2: '#6f0000', dir: '135deg' },
-        { c1: '#000000', c2: '#434343', dir: 'to bottom' },
-      ];
-      gradientPresets.forEach(p => {
-        const swatch = _el('div', 'sp-swatch');
-        swatch.style.background = `linear-gradient(${p.dir}, ${p.c1}, ${p.c2})`;
-        swatch.addEventListener('click', () => {
+      _swatchRow(container, 'Gradient Presets', GRADIENT_PRESETS.map(p => ({
+        background: `linear-gradient(${p.dir}, ${p.c1}, ${p.c2})`,
+        onPick: () => {
           SettingsStore.setBgGradient({ color1: p.c1, color2: p.c2, direction: p.dir });
           applyThemeStyles();
           renderTab('appearance');
-        });
-        presetRow.appendChild(swatch);
-      });
-      presets.appendChild(presetRow);
-      container.appendChild(presets);
+        },
+      })));
 
     } else if (mode === 'wallpaper') {
       _renderWallpaperSection(container);
@@ -1251,84 +1135,29 @@ const SettingsPanel = (function () {
     container.appendChild(iconHeader);
 
     const iconStyle = SettingsStore.getIconStyle();
-    
-    // Icon type toggle
-    const typeGroup = _el('div', 'sp-field-group');
-    typeGroup.innerHTML = '<label class="sp-field-label">Border Type</label>';
-    const typeRow = _el('div', 'sp-mode-select');
-    ['solid', 'gradient'].forEach(t => {
-      const btn = _el('button', `sp-mode-btn${t === iconStyle.type ? ' sp-mode-active' : ''}`);
-      btn.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-      btn.addEventListener('click', () => {
-        iconStyle.type = t;
-        SettingsStore.setIconStyle(iconStyle);
-        applyThemeStyles();
-        renderTab('appearance');
-      });
-      typeRow.appendChild(btn);
-    });
-    typeGroup.appendChild(typeRow);
-    container.appendChild(typeGroup);
+    const save = () => SettingsStore.setIconStyle(iconStyle);
+    const opts = { allowAlpha: true, onChange: rebuildHelp };
 
-    // Color 1 (and only color if solid)
-    const i1Group = _el('div', 'sp-field-group');
-    i1Group.innerHTML = `<label class="sp-field-label">${iconStyle.type === 'gradient' ? 'Color 1' : 'Color'}</label>`;
-    const i1Row = _el('div', 'sp-color-row');
-    const i1Picker = _el('input', 'sp-color-picker');
-    i1Picker.type = 'color';
-    i1Picker.value = _rgbaToHex(iconStyle.color1);
-    i1Picker.addEventListener('input', (e) => {
-      iconStyle.color1 = e.target.value;
-      SettingsStore.setIconStyle(iconStyle);
+    _typeToggle(container, 'Border Type', ['solid', 'gradient'], iconStyle.type, (t) => {
+      iconStyle.type = t;
+      save();
       applyThemeStyles();
-      rebuildHelp();
+      renderTab('appearance');
     });
-    const i1Hex = _el('input', 'sp-hex-input');
-    i1Hex.type = 'text';
-    i1Hex.value = iconStyle.color1;
-    i1Hex.addEventListener('change', (e) => {
-      iconStyle.color1 = e.target.value;
-      SettingsStore.setIconStyle(iconStyle);
-      applyThemeStyles();
-      rebuildHelp();
-    });
-    i1Row.appendChild(i1Picker);
-    i1Row.appendChild(i1Hex);
-    i1Group.appendChild(i1Row);
-    container.appendChild(i1Group);
+
+    _colorField(container, iconStyle.type === 'gradient' ? 'Color 1' : 'Color',
+      () => iconStyle.color1,
+      (v) => { iconStyle.color1 = v; save(); }, opts);
 
     if (iconStyle.type === 'gradient') {
-      const i2Group = _el('div', 'sp-field-group');
-      i2Group.innerHTML = '<label class="sp-field-label">Color 2</label>';
-      const i2Row = _el('div', 'sp-color-row');
-      const i2Picker = _el('input', 'sp-color-picker');
-      i2Picker.type = 'color';
-      i2Picker.value = _rgbaToHex(iconStyle.color2);
-      i2Picker.addEventListener('input', (e) => {
-        iconStyle.color2 = e.target.value;
-        SettingsStore.setIconStyle(iconStyle);
-        applyThemeStyles();
-        rebuildHelp();
-      });
-      const i2Hex = _el('input', 'sp-hex-input');
-      i2Hex.type = 'text';
-      i2Hex.value = iconStyle.color2;
-      i2Hex.addEventListener('change', (e) => {
-        iconStyle.color2 = e.target.value;
-        SettingsStore.setIconStyle(iconStyle);
-        applyThemeStyles();
-        rebuildHelp();
-      });
-      i2Row.appendChild(i2Picker);
-      i2Row.appendChild(i2Hex);
-      i2Group.appendChild(i2Row);
-      container.appendChild(i2Group);
+      _colorField(container, 'Color 2',
+        () => iconStyle.color2,
+        (v) => { iconStyle.color2 = v; save(); }, opts);
 
-      // Force direction to left-to-right as per user request
+      // Icon gradients are always left-to-right — no direction control here.
       iconStyle.direction = 'to right';
-      SettingsStore.setIconStyle(iconStyle);
+      save();
     }
-
   }
 
   function _renderContainerStyleSection(container) {
@@ -1338,99 +1167,33 @@ const SettingsPanel = (function () {
     container.appendChild(contHeader);
 
     const contStyle = SettingsStore.getContainerStyle();
-    
-    // Type toggle
-    const contTypeGroup = _el('div', 'sp-field-group');
-    contTypeGroup.innerHTML = '<label class="sp-field-label">Background Type</label>';
-    const contTypeRow = _el('div', 'sp-mode-select');
-    ['solid', 'gradient'].forEach(t => {
-      const btn = _el('button', `sp-mode-btn${t === contStyle.type ? ' sp-mode-active' : ''}`);
-      btn.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-      btn.addEventListener('click', () => {
-        contStyle.type = t;
-        SettingsStore.setContainerStyle(contStyle);
-        applyThemeStyles();
-        renderTab('appearance');
-      });
-      contTypeRow.appendChild(btn);
-    });
-    contTypeGroup.appendChild(contTypeRow);
-    container.appendChild(contTypeGroup);
+    const save = () => SettingsStore.setContainerStyle(contStyle);
+    const opts = { allowAlpha: true };
 
-    // Color 1
-    const cbGroup = _el('div', 'sp-field-group');
-    cbGroup.innerHTML = `<label class="sp-field-label">${contStyle.type === 'gradient' ? 'Color 1 (RGBA/Hex)' : 'Background Color (RGBA/Hex)'}</label>`;
-    const cbRow = _el('div', 'sp-color-row');
-    const cbPicker = _el('input', 'sp-color-picker');
-    cbPicker.type = 'color';
-    cbPicker.value = _rgbaToHex(contStyle.color1);
-    cbPicker.addEventListener('input', (e) => {
-      contStyle.color1 = e.target.value;
-      SettingsStore.setContainerStyle(contStyle);
+    _typeToggle(container, 'Background Type', ['solid', 'gradient'], contStyle.type, (t) => {
+      contStyle.type = t;
+      save();
       applyThemeStyles();
+      renderTab('appearance');
     });
-    const cbHex = _el('input', 'sp-hex-input');
-    cbHex.type = 'text';
-    cbHex.value = contStyle.color1;
-    cbHex.addEventListener('change', (e) => {
-      contStyle.color1 = e.target.value;
-      SettingsStore.setContainerStyle(contStyle);
-      applyThemeStyles();
-      cbPicker.value = _rgbaToHex(e.target.value);
-    });
-    cbRow.appendChild(cbPicker);
-    cbRow.appendChild(cbHex);
-    cbGroup.appendChild(cbRow);
-    container.appendChild(cbGroup);
+
+    _colorField(container,
+      contStyle.type === 'gradient' ? 'Color 1 (RGBA/Hex)' : 'Background Color (RGBA/Hex)',
+      () => contStyle.color1,
+      (v) => { contStyle.color1 = v; save(); }, opts);
 
     if (contStyle.type === 'gradient') {
-      const cb2Group = _el('div', 'sp-field-group');
-      cb2Group.innerHTML = '<label class="sp-field-label">Color 2 (RGBA/Hex)</label>';
-      const cb2Row = _el('div', 'sp-color-row');
-      const cb2Picker = _el('input', 'sp-color-picker');
-      cb2Picker.type = 'color';
-      cb2Picker.value = _rgbaToHex(contStyle.color2);
-      cb2Picker.addEventListener('input', (e) => {
-        contStyle.color2 = e.target.value;
-        SettingsStore.setContainerStyle(contStyle);
-        applyThemeStyles();
-      });
-      const cb2Hex = _el('input', 'sp-hex-input');
-      cb2Hex.type = 'text';
-      cb2Hex.value = contStyle.color2;
-      cb2Hex.addEventListener('change', (e) => {
-        contStyle.color2 = e.target.value;
-        SettingsStore.setContainerStyle(contStyle);
-        applyThemeStyles();
-        cb2Picker.value = _rgbaToHex(e.target.value);
-      });
-      cb2Row.appendChild(cb2Picker);
-      cb2Row.appendChild(cb2Hex);
-      cb2Group.appendChild(cb2Row);
-      container.appendChild(cb2Group);
+      _colorField(container, 'Color 2 (RGBA/Hex)',
+        () => contStyle.color2,
+        (v) => { contStyle.color2 = v; save(); }, opts);
 
-      // Direction
-      const dirGroup = _el('div', 'sp-field-group');
-      dirGroup.innerHTML = '<label class="sp-field-label">Direction</label>';
-      const dirSelect = _el('select', 'sp-select');
-      GRADIENT_DIRECTIONS.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.value;
-        opt.textContent = d.label;
-        if (d.value === contStyle.direction) opt.selected = true;
-        dirSelect.appendChild(opt);
-      });
-      dirSelect.addEventListener('change', (e) => {
-        contStyle.direction = e.target.value;
-        SettingsStore.setContainerStyle(contStyle);
-        applyThemeStyles();
-      });
-      dirGroup.appendChild(dirSelect);
-      container.appendChild(dirGroup);
+      _directionField(container,
+        () => contStyle.direction,
+        (v) => { contStyle.direction = v; save(); });
     }
 
-    const blGroup = _el('div', 'sp-field-group');
-    blGroup.innerHTML = '<label class="sp-field-label">Container Blur Depth (px)</label>';
+    // Blur depth is container-only, so it stays a bespoke field.
+    const blGroup = _fieldGroup(container, 'Container Blur Depth (px)');
     const blRow = _el('div', 'sp-color-row');
     const blInput = _el('input', 'sp-hex-input');
     blInput.type = 'number';
@@ -1439,13 +1202,11 @@ const SettingsPanel = (function () {
     blInput.value = contStyle.blur;
     blInput.addEventListener('change', (e) => {
       contStyle.blur = parseInt(e.target.value) || 0;
-      SettingsStore.setContainerStyle(contStyle);
+      save();
       applyThemeStyles();
     });
     blRow.appendChild(blInput);
     blGroup.appendChild(blRow);
-    container.appendChild(blGroup);
-
   }
 
   function _renderThemeSection(container) {
@@ -1826,6 +1587,118 @@ const SettingsPanel = (function () {
     const el = document.createElement(tag);
     if (className) el.className = className;
     return el;
+  }
+
+  // ── Shared field builders ──────────────────────────────────────────────────
+  // Background, container and icon styling all present the same controls: a
+  // solid/gradient toggle, one or two colour fields, a direction picker and a
+  // row of preset swatches. These builders are the single implementation.
+
+  function _fieldGroup(container, labelText) {
+    const group = _el('div', 'sp-field-group');
+    const label = _el('label', 'sp-field-label');
+    label.textContent = labelText;
+    group.appendChild(label);
+    container.appendChild(group);
+    return group;
+  }
+
+  /**
+   * A colour swatch + hex/rgba text box, kept in sync with each other.
+   *
+   * get/set read and write the caller's own state, so this builder never needs
+   * to know which SettingsStore key it is editing.
+   *
+   * opts.allowAlpha — accept any CSS colour in the text box (container and icon
+   *   styles store rgba() values). When false only #rrggbb commits, and invalid
+   *   text reverts to the stored value instead of sitting there looking applied.
+   * opts.onChange — extra work after persisting, on top of applyThemeStyles().
+   */
+  function _colorField(container, labelText, get, set, opts) {
+    opts = opts || {};
+    const group = _fieldGroup(container, labelText);
+    const row = _el('div', 'sp-color-row');
+
+    const picker = _el('input', 'sp-color-picker');
+    picker.type = 'color';
+    picker.value = _rgbaToHex(get());
+
+    const hex = _el('input', 'sp-hex-input');
+    hex.type = 'text';
+    hex.value = get();
+    if (!opts.allowAlpha) hex.placeholder = '#000000';
+
+    function commit(value) {
+      set(value);
+      applyThemeStyles();
+      if (opts.onChange) opts.onChange();
+    }
+
+    picker.addEventListener('input', (e) => {
+      hex.value = e.target.value;
+      commit(e.target.value);
+    });
+
+    hex.addEventListener('change', (e) => {
+      const v = e.target.value.trim();
+      if (!opts.allowAlpha && !/^#[0-9a-fA-F]{6}$/.test(v)) {
+        hex.value = get(); // reject silently, same as before
+        return;
+      }
+      picker.value = _rgbaToHex(v);
+      commit(v);
+    });
+
+    row.appendChild(picker);
+    row.appendChild(hex);
+    group.appendChild(row);
+    return group;
+  }
+
+  function _directionField(container, get, set) {
+    const group = _fieldGroup(container, 'Direction');
+    const select = _el('select', 'sp-select');
+    GRADIENT_DIRECTIONS.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.value;
+      opt.textContent = d.label;
+      if (d.value === get()) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', (e) => {
+      set(e.target.value);
+      applyThemeStyles();
+    });
+    group.appendChild(select);
+    return group;
+  }
+
+  function _typeToggle(container, labelText, types, current, onPick) {
+    const group = _fieldGroup(container, labelText);
+    const row = _el('div', 'sp-mode-select');
+    types.forEach(t => {
+      const btn = _el('button', `sp-mode-btn${t === current ? ' sp-mode-active' : ''}`);
+      btn.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      btn.addEventListener('click', () => onPick(t));
+      row.appendChild(btn);
+    });
+    group.appendChild(row);
+    return group;
+  }
+
+  // swatches: [{ background, active, onPick }]
+  function _swatchRow(container, labelText, swatches) {
+    const group = _fieldGroup(container, labelText);
+    const row = _el('div', 'sp-preset-row');
+    swatches.forEach(s => {
+      const swatch = _el('div', 'sp-swatch');
+      swatch.style.background = s.background;
+      if (s.active) swatch.classList.add('sp-swatch-active');
+      swatch.addEventListener('click', s.onPick);
+      row.appendChild(swatch);
+    });
+    group.appendChild(row);
+    return group;
   }
 
   function _rgbaToHex(color) {
