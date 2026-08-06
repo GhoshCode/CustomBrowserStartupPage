@@ -15,7 +15,7 @@ sub-checkboxes here and do the first.
       from this branch (they remain safe on the original branch and in
       history) so the tree holds only the loop files + `v1-content.json`.
       Commit.
-- [ ] Scaffold the project non-interactively in THIS directory (it
+- [x] Scaffold the project non-interactively in THIS directory (it
       contains the loop's .md files and `v1-content.json` — create config
       files directly rather than using an interactive scaffolder): Vite +
       React + TS strict, Tailwind v4 via `@tailwindcss/vite`, deps from
