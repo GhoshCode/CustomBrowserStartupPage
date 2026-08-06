@@ -1,4 +1,25 @@
 class Help {
+    // Site names, categories and URLs come from stored settings, which
+    // SettingsStore.importAll() can load from a file the user was given. This
+    // list is built with insertAdjacentHTML, so unescaped values execute.
+    // Mirrors esc()/safeUrl() in settingsPanel.js; static so they stay off the
+    // global scope, since this file is not wrapped in a module closure.
+    static _esc(s) {
+      return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+
+    static _safeUrl(u) {
+      const s = String(u === null || u === undefined ? '' : u)
+        .split('').filter(c => c.charCodeAt(0) > 31 && c.charCodeAt(0) !== 127).join('').trim();
+      const scheme = s.match(/^([a-z][a-z0-9+.-]*):/i);
+      if (!scheme) return s;                  // relative, e.g. assets/icons/x.png
+      if (/^(https?|mailto|tel|ftp)$/i.test(scheme[1])) return s;
+      if (/^data:image\//i.test(s)) return s;
+      return '';
+    }
+
     constructor(options) {
       this._el = $.el('#help');
       this._commands = options.commands;
@@ -63,7 +84,7 @@ class Help {
         lists.insertAdjacentHTML(
           'beforeend',
           `<li class="category">
-            <h2 class="category-name">${category}</h2>
+            <h2 class="category-name">${Help._esc(category)}</h2>
             <ul>${this._buildListCommands(category)}</ul>
           </li>`
         );
@@ -79,12 +100,12 @@ class Help {
           const iconPath = (icon && icon.includes('.'))
             ? `assets/icons/${icon}`
             : `assets/icons/${icon}.${CONFIG.iconExtension}`;
-          const iconEl = `<img src='${iconPath}' height="20px" style="display:block;">`;
+          const iconEl = `<img src='${Help._esc(Help._safeUrl(iconPath))}' height="20px" style="display:block;">`;
           return `
             <li class="command">
-              <a href="${url}" target="${this._newTab ? '_blank' : '_self'}">
+              <a href="${Help._esc(Help._safeUrl(url))}" target="${this._newTab ? '_blank' : '_self'}">
                 <span class="command-key" style="background-color:transparent;border:2px solid rgba(255, 255, 255, 0.7);color:#F1F1F1;">${iconEl}</span>
-                <span class="command-name">${name}</span>
+                <span class="command-name">${Help._esc(name)}</span>
               </a>
             </li>`;
         })
@@ -95,9 +116,9 @@ class Help {
           if (category !== currentCategory) return '';
           return `
             <li class="command">
-              <a href="${url}" target="${this._newTab ? '_blank' : '_self'}">
-                <span class="command-key" style="color:#F1F1F1;background-color:transparent;border:2px solid rgba(255, 255, 255, 0.7);">${key}</span>
-                <span class="command-name">${name}</span>
+              <a href="${Help._esc(Help._safeUrl(url))}" target="${this._newTab ? '_blank' : '_self'}">
+                <span class="command-key" style="color:#F1F1F1;background-color:transparent;border:2px solid rgba(255, 255, 255, 0.7);">${Help._esc(key)}</span>
+                <span class="command-name">${Help._esc(name)}</span>
               </a>
             </li>`;
         })

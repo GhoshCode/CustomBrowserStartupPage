@@ -1616,10 +1616,14 @@ const SettingsPanel = (function () {
   // href/src values need scheme filtering on top of escaping: escaping alone
   // still lets javascript: through, which runs on click.
   function safeUrl(u) {
-    const s = String(u === null || u === undefined ? '' : u).trim();
-    if (/^(https?|mailto|tel|ftp):/i.test(s)) return s;
+    // Strip control characters first — browsers parse "java\nscript:" as
+    // javascript:, which would otherwise slip past the scheme test below.
+    const s = String(u === null || u === undefined ? '' : u)
+      .split('').filter(c => c.charCodeAt(0) > 31 && c.charCodeAt(0) !== 127).join('').trim();
+    const scheme = s.match(/^([a-z][a-z0-9+.-]*):/i);
+    if (!scheme) return s;                  // relative, e.g. assets/icons/x.png
+    if (/^(https?|mailto|tel|ftp)$/i.test(scheme[1])) return s;
     if (/^data:image\//i.test(s)) return s; // uploaded icons are data: images
-    if (/^[./#?]/.test(s)) return s;        // relative paths
     return '';
   }
 
