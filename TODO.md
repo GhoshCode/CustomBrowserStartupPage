@@ -29,7 +29,7 @@ sub-checkboxes here and do the first.
       loaded on first run only
 - [x] Design token layer per SPEC §9: Tailwind theme, CSS variables, fonts
       (Space Grotesk, Inter, DSEG7 via `dseg`), glass utility classes
-- [ ] Vitest unit tests for store logic: moveSite, reorder, delete cascades,
+- [x] Vitest unit tests for store logic: moveSite, reorder, delete cascades,
       togglePrimary, migrate
 
 ## Phase 1 — Shell

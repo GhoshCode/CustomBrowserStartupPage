@@ -4,6 +4,52 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-08-07 — Phase 0: Store unit tests (Phase 0 COMPLETE)
+
+**Task:** Vitest unit tests for store logic (moveSite, reorder, delete cascades, togglePrimary, migrate).
+
+### What was built
+
+- `src/store/store.test.ts` — 15 tests over a small controlled fixture
+  (c1 ▸ s1[A, B-primary], s2, General[C]; c2 ▸ General[D]; 2 quick links):
+  - **moveSite** — relocation + tail-append ordering, and General→subcategory.
+  - **reorder** — re-indexes only the named ids (sites within a list,
+    categories, quick links); unnamed items keep their order.
+  - **delete cascades** — `deleteCategory` drops its subcategories + sites;
+    `deleteSubcategory` moves sites to General appended after existing, primary
+    flag preserved.
+  - **togglePrimary**, **recordVisit**.
+  - **migrate / normalizePersisted** — empty→valid, preserves collections +
+    backfills settings, coerces garbage (null / string / non-array fields).
+  - **export/import roundtrip** (SPEC §14 #9) + import rejection of bad JSON /
+    missing sites array; **resetToSeed** yields the three SPEC categories.
+- Tests drive the real `useStore` singleton, resetting it via
+  `useStore.setState(...)` in `beforeEach` (persist/localStorage no-ops fine
+  under jsdom).
+
+### Verify
+
+- `npm run typecheck` ✓, `npm run build` ✓, `npx vitest run` → **15 passed**.
+
+### Phase 0 is now fully checked. Next: Phase 1 — Shell.
+
+- **First up: Backdrop (SPEC §3.1)** — constellation of connected nodes + stray
+  code glyphs, very low opacity, GPU-cheap; **fully static under
+  `prefers-reduced-motion: reduce`**. Optional user background image beneath a
+  dark overlay whose opacity/blur read from `settings` (backgroundImage,
+  overlayOpacity, backgroundBlur). All state via `useStore` — never touch
+  localStorage in components.
+- Store API is ready for the shell: `useStore()` selectors for
+  categories/subcategories/sites/quickLinks/settings, plus every action. Seed
+  auto-loads on first run through persist. `QUOTES` is exported from the store
+  barrel for the header.
+- **Dev server** (reused this session on :5173): preview spawner can't resolve
+  npm/node (PATH). Start via Bash `export PATH="/c/Users/GhoshCode/AppData/Local/nvm/nodejs:$PATH"`
+  then `node node_modules/vite/bin/vite.js --port 5173 --strictPort` (background),
+  attach with `preview_start {url:'http://localhost:5173/'}`. The browser pane
+  can't screenshot unless displayed — verify via `javascript_tool` computed
+  styles + `read_console_messages` instead.
+
 ## 2026-08-07 — Phase 0: Design token layer
 
 **Task:** SPEC §9 token layer — Tailwind theme, CSS variables, fonts, glass utilities.
