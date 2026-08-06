@@ -21,7 +21,7 @@ sub-checkboxes here and do the first.
       React + TS strict, Tailwind v4 via `@tailwindcss/vite`, deps from
       SPEC §1, scripts `dev` / `build` / `typecheck` (tsc --noEmit) /
       `test` (vitest), commit
-- [ ] Define all types from SPEC §2 and the Zustand store with `persist`,
+- [x] Define all types from SPEC §2 and the Zustand store with `persist`,
       `schemaVersion: 1`, and a `migrate` scaffold; implement every store
       action listed in SPEC §2
 - [ ] Seed data module built from `v1-content.json` — the user's real

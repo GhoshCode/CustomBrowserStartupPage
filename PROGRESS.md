@@ -4,6 +4,71 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-08-07 — Phase 0: Types + Zustand store
+
+**Task:** Define all SPEC §2 types and the persisted Zustand store (schemaVersion 1, migrate scaffold, every store action).
+
+### What was built
+
+- `src/types.ts` — the SPEC §2 domain model verbatim (`Category`,
+  `Subcategory`, `Site`, `QuickLink`, `Settings`, `PersistedState`) plus helper
+  types `ReorderKind`, `ImportSummary`, `ImportResult`.
+- `src/store/migrate.ts` — `SCHEMA_VERSION = 1`; pure `migrate(persisted,
+  fromVersion)` scaffold that documents where version-stepping transforms go and
+  delegates to `normalizePersisted` (lenient coercion → valid current-schema
+  state, settings backfilled from defaults). Both exported for the later test task.
+- `src/store/seed.ts` — `DEFAULT_SETTINGS` and `getSeedState()`. **Seam for the
+  next task:** currently returns a valid EMPTY deck; the seed-data task fills
+  `getSeedState()` from `v1-content.json`. First-run seed falls out of persist's
+  initial state, so wiring the real seed there needs no store changes.
+- `src/store/store.ts` — `useStore` (zustand `create` + `persist`). All SPEC §2
+  actions: CRUD for categories/subcategories/sites/quickLinks, `moveSite`,
+  `reorder(kind, ids)`, `togglePrimary`, `recordVisit`, `importState`,
+  `exportState`, `resetToSeed`, plus `updateSettings` (needed by Appearance).
+- `src/store/index.ts` — barrel re-exporting the hook, action input types, and
+  migrate/seed helpers.
+
+### Decisions / behavior notes for later iterations
+
+- **Delete cascades (SPEC §2):** `deleteCategory` removes its subcategories AND
+  sites. `deleteSubcategory` moves its sites to that category's General group
+  (`subcategoryId: null`), appended after existing General sites. Confirmation
+  dialogs are a UI concern — the store just performs the cascade.
+- **`reorder`** re-indexes `order` to 0..n-1 for exactly the ids passed,
+  preserving their array order; unnamed items are untouched. Callers pass one
+  scoped list at a time (a subcategory's sites, one category's subcategories,
+  etc.). `order` is only ever compared within a scope.
+- **`addSite`/`moveSite`** append at the tail of the destination group.
+  `togglePrimary` only flips the flag (primary row sorts by the same `order`).
+- **`importState(json)`** parses → shallow-validates (`categories` & `sites`
+  must be arrays) → `migrate` → replaces state; returns
+  `{ ok, summary | error }`. `exportState()` returns pretty JSON of the
+  persisted slice only.
+- **persist config:** `name: 'devdeck'`, `version: SCHEMA_VERSION`,
+  `partialize` persists only the data slice (never action fns), `migrate` wired
+  to the pure fn, custom `merge` deep-merges `settings` so a persisted blob
+  missing a newly added setting still gets its default.
+- **ids:** `crypto.randomUUID()` with a string fallback — works in browser and
+  under Vitest/jsdom (Node 22).
+- **Components must never touch localStorage** — everything routes through
+  `useStore` (PROMPT rule). Settings live-apply via `updateSettings`.
+
+### Verify
+
+- `npm run typecheck` ✓, `npm run build` ✓. The store is not imported by `App`
+  yet, so it is tree-shaken from the current bundle (JS size unchanged) — it is
+  the foundation later phases consume, not dead code.
+
+### For the next iteration (Seed data module)
+
+- Fill `getSeedState()` in `src/store/seed.ts` from `v1-content.json`
+  (Programming + its 17 sites, quick links, accent) and complete Design/Social
+  from SPEC §10. Generate `order` sequentially; ids via any stable scheme.
+  Nothing else in the store needs to change — first-run seeding already flows
+  through persist's initial state.
+- Node/PATH gotcha still applies for Bash: prefix
+  `export PATH="/c/Users/GhoshCode/AppData/Local/nvm/nodejs:$PATH"`.
+
 ## 2026-08-07 — Phase 0: Scaffold
 
 **Task:** Scaffold Vite + React + TS strict + Tailwind v4 + SPEC §1 deps, non-interactively.
