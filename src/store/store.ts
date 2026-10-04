@@ -289,13 +289,31 @@ export const useStore = create<Store>()(
       // Persist only the data slice — never the action functions.
       partialize: (s): PersistedState => pickPersisted(s),
       migrate: (persisted, version) => migrate(persisted, version),
-      // Deep-merge settings so a persisted blob missing a newly added setting
-      // still picks up its default rather than dropping to undefined.
       merge: (persisted, current) => {
+        if (!persisted || typeof persisted !== 'object') {
+          return current;
+        }
         const p = normalizePersisted(persisted);
+        const obj = persisted as Record<string, unknown>;
         return {
           ...current,
           ...p,
+          categories:
+            Array.isArray(obj.categories) && obj.categories.length > 0
+              ? p.categories
+              : current.categories,
+          subcategories:
+            Array.isArray(obj.subcategories) && obj.subcategories.length > 0
+              ? p.subcategories
+              : current.subcategories,
+          sites:
+            Array.isArray(obj.sites) && obj.sites.length > 0
+              ? p.sites
+              : current.sites,
+          quickLinks:
+            Array.isArray(obj.quickLinks) && obj.quickLinks.length > 0
+              ? p.quickLinks
+              : current.quickLinks,
           settings: { ...current.settings, ...p.settings },
         };
       },

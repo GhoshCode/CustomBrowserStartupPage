@@ -4,6 +4,35 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-10-05 — Phase 1: Store Hydration Fix & QuickLinks Browser Simulation
+
+**Task:** Debug missing QuickLinks in browser simulation and fix store persist hydration.
+
+### Root Cause
+- Zustand's `persist` middleware invokes `merge(persisted, current)` on initialization. When `persisted` was `undefined` or lacked the newly added collections (`quickLinks`), `normalizePersisted(persisted)` produced empty arrays `[]` that overwrote the initial `getSeedState()`, causing `quickLinks` (and initial collections) to wipe out on hydration.
+
+### What was fixed
+- Updated `merge` in `src/store/store.ts` to return `current` when `persisted` is falsy or non-object.
+- Added collection-level backfill checks so that missing/empty collections in persisted state retain `current` (seed) defaults.
+- Verified in headless browser simulation with Playwright (`screenshot.png`), confirming that QuickLinks ("Mail", "Drive", "Telegram", "LinkedIn") render with proper icons and glass styling.
+- All 15 Vitest unit tests pass cleanly.
+
+---
+
+## 2026-10-05 — Phase 1: QuickLinks component
+
+**Task:** Quick links row rendered from the store with favicons and hover lift.
+
+### What was built
+- `src/components/QuickLinks.tsx` fetching `quickLinks` from the store.
+- Displays buttons using the `glass-inner` style and Google's S2 favicon service.
+- Smooth hover state matching SPEC.
+
+### Verify
+- `npm run typecheck` and `npm run build` passed.
+
+---
+
 ## 2026-10-05 — Phase 1: Header component
 
 **Task:** Header component per SPEC §3.2 (date line, time-of-day greeting, rotating quote, seven-segment clock).
