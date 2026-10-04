@@ -36,7 +36,7 @@ sub-checkboxes here and do the first.
 
 - [x] Backdrop component per SPEC §3.1 (constellation + optional user image
       + overlay), reduced-motion aware
-- [ ] Header: date line, time-of-day greeting, rotating dev quote (~20
+- [x] Header: date line, time-of-day greeting, rotating dev quote (~20
       built in), live seven-segment clock honoring the 12/24h setting
 - [ ] Quick links row rendered from the store with favicons and hover lift
 - [ ] Responsive category grid container per SPEC §3.4 with glass card frames

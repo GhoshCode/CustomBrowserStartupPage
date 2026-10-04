@@ -4,6 +4,35 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-10-05 — Phase 1: Header component
+
+**Task:** Header component per SPEC §3.2 (date line, time-of-day greeting, rotating quote, seven-segment clock).
+
+### What was built
+- `src/components/Header.tsx` implemented with clock, date formatting, and logic for greeting/time-of-day.
+- Integrated into `App.tsx`
+- Used `setInterval` for the clock, updating every second.
+
+### Verify
+- `npm run typecheck` and `npm run build` passed.
+
+---
+
+## 2026-10-05 — Phase 1: Backdrop component
+
+**Task:** Backdrop component per SPEC §3.1 (constellation + optional user image + overlay).
+
+### What was built
+- `src/components/Backdrop.tsx` implemented with an HTML canvas rendering nodes and edges as a "drifting constellation".
+- Supports `prefers-reduced-motion: reduce`.
+- Reads `backgroundImage`, `overlayOpacity`, and `backgroundBlur` from the Zustand store.
+- Added to `App.tsx`.
+
+### Verify
+- `npm run typecheck` and `npm run build` passed.
+
+---
+
 ## 2026-08-07 — Phase 0: Store unit tests (Phase 0 COMPLETE)
 
 **Task:** Vitest unit tests for store logic (moveSite, reorder, delete cascades, togglePrimary, migrate).
