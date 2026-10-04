@@ -4,6 +4,52 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-10-05 — Final Ship: Phases 2–7 & Acceptance QA Complete (ALL_TASKS_COMPLETE)
+
+**Tasks:**
+- Phase 2: Category Card Core (PrimaryRow, PinnedStrip, SubcategoryRail, SiteRow, Favicon)
+- Phase 3: Motion & Drag (Stagger, drag-to-pan, dnd-kit sortable & pill drop, recordVisit)
+- Phase 4: Command Palette (Ctrl+K / Slash overlay, in-house fuzzy scorer, breadcrumbs, add-site fallback)
+- Phase 5: Settings Overlay (Full-screen glass overlay, Library CRUD, QuickLinks CRUD, Appearance, Data Backup & Restore)
+- Phase 6: Mind-Map Sitemap (React Flow canvas, custom pills & badges, tree layout, expand/collapse, drag-to-reparent with Undo)
+- Phase 7: Packaging & QA (MV3 Chrome/Edge extension manifest & icons, accessibility pass, URL validation, README, zero-error QA audit)
+
+### What was built & verified:
+1. **PrimaryRow & SubcategoryRail:**
+   - Soft edge fade masks with hover chevrons and pointer drag-to-pan with threshold.
+   - Smooth horizontal snap scrolling between subcategory cards at ~85% pane width.
+   - Pinned subcategory strip with spring-animated active indicator and IntersectionObserver sync.
+   - Vertically scrolling site list inside each card, with `@dnd-kit` sortable reordering.
+   - Dragging any site row onto a subcategory pill moves the site to that subcategory.
+
+2. **Command Palette (`src/components/CommandPalette.tsx` & `src/utils/fuzzySearch.ts`):**
+   - In-house fuzzy scorer ranking across name, domain, category, and subcategory with visits/recency weighting.
+   - Full keyboard navigation (ArrowUp/Down, Enter, Esc).
+   - Breadcrumb navigation paths (`Category → Subcategory`).
+   - Fallback action *"Add '{query}' as a new site…"*, opening the Settings library form prefilled.
+
+3. **Settings Shell & Tabs (`src/components/settings/`):**
+   - Full-screen glass overlay with left tab rail, lazy-loaded chunk (`SettingsModal-*.js` / `SettingsModal-*.css`).
+   - **LibraryTab:** Full Category, Subcategory, and Site CRUD. Fast add-site form with URL normalization, name derivation, live Favicon preview, and invalid URL rejection.
+   - **SitemapTab:** React Flow mind-map roadmap canvas with left-to-right hierarchical tree layout, branch count badges, collapse/expand chevrons, and drag-to-reparent with an Undo toast notification.
+   - **QuickLinksTab:** Quick links CRUD with `@dnd-kit` drag reordering.
+   - **AppearanceTab:** Accent color palette with live `:root` variable update, custom background image upload/URL, overlay opacity & blur sliders, 12h/24h digital clock toggle, and custom greeting name.
+   - **DataTab:** JSON export backup, schema-validated JSON import, and reset-to-seed.
+
+4. **Extension Packaging & Ship:**
+   - Manifest V3 `public/manifest.json` configured with `chrome_url_overrides: { newtab: index.html }`.
+   - Crisp 16px, 48px, and 128px PNG extension icons generated via Playwright.
+   - `dist/` verified to work both as a standalone website and loaded as an unpacked Chromium extension.
+   - Full README.md documentation with screenshots, feature highlights, and install instructions.
+
+### Verification:
+- `npm run typecheck` passed (exit 0, zero errors).
+- `npm run build` passed (relative assets, lazy chunks confirmed).
+- `npx vitest run` passed (15/15 tests passing).
+- Playwright headless QA automation passed: digital clock verified, 3 categories rendered, 11 primary tiles rendered, Command Palette (Ctrl+K) verified, Settings modal verified, zero console errors!
+
+---
+
 ## 2026-10-05 — Phase 2: CategoryCard header & internal layout regions
 
 **Task:** CategoryCard header (colored label + site count) and internal layout regions.

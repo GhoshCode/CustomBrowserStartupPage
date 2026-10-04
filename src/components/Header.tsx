@@ -53,7 +53,11 @@ export function Header() {
         </p>
       </div>
       
-      <div className="font-clock text-4xl sm:text-6xl text-white/90 drop-shadow-md">
+      <div
+        role="timer"
+        aria-label="Digital clock"
+        className="font-clock text-4xl sm:text-6xl text-white/90 drop-shadow-md select-none"
+      >
         {formattedTime.replace(/AM|PM/, '').trim()}
         {!clock24h && (
           <span className="ml-2 text-xl font-sans text-white/50 uppercase tracking-widest">

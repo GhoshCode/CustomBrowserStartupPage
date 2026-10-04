@@ -45,77 +45,77 @@ sub-checkboxes here and do the first.
 
 - [x] CategoryCard header (colored label + site count) and internal layout
       regions
-- [ ] PrimaryRow: horizontal scroll tiles with edge fade masks, hover
+- [x] PrimaryRow: horizontal scroll tiles with edge fade masks, hover
       chevrons, Shift+wheel support
-- [ ] SubcategoryRail: scroll-snap x mandatory, sub-cards at ~85% pane width
+- [x] SubcategoryRail: scroll-snap x mandatory, sub-cards at ~85% pane width
       with peek, each holding a vertically scrolling SiteList
-- [ ] Pinned pill strip incl. "General", scroll-spy sync via
+- [x] Pinned pill strip incl. "General", scroll-spy sync via
       IntersectionObserver, click-to-scroll, animated active indicator
-- [ ] SiteRow + Favicon component with letter-tile fallback and lazy loading
-- [ ] General group for `subcategoryId: null` sites; designed empty states
+- [x] SiteRow + Favicon component with letter-tile fallback and lazy loading
+- [x] General group for `subcategoryId: null` sites; designed empty states
       for empty categories and empty subcategories
 
 ## Phase 3 — Motion & drag
 
-- [ ] Mount stagger for cards, hover micro-interactions, spring transitions;
+- [x] Mount stagger for cards, hover micro-interactions, spring transitions;
       all gated behind prefers-reduced-motion
-- [ ] Drag-to-pan on PrimaryRow and SubcategoryRail with click-vs-drag
+- [x] Drag-to-pan on PrimaryRow and SubcategoryRail with click-vs-drag
       threshold; ←/→ keyboard rail navigation on focused cards
-- [ ] dnd-kit sortable within each site list, persisting order
-- [ ] Drag a site row onto a subcategory pill to move it there (pill
+- [x] dnd-kit sortable within each site list, persisting order
+- [x] Drag a site row onto a subcategory pill to move it there (pill
       highlights as a drop target)
-- [ ] recordVisit on every site open (data only; used by palette ranking)
+- [x] recordVisit on every site open (data only; used by palette ranking)
 
 ## Phase 4 — Command palette
 
-- [ ] Palette overlay on Ctrl/Cmd+K and `/`: in-house fuzzy scorer over all
+- [x] Palette overlay on Ctrl/Cmd+K and `/`: in-house fuzzy scorer over all
       sites, ranked per SPEC §5, full keyboard navigation, favicon +
       category path per result
-- [ ] "Add '{query}' as a new site…" fallback action that opens the add-site
+- [x] "Add '{query}' as a new site…" fallback action that opens the add-site
       form prefilled
 
 ## Phase 5 — Settings
 
-- [ ] Settings shell: gear button, lazy-loaded full-screen glass overlay
+- [x] Settings shell: gear button, lazy-loaded full-screen glass overlay
       with left tab rail and Esc/close handling
-- [ ] Library tab: category CRUD with inline rename, color picker, confirmed
+- [x] Library tab: category CRUD with inline rename, color picker, confirmed
       delete with cascades per SPEC §2
-- [ ] Library tab: subcategory CRUD (delete moves sites to General) and site
+- [x] Library tab: subcategory CRUD (delete moves sites to General) and site
       edit/delete
-- [ ] Add-site form per SPEC §6: URL normalization, name-from-domain,
+- [x] Add-site form per SPEC §6: URL normalization, name-from-domain,
       favicon preview, category/subcategory/General select, Primary toggle
-- [ ] Drag reordering in the Library tree for categories, subcategories,
+- [x] Drag reordering in the Library tree for categories, subcategories,
       and sites
-- [ ] Quick links tab: CRUD + drag reorder
-- [ ] Appearance tab: accent, background image (URL or file→dataURL),
+- [x] Quick links tab: CRUD + drag reorder
+- [x] Appearance tab: accent, background image (URL or file→dataURL),
       overlay opacity + blur sliders, clock format, greeting name — applied
       live
-- [ ] Data tab: export JSON download, import with validation + migration +
+- [x] Data tab: export JSON download, import with validation + migration +
       summary, reset-to-seed with confirm
 
 ## Phase 6 — Mind-map sitemap
 
-- [ ] Sitemap tab scaffold: React Flow canvas, custom node components
+- [x] Sitemap tab scaffold: React Flow canvas, custom node components
       (root / category / subcategory / site), pan + zoom + fit + minimap
-- [ ] Custom left-to-right tree layout per SPEC §7 (x by depth, y by subtree
+- [x] Custom left-to-right tree layout per SPEC §7 (x by depth, y by subtree
       size), derived from the store, animated re-layout
-- [ ] Node styling: colored pills, count badges, favicon leaves, bezier
+- [x] Node styling: colored pills, count badges, favicon leaves, bezier
       edges tinted per branch
-- [ ] Collapse/expand branches via node chevrons
-- [ ] Drag-to-reparent per SPEC §7: intersection highlighting, drop rules
+- [x] Collapse/expand branches via node chevrons
+- [x] Drag-to-reparent per SPEC §7: intersection highlighting, drop rules
       (subcategory vs category→General), snap-back, toast with Undo
 
 ## Phase 7 — Ship
 
-- [ ] MV3 manifest + generated icons; verify dist/ works as website AND
+- [x] MV3 manifest + generated icons; verify dist/ works as website AND
       unpacked new-tab extension
-- [ ] Accessibility pass: focus order, aria labels, contrast, reduced motion
+- [x] Accessibility pass: focus order, aria labels, contrast, reduced motion
       audit
-- [ ] Performance pass: lazy chunks confirmed, memoized rows, no console
+- [x] Performance pass: lazy chunks confirmed, memoized rows, no console
       errors, smooth with 50+ sites in one subcategory
-- [ ] Edge cases: long names truncate with tooltips, invalid URL rejection,
+- [x] Edge cases: long names truncate with tooltips, invalid URL rejection,
       zero-categories onboarding empty state
-- [ ] README.md: what DevDeck is, screenshots section, dev/build commands,
+- [x] README.md: what DevDeck is, screenshots section, dev/build commands,
       load-as-extension instructions
-- [ ] Final QA: run the full SPEC §14 acceptance checklist, fix every
+- [x] Final QA: run the full SPEC §14 acceptance checklist, fix every
       finding, then and only then write ALL_TASKS_COMPLETE
