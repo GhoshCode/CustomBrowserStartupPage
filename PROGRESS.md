@@ -4,6 +4,25 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-10-05 — Phase 2: CategoryCard header & internal layout regions
+
+**Task:** CategoryCard header (colored label + site count) and internal layout regions.
+
+### What was built
+- `src/components/CategoryCard.tsx` — Structured into 4 distinct regions per SPEC §4:
+  1. **Header Region**: Glowing colored category dot, category title in `font-display`, uppercase tracking, and total site count in `tabular-nums`.
+  2. **Primary Row Region**: Reserved container for horizontal primary site tiles when `primary: true` sites exist.
+  3. **Pinned Strip Region**: Dedicated navigation strip containing "General" and all subcategories.
+  4. **Subcategory Rail Region**: Dedicated container for the upcoming horizontal snapping subcategory cards.
+  5. **Empty State**: Designed empty state when a category has 0 sites.
+- Verified in browser simulation (`screenshot.png`), confirming proper layout and alignment across all 3 seed categories.
+
+### Verify
+- `npm run typecheck` and `npm run build` passed.
+- All 15 Vitest tests passed.
+
+---
+
 ## 2026-10-05 — Phase 1: CategoryGrid container & glass card frames (Phase 1 COMPLETE)
 
 **Task:** Responsive category grid container per SPEC §3.4 with glass card frames.

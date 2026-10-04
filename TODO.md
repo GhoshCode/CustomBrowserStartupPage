@@ -43,7 +43,7 @@ sub-checkboxes here and do the first.
 
 ## Phase 2 — Category card core
 
-- [ ] CategoryCard header (colored label + site count) and internal layout
+- [x] CategoryCard header (colored label + site count) and internal layout
       regions
 - [ ] PrimaryRow: horizontal scroll tiles with edge fade masks, hover
       chevrons, Shift+wheel support
