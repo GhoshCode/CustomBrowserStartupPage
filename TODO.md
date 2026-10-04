@@ -34,7 +34,7 @@ sub-checkboxes here and do the first.
 
 ## Phase 1 — Shell
 
-- [ ] Backdrop component per SPEC §3.1 (constellation + optional user image
+- [x] Backdrop component per SPEC §3.1 (constellation + optional user image
       + overlay), reduced-motion aware
 - [ ] Header: date line, time-of-day greeting, rotating dev quote (~20
       built in), live seven-segment clock honoring the 12/24h setting
