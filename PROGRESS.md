@@ -4,6 +4,22 @@ Newest entries first. Each iteration appends its own.
 
 ---
 
+## 2026-10-05 — Phase 1: CategoryGrid container & glass card frames (Phase 1 COMPLETE)
+
+**Task:** Responsive category grid container per SPEC §3.4 with glass card frames.
+
+### What was built
+- `src/components/CategoryCard.tsx` — Glass card frame component (`.glass`, 24px radius, 550px height) featuring the category color dot, uppercase category title, and tabular site count badge.
+- `src/components/CategoryGrid.tsx` — Responsive CSS grid container (1 column below 1100px, 2 columns at ≥1100px, 3 columns at ≥1600px), sorting categories by `order` and displaying a designed empty state if no categories exist.
+- Integrated `CategoryGrid` into `src/App.tsx`.
+- Verified layout via Playwright simulation at 1650px, confirming 3 equal-height columns (Programming 26 sites, Design 7 sites, Social 5 sites).
+
+### Verify
+- `npm run typecheck` and `npm run build` passed.
+- Vitest suite (15 tests) passed.
+
+---
+
 ## 2026-10-05 — Phase 1: Store Hydration Fix & QuickLinks Browser Simulation
 
 **Task:** Debug missing QuickLinks in browser simulation and fix store persist hydration.

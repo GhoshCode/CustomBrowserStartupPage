@@ -38,8 +38,8 @@ sub-checkboxes here and do the first.
       + overlay), reduced-motion aware
 - [x] Header: date line, time-of-day greeting, rotating dev quote (~20
       built in), live seven-segment clock honoring the 12/24h setting
-- [ ] Quick links row rendered from the store with favicons and hover lift
-- [ ] Responsive category grid container per SPEC §3.4 with glass card frames
+- [x] Quick links row rendered from the store with favicons and hover lift
+- [x] Responsive category grid container per SPEC §3.4 with glass card frames
 
 ## Phase 2 — Category card core
 
