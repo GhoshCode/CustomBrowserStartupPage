@@ -23,7 +23,8 @@ export const PRESET_THEMES: readonly PresetTheme[] = [
     name: 'Pearlescent Day',
     mode: 'light',
     accentColor: '#7c3aed',
-    gradient: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
+    gradient:
+      'radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.75) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(254, 205, 211, 0.6) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(224, 231, 255, 0.6) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.7) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.45) 0px, transparent 50%), linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)',
     description: 'Crisp, high-contrast light mode with frosted glass',
   },
   {
@@ -31,8 +32,9 @@ export const PRESET_THEMES: readonly PresetTheme[] = [
     name: 'Absolute Light',
     mode: 'light',
     accentColor: '#4f46e5',
-    gradient: null,
-    description: 'Ultra-clean pure light mode with solid slate backdrop',
+    gradient:
+      'radial-gradient(at 10% 10%, rgba(224, 231, 255, 0.7) 0px, transparent 50%), radial-gradient(at 90% 90%, rgba(241, 245, 249, 0.8) 0px, transparent 55%), linear-gradient(135deg, #e8edf5 0%, #edf2f8 50%, #e2e8f0 100%)',
+    description: 'Ultra-clean pure light mode with radiant slate backdrop',
   },
   {
     id: 'solar-light',

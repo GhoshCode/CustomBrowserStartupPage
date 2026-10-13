@@ -159,7 +159,7 @@ export function QuickLinksTab() {
 
   return (
     <div className="max-w-2xl space-y-6 p-6 text-sm text-white/90">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pr-12">
         <div>
           <h3 className="font-display text-base font-semibold text-white">Quick Links</h3>
           <p className="text-xs text-white/50">Manage the shortcut bar in your header row.</p>

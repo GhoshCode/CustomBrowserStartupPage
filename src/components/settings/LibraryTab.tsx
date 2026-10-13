@@ -155,7 +155,7 @@ export function LibraryTab({
   return (
     <div className="max-w-4xl space-y-6 p-6 text-sm text-white/90">
       {/* Top Action Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 pr-12">
         <div>
           <h3 className="font-display text-base font-semibold text-white">Library</h3>
           <p className="text-xs text-white/50">Manage categories, subcategories, and your curated sites.</p>

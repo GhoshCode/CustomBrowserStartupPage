@@ -49,8 +49,8 @@ export const Backdrop = memo(function Backdrop() {
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
-      ctx.strokeStyle = isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)';
+      ctx.fillStyle = isLight ? 'rgba(99, 102, 241, 0.16)' : 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = isLight ? 'rgba(99, 102, 241, 0.09)' : 'rgba(255, 255, 255, 0.03)';
       ctx.font = '14px var(--font-sans)';
 
       for (let i = 0; i < nodes.length; i++) {
@@ -107,8 +107,17 @@ export const Backdrop = memo(function Backdrop() {
     backgroundImage &&
     (backgroundImage.startsWith('linear-gradient') || backgroundImage.startsWith('radial-gradient'));
 
+  // Default light mode ambient mesh gradient if no custom background set
+  const defaultLightMesh =
+    'radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.75) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(254, 205, 211, 0.6) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(224, 231, 255, 0.6) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.7) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.45) 0px, transparent 50%), linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)';
+
   return (
-    <div className="fixed inset-0 -z-10 bg-[var(--color-base)] transition-colors duration-300">
+    <div
+      className="fixed inset-0 -z-10 bg-[var(--color-base)] transition-colors duration-300"
+      style={{
+        backgroundImage: !backgroundImage && isLight ? defaultLightMesh : undefined,
+      }}
+    >
       {backgroundImage && (
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-300"
@@ -120,7 +129,7 @@ export const Backdrop = memo(function Backdrop() {
       )}
       <div 
         className="absolute inset-0 bg-[var(--color-base)] transition-opacity duration-300" 
-        style={{ opacity: backgroundImage ? overlayOpacity : 0 }} 
+        style={{ opacity: backgroundImage ? (isLight ? 0.06 : overlayOpacity) : 0 }} 
       />
       <canvas 
         ref={canvasRef} 

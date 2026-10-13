@@ -13,40 +13,48 @@ async function main() {
 
   const outDir = 'C:/Users/GhoshCode/.gemini/antigravity-ide/brain/b59f24ba-542d-4d7b-ae75-9188ca6724df';
 
-  // 1. Grid mode default
-  await page.screenshot({ path: path.join(outDir, 'typography_grid_dark.png') });
-  console.log('Saved typography_grid_dark.png');
-
-  // 2. Switch first card to List mode
-  const listBtn = page.locator('button[aria-label="List view"]').first();
-  await listBtn.click();
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: path.join(outDir, 'typography_list_dark.png') });
-  console.log('Saved typography_list_dark.png');
-
-  // 3. Switch back to grid and test light mode
-  const gridBtn = page.locator('button[aria-label="Grid view"]').first();
-  await gridBtn.click();
-  await page.waitForTimeout(200);
-
-  // Switch to light mode via settings
+  // Open Settings to switch to light mode
   const settingsBtn = page.getByRole('button', { name: 'Settings' });
   await settingsBtn.click();
   const settingsModal = page.getByRole('dialog', { name: 'DevDeck Settings' });
   await settingsModal.waitFor({ state: 'visible' });
 
+  // Appearance tab
   const appearanceTab = settingsModal.getByRole('button', { name: /Appearance/i });
   await appearanceTab.click();
-  const lightBtn = settingsModal.getByRole('button', { name: /Default Light/i });
-  await lightBtn.click();
   await page.waitForTimeout(300);
 
-  await page.keyboard.press('Escape');
-  await settingsModal.waitFor({ state: 'hidden' });
+  // Switch to Default Light
+  const lightBtn = settingsModal.getByRole('button', { name: /Default Light/i });
+  await lightBtn.click();
   await page.waitForTimeout(400);
 
-  await page.screenshot({ path: path.join(outDir, 'typography_grid_light.png') });
-  console.log('Saved typography_grid_light.png');
+  // Capture Settings Modal in Light Mode (Appearance Tab)
+  await page.screenshot({ path: path.join(outDir, 'light_theme_settings_appearance.png') });
+  console.log('Saved light_theme_settings_appearance.png');
+
+  // Switch to Library tab to see table/cards inside settings in light mode
+  const libraryTab = settingsModal.getByRole('button', { name: /Library/i });
+  await libraryTab.click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: path.join(outDir, 'light_theme_settings_library.png') });
+  console.log('Saved light_theme_settings_library.png');
+
+  // Close settings to capture main deck in light mode
+  await page.keyboard.press('Escape');
+  await settingsModal.waitFor({ state: 'hidden' });
+  await page.waitForTimeout(500);
+
+  // Capture Main Deck in Light Mode
+  await page.screenshot({ path: path.join(outDir, 'light_theme_deck.png') });
+  console.log('Saved light_theme_deck.png');
+
+  // Switch first category card to list mode to see list mode in light mode
+  const listBtn = page.locator('button[aria-label="List view"]').first();
+  await listBtn.click();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(outDir, 'light_theme_deck_list.png') });
+  console.log('Saved light_theme_deck_list.png');
 
   await browser.close();
 }

@@ -156,31 +156,28 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Light Mode Theme Overrides
+   Light Mode Theme Overrides — High-Contrast Frosted Glassmorphism
    --------------------------------------------------------------------------- */
 html[data-theme='light'] {
-  --color-base: #f1f5f9;
-  --color-base-elevated: #ffffff;
-  --color-glass: rgba(255, 255, 255, 0.92);
-  --color-glass-strong: #ffffff;
-  --color-glass-border: rgba(148, 163, 184, 0.40);
-  --color-glass-border-raised: rgba(100, 116, 139, 0.45);
+  --color-base: #e8ecf4;
+  --color-base-elevated: rgba(255, 255, 255, 0.82);
+  --color-glass: rgba(255, 255, 255, 0.76);
+  --color-glass-strong: rgba(255, 255, 255, 0.92);
+  --color-glass-border: rgba(148, 163, 184, 0.38);
+  --color-glass-border-raised: rgba(148, 163, 184, 0.48);
 }
 
 html[data-theme='light'] * {
-  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
 }
 html[data-theme='light'] *::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.35);
-}
-html[data-theme='light'] *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(71, 85, 105, 0.6);
-}
-html[data-theme='light'] .ultra-thin-scrollbar::-webkit-scrollbar-thumb {
   background-color: rgba(100, 116, 139, 0.4);
 }
+html[data-theme='light'] *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(71, 85, 105, 0.65);
+}
 html[data-theme='light'] [data-testid="thin-cards-scroll-space"] > div {
-  background-color: rgba(15, 23, 42, 0.12) !important;
+  background-color: rgba(15, 23, 42, 0.2) !important;
 }
 
 html[data-theme='light'] body {
@@ -188,7 +185,7 @@ html[data-theme='light'] body {
   background-color: var(--color-base) !important;
 }
 
-/* All white text variants in light mode (using attribute wildcard selectors for complete coverage) */
+/* Typography contrast hierarchy in light mode */
 html[data-theme='light'] [class*='text-white'],
 html[data-theme='light'] .text-white {
   color: #0f172a !important;
@@ -201,177 +198,445 @@ html[data-theme='light'] [class*='text-white/80'] {
 }
 html[data-theme='light'] [class*='text-white/70'],
 html[data-theme='light'] [class*='text-white/60'] {
-  color: #1e293b !important;
+  color: #334155 !important;
 }
 html[data-theme='light'] [class*='text-white/50'],
-html[data-theme='light'] [class*='text-white/45'],
+html[data-theme='light'] [class*='text-white/45'] {
+  color: #475569 !important;
+}
 html[data-theme='light'] [class*='text-white/40'],
 html[data-theme='light'] [class*='text-white/35'] {
-  color: #475569 !important;
+  color: #64748b !important;
 }
 html[data-theme='light'] [class*='text-white/30'],
 html[data-theme='light'] [class*='text-white/25'],
 html[data-theme='light'] [class*='text-white/20'],
 html[data-theme='light'] [class*='text-white/10'] {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
-html[data-theme='light'] input,
-html[data-theme='light'] textarea,
-html[data-theme='light'] select {
-  background-color: #ffffff !important;
+/* 1. Core Frosted Glass Utilities in Light Mode */
+/* Category Cards and Floating Panels */
+html[data-theme='light'] .glass {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08), 
+              0 2px 6px rgba(15, 23, 42, 0.04), 
+              inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
+}
+html[data-theme='light'] .glass:hover {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 20px 42px -4px rgba(15, 23, 42, 0.12),
+              inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* Inner elements: Subcategory cards, list items, primary tiles */
+html[data-theme='light'] .glass-inner {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.36) !important;
+  backdrop-filter: blur(18px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(170%) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Raised containers: Top Bar, Main Deck Container */
+html[data-theme='light'] .glass-raised {
+  background-color: rgba(255, 255, 255, 0.70) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  outline: 1.5px solid rgba(148, 163, 184, 0.32) !important;
+  backdrop-filter: blur(32px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10), 
+              0 4px 14px rgba(15, 23, 42, 0.04), 
+              inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* 2. Top Bar & Search Input */
+html[data-theme='light'] .glass-raised a.glass-inner {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff !important;
   color: #0f172a !important;
-  border-color: #cbd5e1 !important;
 }
-html[data-theme='light'] input::placeholder,
-html[data-theme='light'] textarea::placeholder {
-  color: #64748b !important;
-}
-html[data-theme='light'] .mix-blend-screen {
-  mix-blend-mode: normal !important;
+html[data-theme='light'] .glass-raised a.glass-inner:hover {
+  background-color: #ffffff !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff !important;
 }
 
-/* Backgrounds in light mode */
-html[data-theme='light'] [class*='bg-white/5'],
-html[data-theme='light'] [class*='bg-white/[0.02]'],
-html[data-theme='light'] [class*='bg-white/[0.03]'],
-html[data-theme='light'] [class*='bg-white/[0.04]'] {
-  background-color: rgba(15, 23, 42, 0.04) !important;
+/* Unified Search Input Bar */
+html[data-theme='light'] .glass-raised .h-13,
+html[data-theme='light'] .glass-raised .sm\:h-14 {
+  background-color: rgba(255, 255, 255, 0.90) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.45) !important;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(255, 255, 255, 0.9) !important;
 }
-html[data-theme='light'] [class*='bg-white/10'],
-html[data-theme='light'] [class*='bg-white/[0.06]'],
-html[data-theme='light'] [class*='bg-white/[0.08]'] {
-  background-color: rgba(15, 23, 42, 0.08) !important;
+html[data-theme='light'] .glass-raised .h-13:focus-within,
+html[data-theme='light'] .glass-raised .sm\:h-14:focus-within {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), inset 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
-html[data-theme='light'] [class*='bg-white/15'],
-html[data-theme='light'] [class*='bg-white/20'],
-html[data-theme='light'] [class*='bg-white/25'] {
+html[data-theme='light'] .glass-raised .h-13 input,
+html[data-theme='light'] .glass-raised .sm\:h-14 input {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #0f172a !important;
+}
+html[data-theme='light'] .glass-raised input::placeholder {
+  color: #64748b !important;
+}
+html[data-theme='light'] button[aria-label="Open command palette"] {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+html[data-theme='light'] button[aria-label="Open command palette"]:hover {
   background-color: rgba(15, 23, 42, 0.12) !important;
 }
-html[data-theme='light'] [class*='bg-black/'] {
-  background-color: rgba(15, 23, 42, 0.04) !important;
-}
-html[data-theme='light'] [class*='bg-[#0e0819]'],
-html[data-theme='light'] [class*='bg-[#150e24]'],
-html[data-theme='light'] [class*='bg-[#1e1533]'] {
-  background-color: #ffffff !important;
+html[data-theme='light'] button[aria-label="Open command palette"] kbd {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+  color: #334155 !important;
 }
 
-/* Borders in light mode */
-html[data-theme='light'] [class*='border-white'] {
-  border-color: #cbd5e1 !important;
+/* Suggestions Dropdown in Light Mode */
+html[data-theme='light'] [class*='bg-[#0e0819]/95'] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.16) !important;
+  backdrop-filter: blur(32px) !important;
 }
 
-/* Frosted glass utilities in light mode with high-contrast surfaces */
-html[data-theme='light'] .glass {
-  background-color: rgba(255, 255, 255, 0.94) !important;
-  border: 1.5px solid #cbd5e1 !important;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+/* 3. Category Cards & Subcategory Rail */
+html[data-theme='light'] article[data-category-id] {
+  background-color: rgba(255, 255, 255, 0.80) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
 }
-html[data-theme='light'] .glass-inner {
-  background-color: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+html[data-theme='light'] article[data-category-id] header {
+  border-bottom: 1.5px solid rgba(148, 163, 184, 0.28) !important;
 }
-html[data-theme='light'] .glass-raised {
+html[data-theme='light'] [role="group"][aria-label*="View mode"] {
+  background-color: rgba(15, 23, 42, 0.07) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.32) !important;
+}
+html[data-theme='light'] [role="group"][aria-label*="View mode"] button[aria-pressed="true"] {
   background-color: #ffffff !important;
-  border: 1.5px solid #94a3b8 !important;
-  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+}
+html[data-theme='light'] [role="group"][aria-label*="View mode"] button[aria-pressed="false"] {
+  color: #64748b !important;
+}
+html[data-theme='light'] [role="group"][aria-label*="View mode"] button[aria-pressed="false"]:hover {
+  color: #0f172a !important;
 }
 
-/* Subcategory Cards inside Rails */
-html[data-theme='light'] [data-subcategory-card-id] {
-  background-color: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+/* Subcategory Cards inside Rail & List Mode */
+html[data-theme='light'] [data-subcategory-card-id],
+html[data-theme='light'] [data-list-group-id] {
+  background-color: rgba(255, 255, 255, 0.86) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  border-radius: 18px !important;
 }
-html[data-theme='light'] [data-subcategory-card-id] h3 {
+html[data-theme='light'] [data-subcategory-card-id] > div:first-child,
+html[data-theme='light'] [data-list-group-id] > div:first-child {
+  border-bottom: 1.5px solid rgba(148, 163, 184, 0.28) !important;
+}
+html[data-theme='light'] [data-subcategory-card-id] h3,
+html[data-theme='light'] [data-list-group-id] h3 {
   color: #0f172a !important;
   font-weight: 700 !important;
+}
+html[data-theme='light'] [data-subcategory-card-id] span.rounded-full,
+html[data-theme='light'] [data-list-group-id] span.rounded-full {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  font-weight: 600 !important;
+}
+
+/* Site Rows within cards */
+html[data-theme='light'] [data-site-id] {
+  border: 1px solid transparent !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: 10px !important;
+  transition: all 0.15s ease !important;
+}
+html[data-theme='light'] [data-site-id]:hover {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07) !important;
+  transform: translateY(-1px) !important;
+}
+html[data-theme='light'] [data-site-id] span.truncate:first-child {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+html[data-theme='light'] [data-site-id] span.truncate.font-mono {
+  color: #475569 !important;
+  font-weight: 500 !important;
 }
 
 /* Subcategory Strip Pills */
 html[data-theme='light'] [data-group-id] {
-  background-color: #f8fafc !important;
+  background-color: rgba(241, 245, 249, 0.85) !important;
   color: #334155 !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  font-weight: 600 !important;
+}
+html[data-theme='light'] [data-group-id]:hover {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+  border-color: rgba(100, 116, 139, 0.5) !important;
 }
 html[data-theme='light'] [data-group-id][aria-current='true'] {
   background-color: #0f172a !important;
   color: #ffffff !important;
   border-color: #0f172a !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.20) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25) !important;
 }
 html[data-theme='light'] [data-group-id][aria-current='true'] span {
   color: #ffffff !important;
 }
 
-/* Bottom Bar of Category Cards */
-html[data-theme='light'] [data-category-card-bottom] {
-  background-color: #f8fafc !important;
-  border-top-color: #e2e8f0 !important;
+/* Primary Tiles */
+html[data-theme='light'] [aria-label="Primary sites rail"] a {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
 }
-
-/* Primary sites row fade masks fix (no black overlay in light mode) */
-html[data-theme='light'] .from-\[\#0b0713\]\/90 {
-  --tw-gradient-from: rgba(255, 255, 255, 0.95) var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgba(255, 255, 255, 0) var(--tw-gradient-to-position) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
-}
-
-/* Floating Settings Button in light mode */
-html[data-theme='light'] button[aria-label="Settings"] {
+html[data-theme='light'] [aria-label="Primary sites rail"] a:hover {
   background-color: #ffffff !important;
-  border: 1.5px solid #94a3b8 !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* Bottom Toolbar of Category Cards */
+html[data-theme='light'] [data-category-card-bottom] {
+  background-color: rgba(241, 245, 249, 0.85) !important;
+  border-top: 1.5px solid rgba(148, 163, 184, 0.28) !important;
+}
+html[data-theme='light'] [data-category-card-bottom] button[title*="subcategory"] {
+  color: #334155 !important;
+}
+html[data-theme='light'] [data-category-card-bottom] button[title*="subcategory"]:hover {
+  background-color: rgba(15, 23, 42, 0.08) !important;
   color: #0f172a !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18) !important;
+}
+html[data-theme='light'] [data-category-card-bottom] button[aria-label*="dot-"] {
+  background-color: rgba(15, 23, 42, 0.25) !important;
+}
+html[data-theme='light'] [data-category-card-bottom] button[aria-label*="dot-"]:hover {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* Floating Settings Button in Light Mode */
+html[data-theme='light'] button[aria-label="Settings"] {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.45) !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15), inset 0 1px 0 #ffffff !important;
+  backdrop-filter: blur(24px) !important;
+}
+html[data-theme='light'] button[aria-label="Settings"]:hover {
+  background-color: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
 }
 html[data-theme='light'] button[aria-label="Settings"] svg {
   color: #0f172a !important;
   fill: #0f172a !important;
 }
 
-/* Settings Modal & Command Palette Dialog in light mode */
-html[data-theme='light'] [role="dialog"] {
+/* 4. Settings Modal in Light Mode — Elegant Frosted Glass */
+html[data-theme='light'] [role="dialog"][aria-label="DevDeck Settings"] {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  outline: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 32px 96px rgba(15, 23, 42, 0.25), 0 8px 24px rgba(15, 23, 42, 0.08), inset 0 1.5px 0 #ffffff !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+}
+
+/* Settings Modal Backdrop */
+html[data-theme='light'] .fixed.inset-0.bg-black\/75 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(24px) !important;
+}
+
+/* Settings Sidebar */
+html[data-theme='light'] [role="dialog"] aside {
+  background-color: rgba(241, 245, 249, 0.70) !important;
+  border-right: 1.5px solid rgba(148, 163, 184, 0.32) !important;
+  border-bottom: 1.5px solid rgba(148, 163, 184, 0.32) !important;
+}
+
+/* Settings Tabs */
+html[data-theme='light'] [role="dialog"] aside button {
+  color: #475569 !important;
+}
+html[data-theme='light'] [role="dialog"] aside button:hover {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  color: #0f172a !important;
+}
+html[data-theme='light'] [role="dialog"] aside button.bg-white\/10,
+html[data-theme='light'] [role="dialog"] aside button[class*='font-semibold'] {
   background-color: #ffffff !important;
   color: #0f172a !important;
-  border-color: #94a3b8 !important;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff !important;
 }
-html[data-theme='light'] [role="dialog"] aside {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
+
+/* Settings Main Content Area */
+html[data-theme='light'] [role="dialog"] section.bg-black\/20 {
+  background-color: rgba(241, 245, 249, 0.55) !important;
 }
-html[data-theme='light'] [role="dialog"] section {
+
+/* Cards & Sections inside Settings Tabs */
+html[data-theme='light'] [role="dialog"] section .glass-inner,
+html[data-theme='light'] [role="dialog"] section .glass {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  box-shadow: 0 8px 24px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04), inset 0 1.5px 0 #ffffff !important;
+  backdrop-filter: blur(20px) !important;
+  border-radius: 18px !important;
+}
+
+/* Dividers and subcategory tree guide lines inside Settings */
+html[data-theme='light'] [role="dialog"] .border-b.border-white\/\[0\.06\],
+html[data-theme='light'] [role="dialog"] .border-b.border-white\/10 {
+  border-bottom-color: rgba(148, 163, 184, 0.28) !important;
+}
+html[data-theme='light'] [role="dialog"] .border-l-2.border-white\/10 {
+  border-left-color: rgba(99, 102, 241, 0.45) !important;
+}
+
+/* Site Rows inside Library Tab */
+html[data-theme='light'] [role="dialog"] .bg-white\/\[0\.02\] {
+  background-color: rgba(255, 255, 255, 0.70) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03) !important;
+  border-radius: 10px !important;
+  margin-bottom: 4px !important;
+}
+html[data-theme='light'] [role="dialog"] .bg-white\/\[0\.02\]:hover {
   background-color: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
 }
-html[data-theme='light'] [role="dialog"] button {
-  color: #0f172a;
+
+/* Primary/Normal badges in Library Tab */
+html[data-theme='light'] [role="dialog"] button[title="Toggle Primary site tile"] {
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
 }
-html[data-theme='light'] [role="dialog"] p,
-html[data-theme='light'] [role="dialog"] span,
-html[data-theme='light'] [role="dialog"] label,
-html[data-theme='light'] [role="dialog"] h1,
-html[data-theme='light'] [role="dialog"] h2,
-html[data-theme='light'] [role="dialog"] h3,
-html[data-theme='light'] [role="dialog"] h4 {
-  color: #0f172a;
+html[data-theme='light'] [role="dialog"] button[title="Toggle Primary site tile"].text-\[var\(--color-accent\)\] {
+  background-color: rgba(124, 58, 237, 0.12) !important;
+  color: #7c3aed !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  font-weight: 700 !important;
 }
+
+/* Action Buttons inside Library Tab */
+html[data-theme='light'] [role="dialog"] button.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.38) !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+}
+html[data-theme='light'] [role="dialog"] button.bg-white\/5:hover {
+  background-color: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+/* Option Buttons & Theme Cards in Appearance Tab */
+html[data-theme='light'] [role="dialog"] section button.border-white\/10 {
+  border-color: rgba(148, 163, 184, 0.38) !important;
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 #ffffff !important;
+}
+html[data-theme='light'] [role="dialog"] section button.border-white\/10:hover {
+  background-color: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff !important;
+}
+html[data-theme='light'] [role="dialog"] section button[class*='border-[var(--color-accent)]'] {
+  background-color: #ffffff !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.16), inset 0 1px 0 #ffffff !important;
+}
+
+/* Inputs, textareas, selects inside Settings */
 html[data-theme='light'] [role="dialog"] input,
 html[data-theme='light'] [role="dialog"] textarea,
 html[data-theme='light'] [role="dialog"] select {
   background-color: #ffffff !important;
   color: #0f172a !important;
-  border: 1.5px solid #cbd5e1 !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.5) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
-html[data-theme='light'] [role="dialog"] input::placeholder,
-html[data-theme='light'] [role="dialog"] textarea::placeholder {
-  color: #64748b !important;
+html[data-theme='light'] [role="dialog"] input:focus,
+html[data-theme='light'] [role="dialog"] textarea:focus,
+html[data-theme='light'] [role="dialog"] select:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
 }
-html[data-theme='light'] kbd {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
+
+/* Close & Action Buttons inside Settings */
+html[data-theme='light'] [role="dialog"] button[aria-label="Close Settings"] {
+  background-color: rgba(255, 255, 255, 0.90) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.45) !important;
   color: #334155 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff !important;
+}
+html[data-theme='light'] [role="dialog"] button[aria-label="Close Settings"]:hover {
+  background-color: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  color: #0f172a !important;
+}
+
+/* Command Palette dialog in light mode */
+html[data-theme='light'] [role="dialog"][aria-label="Command palette"] {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  outline: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2) !important;
+  backdrop-filter: blur(36px) saturate(180%) !important;
+}
+
+/* Sitemap ReactFlow Canvas in Light Mode */
+html[data-theme='light'] .react-flow {
+  background-color: rgba(241, 245, 249, 0.65) !important;
+}
+html[data-theme='light'] .react-flow__controls {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+}
+html[data-theme='light'] .react-flow__controls button {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3) !important;
+  fill: #0f172a !important;
+}
+html[data-theme='light'] .react-flow__controls button svg {
+  fill: #0f172a !important;
+}
+html[data-theme='light'] .react-flow__minimap {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+}
+html[data-theme='light'] .react-flow__node .glass-inner {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
 }
 
 /* Ultra-thin horizontal scroll option */
