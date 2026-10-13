@@ -8,13 +8,14 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Category, Site } from '../types';
 import { useStore } from '../store';
 import { PrimaryRow } from './PrimaryRow';
 import { PinnedStrip, type GroupItem } from './PinnedStrip';
 import { SubcategoryRail, type RailGroup } from './SubcategoryRail';
 import { SiteRow } from './SiteRow';
+import { getCategoryDisplayColor } from '../utils';
 
 interface CategoryCardProps {
   category: Category;
@@ -27,7 +28,9 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
   const reorder = useStore((s) => s.reorder);
 
   const railRef = useRef<HTMLDivElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
   const [activeSite, setActiveSite] = useState<Site | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -120,6 +123,15 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
 
   const handlePillSelect = useCallback((id: string) => {
     setActiveGroupId(id);
+    if (viewMode === 'list') {
+      const container = listContainerRef.current;
+      if (!container) return;
+      const groupEl = container.querySelector<HTMLElement>(`[data-list-group-id="${id}"]`);
+      if (groupEl) {
+        groupEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
     const rootEl = railRef.current;
     if (!rootEl) return;
     const cardEl = rootEl.querySelector<HTMLElement>(`[data-subcategory-card-id="${id}"]`);
@@ -135,7 +147,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
         scrollTimerRef.current = null;
       }, 450);
     }
-  }, []);
+  }, [viewMode]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const site = allSites.find((s) => s.id === event.active.id);
@@ -188,31 +200,107 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
 
   const totalSites = categorySites.length;
 
+  const themeMode = useStore((s) => s.settings.themeMode ?? 'dark');
+  const isLight = themeMode === 'light';
+  const displayColor = useMemo(
+    () => getCategoryDisplayColor(category.color, isLight),
+    [category.color, isLight],
+  );
+
+  const handlePrevSubcategory = useCallback(() => {
+    const idx = railGroups.findIndex((g) => g.id === activeGroupId);
+    if (idx > 0) {
+      handlePillSelect(railGroups[idx - 1].id);
+    }
+  }, [railGroups, activeGroupId, handlePillSelect]);
+
+  const handleNextSubcategory = useCallback(() => {
+    const idx = railGroups.findIndex((g) => g.id === activeGroupId);
+    if (idx < railGroups.length - 1) {
+      handlePillSelect(railGroups[idx + 1].id);
+    }
+  }, [railGroups, activeGroupId, handlePillSelect]);
+
+  const handleBottomWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (delta > 8) handleNextSubcategory();
+    else if (delta < -8) handlePrevSubcategory();
+  };
+
+  const currentGroupIndex = railGroups.findIndex((g) => g.id === activeGroupId);
+
   return (
     <article
       data-category-id={category.id}
       className="glass flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:border-white/20 shadow-lg select-none"
     >
-      {/* 1. Header Region: colored label + site count */}
-      <header className="flex items-center justify-between px-5 pt-3.5 pb-2.5 border-b border-white/[0.06] select-none shrink-0">
-        <div className="flex items-center gap-2.5">
+      {/* 1. Header Region: colored label + site count + segmented view switcher */}
+      <header className="flex items-center justify-between px-4.5 pt-3.5 pb-2.5 border-b border-white/[0.06] select-none shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className="size-2 rounded-full"
+            className="size-2.5 rounded-full shrink-0"
             style={{
-              backgroundColor: category.color,
-              boxShadow: `0 0 10px ${category.color}80`,
+              backgroundColor: displayColor,
+              boxShadow: `0 0 10px ${displayColor}80`,
             }}
           />
           <h2
-            className="font-display text-xs font-bold tracking-[0.2em] uppercase"
-            style={{ color: category.color }}
+            className="font-display text-sm sm:text-base font-bold tracking-[0.12em] uppercase truncate"
+            style={{ color: displayColor }}
           >
             {category.name}
           </h2>
         </div>
-        <span className="text-xs font-medium text-white/40 tabular-nums">
-          {totalSites} {totalSites === 1 ? 'site' : 'sites'}
-        </span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="text-xs sm:text-sm font-medium text-white/50 tabular-nums">
+            {totalSites} {totalSites === 1 ? 'site' : 'sites'}
+          </span>
+          {/* Segmented View Switcher: Grid vs List (per user request) */}
+          <div
+            role="group"
+            aria-label={`View mode for ${category.name}`}
+            className="inline-flex items-center rounded-xl bg-black/35 border border-white/10 p-0.5"
+          >
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
+              title="Grid view: browse subcategories"
+              className={`flex size-7 items-center justify-center rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-white/20 text-white shadow-sm'
+                  : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              aria-label="List view"
+              aria-pressed={viewMode === 'list'}
+              title="List view: all sites in vertical order by subcategory"
+              className={`flex size-7 items-center justify-center rounded-lg transition-all ${
+                viewMode === 'list'
+                  ? 'bg-white/20 text-white shadow-sm'
+                  : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </header>
 
       {totalSites === 0 ? (
@@ -234,51 +322,148 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
         >
           <div className="flex flex-1 flex-col overflow-hidden min-h-0">
             {/* 2. Primary Row Region */}
-            <PrimaryRow sites={primarySites} categoryColor={category.color} />
+            <PrimaryRow sites={primarySites} categoryColor={displayColor} />
 
             {/* 3. Pinned Subcategory Strip */}
             <PinnedStrip
               categoryId={category.id}
-              categoryColor={category.color}
+              categoryColor={displayColor}
               groups={stripGroups}
               activeId={activeGroupId}
               onSelect={handlePillSelect}
             />
 
-            {/* 4. Subcategory Rail Region */}
-            <SubcategoryRail
-              groups={railGroups}
-              categoryColor={category.color}
-              activeId={activeGroupId}
-              onActiveChange={setActiveGroupId}
-              onSelectGroup={handlePillSelect}
-              scrollRef={railRef}
-              isProgrammaticScrollRef={isProgrammaticScrollRef}
-            />
+            {/* 4. Subcategory Content: Grid Mode vs List Mode */}
+            {viewMode === 'grid' ? (
+              <SubcategoryRail
+                groups={railGroups}
+                categoryColor={displayColor}
+                activeId={activeGroupId}
+                onActiveChange={setActiveGroupId}
+                onSelectGroup={handlePillSelect}
+                scrollRef={railRef}
+                isProgrammaticScrollRef={isProgrammaticScrollRef}
+              />
+            ) : (
+              <div
+                ref={listContainerRef}
+                role="region"
+                aria-label={`All sites list for ${category.name}`}
+                className="flex-1 min-h-0 overflow-y-auto ultra-thin-scrollbar px-3 py-2 space-y-3"
+              >
+                {railGroups.map((group) => {
+                  const groupSiteIds = group.sites.map((s) => s.id);
+                  return (
+                    <div
+                      key={group.id}
+                      data-list-group-id={group.id}
+                      className="glass-inner rounded-2xl p-3.5 border border-white/[0.06] space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: displayColor }}
+                          />
+                          <h3 className="text-sm sm:text-[15px] font-bold text-white/95 tracking-wide">
+                            {group.name}
+                          </h3>
+                        </div>
+                        <span className="text-xs font-mono text-white/50 tabular-nums rounded-full bg-white/[0.06] px-2.5 py-0.5">
+                          {group.sites.length}
+                        </span>
+                      </div>
 
-            {/* 5. Subcategory Indicator Dots */}
+                      {group.sites.length === 0 ? (
+                        <p className="text-xs sm:text-sm text-white/35 italic py-1.5 px-1">
+                          No sites in this subcategory
+                        </p>
+                      ) : (
+                        <div className="space-y-0.5">
+                          <SortableContext items={groupSiteIds} strategy={verticalListSortingStrategy}>
+                            {group.sites.map((site) => (
+                              <SiteRow
+                                key={site.id}
+                                site={site}
+                                categoryColor={displayColor}
+                              />
+                            ))}
+                          </SortableContext>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 5. Subcategory Bottom Controls: < > Arrows on Left, Dots on Right */}
             {railGroups.length > 1 && (
               <div
-                role="tablist"
-                aria-label={`Subcategory indicator for ${category.name}`}
-                className="flex items-center justify-center py-1.5 border-t border-white/[0.04] shrink-0 select-none bg-black/10"
+                data-category-card-bottom
+                onWheel={handleBottomWheel}
+                role="toolbar"
+                aria-label={`Subcategory navigation for ${category.name}`}
+                className="flex items-center justify-between px-3.5 py-2 border-t border-white/[0.06] shrink-0 select-none bg-black/10"
               >
-                <div className="flex items-center gap-1.5" aria-hidden="true">
+                {/* Left: < > Navigation buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handlePrevSubcategory}
+                    disabled={currentGroupIndex <= 0}
+                    aria-label={`Previous subcategory in ${category.name}`}
+                    title="Previous subcategory (<)"
+                    className="flex size-6 items-center justify-center rounded-lg text-white/70 hover:bg-white/15 hover:text-white disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                  >
+                    <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextSubcategory}
+                    disabled={currentGroupIndex >= railGroups.length - 1}
+                    aria-label={`Next subcategory in ${category.name}`}
+                    title="Next subcategory (>)"
+                    className="flex size-6 items-center justify-center rounded-lg text-white/70 hover:bg-white/15 hover:text-white disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                  >
+                    <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Right: Dots indicator */}
+                <div
+                  role="tablist"
+                  aria-label={`Subcategory dots for ${category.name}`}
+                  className="flex items-center gap-1.5"
+                >
                   {railGroups.map((g) => (
                     <button
                       key={g.id}
                       type="button"
                       onClick={() => handlePillSelect(g.id)}
                       tabIndex={-1}
-                      title={`Jump to ${g.name}`}
-                      className={`h-1.5 rounded-full transition-all duration-200 ${
+                      aria-label={`dot-${g.id}`}
+                      title={`Go to ${g.name}`}
+                      className={`h-2 rounded-full transition-all duration-200 ${
                         g.id === activeGroupId
                           ? 'w-5'
-                          : 'w-1.5 bg-white/20 hover:bg-white/40'
+                          : 'w-2 bg-white/20 hover:bg-white/50'
                       }`}
                       style={{
-                        backgroundColor: g.id === activeGroupId ? category.color : undefined,
-                        boxShadow: g.id === activeGroupId ? `0 0 8px ${category.color}80` : undefined,
+                        backgroundColor: g.id === activeGroupId ? displayColor : undefined,
+                        boxShadow: g.id === activeGroupId ? `0 0 8px ${displayColor}80` : undefined,
                       }}
                     />
                   ))}

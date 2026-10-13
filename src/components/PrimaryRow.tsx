@@ -112,21 +112,12 @@ export const PrimaryRow = memo(function PrimaryRow({ sites, categoryColor }: Pri
   return (
     <section
       aria-label="Primary sites"
-      className="group/primary relative shrink-0 border-b border-white/[0.04] px-6 py-3.5 select-none"
+      className="group/primary relative shrink-0 border-b border-white/[0.04] px-4 py-2 select-none"
     >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
-          Primary Sites
-        </span>
-        <span className="text-[10px] font-medium text-white/30 tabular-nums">
-          {sites.length}
-        </span>
-      </div>
-
       <div className="relative">
         {/* Left Fade Mask & Chevron */}
         {canScrollLeft && (
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 flex w-12 items-center justify-start bg-gradient-to-r from-[#0b0713]/90 to-transparent">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 flex w-12 items-center justify-start bg-gradient-to-r from-[var(--color-base-elevated)]/90 to-transparent">
             <button
               type="button"
               onClick={() => handleScrollBy(-160)}
@@ -163,16 +154,16 @@ export const PrimaryRow = memo(function PrimaryRow({ sites, categoryColor }: Pri
               key={site.id}
               href={site.url}
               onClick={(e) => handleTileClick(e, site.id)}
-              className="glass-inner group/tile flex size-20 shrink-0 flex-col items-center justify-center gap-1.5 p-2 text-center transition-all duration-200 hover:scale-105 hover:bg-[var(--color-glass-strong)] hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              className="glass-inner group/tile flex size-20 sm:size-22 shrink-0 flex-col items-center justify-center gap-1.5 p-2 text-center transition-all duration-200 hover:scale-105 hover:bg-[var(--color-glass-strong)] hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
               title={site.name}
             >
               <Favicon
                 url={site.url}
                 name={site.name}
                 categoryColor={categoryColor}
-                className="size-7"
+                className="size-7 sm:size-8"
               />
-              <span className="w-full truncate text-[11px] font-medium text-white/80 group-hover/tile:text-white">
+              <span className="w-full truncate text-xs sm:text-[13px] font-semibold text-white/90 group-hover/tile:text-white">
                 {site.name}
               </span>
             </a>
@@ -181,7 +172,7 @@ export const PrimaryRow = memo(function PrimaryRow({ sites, categoryColor }: Pri
 
         {/* Right Fade Mask & Chevron */}
         {canScrollRight && (
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 flex w-12 items-center justify-end bg-gradient-to-l from-[#0b0713]/90 to-transparent">
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 flex w-12 items-center justify-end bg-gradient-to-l from-[var(--color-base-elevated)]/90 to-transparent">
             <button
               type="button"
               onClick={() => handleScrollBy(160)}

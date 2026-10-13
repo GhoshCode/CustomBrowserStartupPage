@@ -37,14 +37,14 @@ const SubcategoryCard = memo(function SubcategoryCard({
   return (
     <div
       data-subcategory-card-id={id}
-      className="glass-inner flex h-full w-[85%] min-w-[85%] max-w-[85%] shrink-0 flex-col overflow-hidden p-3.5"
+      className="glass-inner flex h-full w-[85%] min-w-[85%] max-w-[85%] shrink-0 flex-col overflow-hidden p-3.5 sm:p-4 snap-start snap-always"
     >
       {/* Subcategory Card Header */}
       <div className="mb-2 flex items-center justify-between border-b border-white/[0.04] pb-2 px-1 select-none">
-        <h3 className="text-xs font-semibold text-white/90 truncate">
+        <h3 className="text-sm sm:text-[15px] font-bold text-white/95 tracking-tight truncate">
           {name}
         </h3>
-        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/40 tabular-nums">
+        <span className="rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-semibold text-white/50 tabular-nums">
           {sites.length}
         </span>
       </div>
@@ -53,8 +53,8 @@ const SubcategoryCard = memo(function SubcategoryCard({
       <div className="flex-1 overflow-y-auto space-y-0.5 pr-1">
         {sites.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-            <p className="text-xs font-medium text-white/40">No sites yet</p>
-            <p className="mt-0.5 text-[10px] text-white/25">Add sites to {name}</p>
+            <p className="text-sm font-medium text-white/50">No sites yet</p>
+            <p className="mt-0.5 text-xs text-white/35">Add sites to {name}</p>
           </div>
         ) : (
           <SortableContext items={siteIds} strategy={verticalListSortingStrategy}>
@@ -99,7 +99,9 @@ export function SubcategoryRail({
   const isDraggingRef = useRef(false);
   const lastSwitchTimeRef = useRef(0);
 
-  // IntersectionObserver to sync the active pill with the currently snapped card
+  // Debounced IntersectionObserver to sync the active pill with the currently snapped card
+  const debounceTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const rootEl = scrollRef.current;
     if (!rootEl || groups.length <= 1) return;
@@ -123,13 +125,19 @@ export function SubcategoryRail({
           }
         }
 
-        if (bestId && maxRatio >= 0.45) {
-          onActiveChange(bestId);
+        if (bestId && maxRatio >= 0.5) {
+          if (debounceTimerRef.current !== null) {
+            window.clearTimeout(debounceTimerRef.current);
+          }
+          debounceTimerRef.current = window.setTimeout(() => {
+            onActiveChange(bestId);
+            debounceTimerRef.current = null;
+          }, 60);
         }
       },
       {
         root: rootEl,
-        threshold: [0.3, 0.5, 0.7, 0.9],
+        threshold: [0.4, 0.6, 0.8],
       },
     );
 
@@ -137,6 +145,9 @@ export function SubcategoryRail({
 
     return () => {
       observer.disconnect();
+      if (debounceTimerRef.current !== null) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
     };
   }, [groups.length, onActiveChange, scrollRef, isProgrammaticScrollRef]);
 
@@ -160,47 +171,54 @@ export function SubcategoryRail({
     [scrollRef],
   );
 
-  // Wheel scroll handler: scrolling in the subcategory area switches the subcategory
+  // Smooth wheel handler: allows native trackpad swipe and smoothly steps subcategories
   const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
     if (groups.length <= 1) return;
 
     const target = e.target as HTMLElement;
     const siteListEl = target.closest('.overflow-y-auto') as HTMLElement | null;
 
-    let shouldSwitch = false;
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    // If mouse is inside the vertically scrollable site list
+    if (siteListEl) {
+      const isAtTop = siteListEl.scrollTop <= 2 && e.deltaY < 0;
+      const isAtBottom =
+        siteListEl.scrollTop + siteListEl.clientHeight >= siteListEl.scrollHeight - 2 && e.deltaY > 0;
+      const isHorizontalTrackpad = Math.abs(e.deltaX) > Math.abs(e.deltaY);
 
-    if (Math.abs(delta) < 18) return;
+      if (isHorizontalTrackpad) {
+        // Native horizontal trackpad scrolling inside rail
+        e.stopPropagation();
+        return;
+      }
 
-    if (!siteListEl) {
-      shouldSwitch = true;
-    } else {
-      // If inside site list: switch if horizontal wheel, or if scrolled to edge
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey) {
-        shouldSwitch = true;
-      } else if (e.deltaY > 0 && siteListEl.scrollTop + siteListEl.clientHeight >= siteListEl.scrollHeight - 2) {
-        shouldSwitch = true;
-      } else if (e.deltaY < 0 && siteListEl.scrollTop <= 2) {
-        shouldSwitch = true;
+      if (!isAtTop && !isAtBottom) {
+        // Vertical scroll within list - let default browser scroll happen
+        e.stopPropagation();
+        return;
       }
     }
 
-    if (shouldSwitch) {
+    // Horizontal trackpad gesture
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.stopPropagation();
+      return;
+    }
+
+    // Wheel over subcategory card header / padding: smoothly switch subcategories
+    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (Math.abs(delta) > 8) {
       e.preventDefault();
+      e.stopPropagation();
+
       const now = Date.now();
-      if (now - lastSwitchTimeRef.current < 320) return;
+      if (now - lastSwitchTimeRef.current < 220) return;
+      lastSwitchTimeRef.current = now;
 
       const currentIndex = groups.findIndex((g) => g.id === activeId);
       if (delta > 0 && currentIndex < groups.length - 1) {
-        lastSwitchTimeRef.current = now;
-        const nextId = groups[currentIndex + 1].id;
-        if (onSelectGroup) onSelectGroup(nextId);
-        else onActiveChange(nextId);
+        onSelectGroup?.(groups[currentIndex + 1].id);
       } else if (delta < 0 && currentIndex > 0) {
-        lastSwitchTimeRef.current = now;
-        const prevId = groups[currentIndex - 1].id;
-        if (onSelectGroup) onSelectGroup(prevId);
-        else onActiveChange(prevId);
+        onSelectGroup?.(groups[currentIndex - 1].id);
       }
     }
   };
@@ -208,9 +226,10 @@ export function SubcategoryRail({
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     // Only drag when clicking the rail container or subcategory card header area, not inside links/buttons
     const target = e.target as HTMLElement;
-    if (target.closest('a, button, input, [data-site-id]')) return;
+    if (target.closest('a, button, input')) return;
     if (e.button !== 0) return;
 
+    e.stopPropagation();
     isPointerDownRef.current = true;
     isDraggingRef.current = false;
     startXRef.current = e.clientX;
@@ -219,6 +238,7 @@ export function SubcategoryRail({
 
   const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!isPointerDownRef.current) return;
+    e.stopPropagation();
     const dx = e.clientX - startXRef.current;
     if (!isDraggingRef.current && Math.abs(dx) > 6) {
       isDraggingRef.current = true;
@@ -230,6 +250,7 @@ export function SubcategoryRail({
   };
 
   const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     if (isDraggingRef.current) {
       try {
         scrollRef.current?.releasePointerCapture(e.pointerId);
@@ -255,7 +276,7 @@ export function SubcategoryRail({
       tabIndex={0}
       role="region"
       aria-label="Subcategory rail"
-      className="flex-1 flex gap-4 overflow-x-auto p-4 pb-2 min-h-0 scrollbar-none focus-visible:outline-none"
+      className="flex-1 flex gap-4 overflow-x-auto p-4 pb-2 min-h-0 snap-x snap-mandatory scroll-smooth scrollbar-none focus-visible:outline-none select-none"
     >
       {groups.map((group) => (
         <SubcategoryCard

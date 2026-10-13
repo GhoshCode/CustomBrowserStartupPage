@@ -128,7 +128,40 @@ export function AppearanceTab() {
         </div>
       </section>
 
-      {/* 2. Preset Gradient Themes */}
+      {/* 2. Accent Color Customization */}
+      <section className="glass-inner space-y-3 p-5 rounded-2xl border border-white/10">
+        <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+          Accent Color
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          {PRESET_ACCENTS.map((preset) => (
+            <button
+              key={preset.hex}
+              type="button"
+              onClick={() => updateSettings({ accentColor: preset.hex })}
+              className={`flex size-8 items-center justify-center rounded-full transition-transform ${
+                settings.accentColor.toLowerCase() === preset.hex.toLowerCase()
+                  ? 'scale-110 ring-2 ring-white shadow-lg'
+                  : 'hover:scale-105'
+              }`}
+              style={{ backgroundColor: preset.hex }}
+              title={preset.name}
+            />
+          ))}
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1">
+            <input
+              type="color"
+              value={settings.accentColor}
+              onChange={(e) => updateSettings({ accentColor: e.target.value })}
+              className="size-5 cursor-pointer rounded border-0 bg-transparent"
+              aria-label="Pick custom accent color"
+            />
+            <span className="font-mono text-xs text-white/60">{settings.accentColor}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Preset Gradient Themes */}
       <section className="glass-inner space-y-3.5 p-5 rounded-2xl border border-white/10">
         <div className="flex items-center justify-between">
           <div>
@@ -195,39 +228,6 @@ export function AppearanceTab() {
               </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* 3. Accent Color Customization */}
-      <section className="glass-inner space-y-3 p-5 rounded-2xl border border-white/10">
-        <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-          Accent Color
-        </label>
-        <div className="flex flex-wrap items-center gap-3">
-          {PRESET_ACCENTS.map((preset) => (
-            <button
-              key={preset.hex}
-              type="button"
-              onClick={() => updateSettings({ accentColor: preset.hex })}
-              className={`flex size-8 items-center justify-center rounded-full transition-transform ${
-                settings.accentColor.toLowerCase() === preset.hex.toLowerCase()
-                  ? 'scale-110 ring-2 ring-white shadow-lg'
-                  : 'hover:scale-105'
-              }`}
-              style={{ backgroundColor: preset.hex }}
-              title={preset.name}
-            />
-          ))}
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1">
-            <input
-              type="color"
-              value={settings.accentColor}
-              onChange={(e) => updateSettings({ accentColor: e.target.value })}
-              className="size-5 cursor-pointer rounded border-0 bg-transparent"
-              aria-label="Pick custom accent color"
-            />
-            <span className="font-mono text-xs text-white/60">{settings.accentColor}</span>
-          </div>
         </div>
       </section>
 

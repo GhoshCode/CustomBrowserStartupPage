@@ -43,14 +43,14 @@ export const Header = memo(function Header() {
 
   return (
     <header className="flex w-full items-center justify-between px-6 pt-5 pb-2 sm:px-10 sm:pt-6 sm:pb-2 shrink-0">
-      <div className="flex flex-col gap-1 min-w-0 pr-4">
-        <p className="text-gradient font-display text-[11px] sm:text-xs tracking-[0.2em] font-semibold">
+      <div className="flex flex-col gap-1.5 min-w-0 pr-4">
+        <p className="text-gradient font-display text-xs sm:text-sm tracking-[0.2em] font-semibold">
           {formattedDate}
         </p>
-        <h1 className="font-display text-2xl sm:text-4xl font-semibold tracking-tight text-white/90 truncate">
+        <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white/95 truncate">
           {greeting}
         </h1>
-        <p className="mt-0.5 max-w-xl text-xs sm:text-sm text-white/50 opacity-80 mix-blend-screen line-clamp-1">
+        <p className="mt-0.5 max-w-xl text-sm sm:text-base text-white/80 line-clamp-1">
           {quote}
         </p>
       </div>

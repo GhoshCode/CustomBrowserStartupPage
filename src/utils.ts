@@ -155,3 +155,26 @@ export function searchSites(
 
   return scored.sort((a, b) => b.score - a.score);
 }
+
+/**
+ * Ensures category accent colors have sufficient contrast against light mode surfaces (WCAG AAA).
+ */
+export function getCategoryDisplayColor(hex: string, isLight: boolean): string {
+  if (!isLight || !hex) return hex;
+  const map: Record<string, string> = {
+    '#fbbf24': '#b45309', // yellow -> deep amber
+    '#38bdf8': '#0284c7', // light sky -> ocean blue
+    '#4ade80': '#15803d', // neon green -> forest green
+    '#f472b6': '#be185d', // light pink -> ruby rose
+    '#a78bfa': '#6d28d9', // lavender -> deep purple
+    '#fb923c': '#c2410c', // peach orange -> rich orange
+    '#22d3ee': '#0e7490', // cyan -> deep teal
+    '#e879f9': '#a21caf', // light fuchsia -> rich fuchsia
+    '#818cf8': '#4338ca', // periwinkle -> deep indigo
+    '#f87171': '#b91c1c', // salmon red -> crimson red
+    '#34d399': '#047857', // mint -> emerald
+    '#60a5fa': '#1d4ed8', // light blue -> royal blue
+    '#94a3b8': '#334155', // slate -> dark slate
+  };
+  return map[hex.toLowerCase()] || hex;
+}

@@ -10,7 +10,7 @@ interface QuickLinksProps {
 export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinksProps) {
   const quickLinks = useStore((s) => s.quickLinks);
   const allSites = useStore((s) => s.sites);
-  const trackVisit = useStore((s) => s.trackVisit);
+  const recordVisit = useStore((s) => s.recordVisit);
 
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -68,7 +68,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
   };
 
   const handleSelectSite = (site: Site) => {
-    trackVisit(site.id);
+    recordVisit(site.id);
     window.open(site.url, '_blank');
     setQuery('');
     setShowSuggestions(false);
@@ -119,15 +119,15 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
         className="glass-raised flex flex-wrap items-center justify-between gap-4 px-4 py-2 rounded-2xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.37)] backdrop-blur-xl"
       >
         {/* Quick Links on the left */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4">
           {quickLinks.map((link) => (
             <a
               key={link.id}
               href={link.url}
-              className="glass-inner flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium transition-all hover:scale-105 hover:bg-[var(--color-glass-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              className="glass-inner flex items-center gap-2.5 px-3.5 py-2 text-sm sm:text-base font-semibold transition-all hover:scale-105 hover:bg-[var(--color-glass-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
-              <Favicon url={link.url} name={link.name} className="size-4 sm:size-5" />
-              <span className="text-white/90 drop-shadow-sm font-medium">{link.name}</span>
+              <Favicon url={link.url} name={link.name} className="size-5 sm:size-5.5" />
+              <span className="text-white/95 drop-shadow-sm font-semibold tracking-tight">{link.name}</span>
             </a>
           ))}
         </div>
@@ -161,7 +161,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
               onKeyDown={handleSearchKeyDown}
               placeholder="Search sites or web..."
               aria-label="Direct search bar"
-              className="w-full bg-transparent text-sm sm:text-base text-white placeholder-white/40 focus:outline-none tracking-wide"
+              className="w-full bg-transparent text-sm sm:text-base text-white placeholder-white/45 focus:outline-none tracking-normal font-medium"
             />
 
             {/* Clear query button if typed */}
@@ -186,7 +186,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
                 onClick={onOpenPalette}
                 title="Search existing sites (Ctrl+K or /)"
                 aria-label="Open command palette"
-                className="group flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white/80 hover:bg-white/20 hover:text-white transition-all shrink-0 border border-white/15 font-medium shadow-sm"
+                className="group flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2 text-xs sm:text-sm text-white/90 hover:bg-white/20 hover:text-white transition-all shrink-0 border border-white/15 font-semibold shadow-sm"
               >
                 <svg
                   className="size-4 text-white/70 group-hover:text-white transition-colors shrink-0"
@@ -199,8 +199,8 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="hidden sm:inline font-medium">Search</span>
-                <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] sm:text-[11px] font-mono text-white/70">
+                <span className="hidden sm:inline font-semibold">Search</span>
+                <kbd className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-xs font-mono text-white/80">
                   ⌘K
                 </kbd>
               </button>
@@ -216,7 +216,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
               {/* Matching Bookmarked Sites */}
               {matchedSites.length > 0 && (
                 <div className="px-2.5 py-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 px-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-white/50 px-2.5">
                     Your Sites
                   </span>
                   <div className="mt-1 space-y-0.5">
@@ -225,20 +225,20 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
                         key={site.id}
                         type="button"
                         onClick={() => handleSelectSite(site)}
-                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs sm:text-sm transition-colors ${
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm sm:text-base transition-colors ${
                           selectedSuggestionIndex === idx
-                            ? 'bg-white/15 text-white'
-                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                            ? 'bg-white/15 text-white font-semibold'
+                            : 'text-white/85 hover:bg-white/10 hover:text-white'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 truncate">
-                          <Favicon url={site.url} name={site.name} className="size-4.5 shrink-0" />
-                          <span className="font-medium text-white truncate">{site.name}</span>
-                          <span className="text-xs text-white/40 truncate">
+                          <Favicon url={site.url} name={site.name} className="size-5 shrink-0" />
+                          <span className="font-semibold text-white truncate">{site.name}</span>
+                          <span className="text-xs sm:text-sm text-white/45 truncate font-mono">
                             {site.url.replace(/^https?:\/\//, '')}
                           </span>
                         </div>
-                        <span className="text-[10px] sm:text-xs font-mono text-white/30 shrink-0">Open ↗</span>
+                        <span className="text-xs font-mono text-white/40 shrink-0">Open ↗</span>
                       </button>
                     ))}
                   </div>
@@ -247,7 +247,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
 
               {/* Web Search Suggestions */}
               <div className="px-2.5 py-1 border-t border-white/[0.06]">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 px-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-white/50 px-2.5">
                   Web Suggestions
                 </span>
                 <div className="mt-1 space-y-0.5">
@@ -258,14 +258,14 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
                         key={sug}
                         type="button"
                         onClick={() => handleSearchQuery(sug)}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs sm:text-sm transition-colors ${
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm sm:text-base transition-colors ${
                           selectedSuggestionIndex === totalIndex
-                            ? 'bg-white/15 text-white'
-                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                            ? 'bg-white/15 text-white font-semibold'
+                            : 'text-white/85 hover:bg-white/10 hover:text-white'
                         }`}
                       >
                         <svg
-                          className="size-4 text-white/40 shrink-0"
+                          className="size-4.5 text-white/40 shrink-0"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -276,7 +276,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
                           />
                         </svg>
                         <span className="truncate">{sug}</span>
-                        <span className="ml-auto text-[10px] sm:text-xs text-white/30 font-mono">Google</span>
+                        <span className="ml-auto text-xs text-white/40 font-mono">Google</span>
                       </button>
                     );
                   })}

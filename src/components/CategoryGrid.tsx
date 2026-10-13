@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useStore } from '../store';
 import { CategoryCard } from './CategoryCard';
@@ -11,34 +11,49 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
   const categories = useStore((s) => s.categories);
   const shouldReduceMotion = useReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.order - b.order),
     [categories],
   );
 
-  const updateScrollIndicators = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 5);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 5);
+  const handleThinSpaceWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 2) return;
+
+    // Check if directly below a specific card
+    const elements = document.elementsFromPoint(e.clientX, Math.max(0, e.clientY - 25));
+    const card = elements.find((el) => el.closest('[data-category-id]'))?.closest<HTMLElement>('[data-category-id]');
+    if (card) {
+      const bottomToolbar = card.querySelector<HTMLElement>('[data-category-card-bottom]');
+      if (bottomToolbar) {
+        const btn =
+          delta > 0
+            ? bottomToolbar.querySelector<HTMLButtonElement>('button[title*="Next"]')
+            : bottomToolbar.querySelector<HTMLButtonElement>('button[title*="Previous"]');
+        if (btn && !btn.disabled) {
+          btn.click();
+          return;
+        }
+      }
+    }
+    // Fallback: translate to horizontal scroll of category container
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft += delta;
+    }
   };
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
-    updateScrollIndicators();
-    const raf = requestAnimationFrame(updateScrollIndicators);
-    const timer = setTimeout(updateScrollIndicators, 150);
-
-    el.addEventListener('scroll', updateScrollIndicators, { passive: true });
-    window.addEventListener('resize', updateScrollIndicators);
-
     // Mouse wheel horizontal translation inside this container
     const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      // If cursor is inside any category card, let the card handle its internal scrolling
+      if (target.closest('[data-category-id]')) {
+        return;
+      }
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
         e.preventDefault();
         el.scrollLeft += e.deltaY;
@@ -48,22 +63,52 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
     el.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(timer);
-      el.removeEventListener('scroll', updateScrollIndicators);
-      window.removeEventListener('resize', updateScrollIndicators);
       el.removeEventListener('wheel', handleWheel);
     };
   }, [sortedCategories.length]);
 
-  const scroll = (direction: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const distance = 400; // Approximately one card width + gap
-    el.scrollBy({
-      left: direction === 'left' ? -distance : distance,
-      behavior: 'smooth',
-    });
+  // Pointer drag-to-scroll on main container
+  const isPointerDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollStartRef = useRef(0);
+  const isDraggingRef = useRef(false);
+
+  const handleContainerPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Don't drag if clicking inside links, buttons, inputs, or site rows
+    if (target.closest('a, button, input, [data-site-id]')) return;
+    if (e.button !== 0) return;
+
+    isPointerDownRef.current = true;
+    isDraggingRef.current = false;
+    startXRef.current = e.clientX;
+    scrollStartRef.current = scrollRef.current?.scrollLeft ?? 0;
+  };
+
+  const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+    const dx = e.clientX - startXRef.current;
+    if (!isDraggingRef.current && Math.abs(dx) > 6) {
+      isDraggingRef.current = true;
+      try {
+        scrollRef.current?.setPointerCapture(e.pointerId);
+      } catch {}
+    }
+    if (isDraggingRef.current && scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollStartRef.current - dx;
+    }
+  };
+
+  const handleContainerPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) {
+      try {
+        scrollRef.current?.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+    isPointerDownRef.current = false;
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 50);
   };
 
   const containerVariants = {
@@ -132,22 +177,13 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
               </motion.div>
             ))}
           </motion.div>
-          {/* Thin space below the cards where scrolling scrolls the cards */}
+          {/* Thin interactive scroll space below cards - completely scrollbar-free */}
           <div
             data-testid="thin-cards-scroll-space"
-            onWheel={(e) => {
-              const el = scrollRef.current;
-              if (el) {
-                e.preventDefault();
-                const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-                el.scrollLeft += delta;
-              }
-            }}
-            className="w-full py-1.5 px-2 flex items-center justify-center shrink-0 select-none cursor-ew-resize group"
-            title="Scroll cards horizontally"
-          >
-            <div className="h-1 w-24 rounded-full bg-white/10 group-hover:bg-white/30 transition-colors" />
-          </div>
+            onWheel={handleThinSpaceWheel}
+            className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
+            title="Scroll subcategories or cards horizontally"
+          />
         </div>
       ) : (
         /* Containerized when cards cross the limit (> 3 categories) */
@@ -156,16 +192,20 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
           data-categories-container
           className="glass-raised relative flex flex-1 min-h-0 flex-col overflow-hidden rounded-3xl border border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.5)] backdrop-blur-2xl p-3 sm:p-4"
         >
-          {/* Horizontal scroll track with ultra-thin horizontal scroll option below */}
+          {/* Horizontal scroll track with cards */}
           <motion.div
             ref={scrollRef}
             variants={containerVariants}
             initial="hidden"
             animate="show"
+            onPointerDown={handleContainerPointerDown}
+            onPointerMove={handleContainerPointerMove}
+            onPointerUp={handleContainerPointerUp}
+            onPointerCancel={handleContainerPointerUp}
             tabIndex={0}
             role="region"
             aria-label="Scrollable category cards"
-            className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-1 scroll-smooth ultra-thin-scrollbar focus-visible:outline-none"
+            className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-1 scroll-smooth scrollbar-none focus-visible:outline-none select-none cursor-grab active:cursor-grabbing"
           >
             {sortedCategories.map((category) => (
               <motion.div
@@ -178,22 +218,13 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
             ))}
           </motion.div>
 
-          {/* Thin space below the cards where scrolling scrolls the cards horizontally */}
+          {/* Thin interactive scroll space below cards - completely scrollbar-free */}
           <div
             data-testid="thin-cards-scroll-space"
-            onWheel={(e) => {
-              const el = scrollRef.current;
-              if (el) {
-                e.preventDefault();
-                const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-                el.scrollLeft += delta;
-              }
-            }}
-            className="w-full py-1.5 px-2 flex items-center justify-center shrink-0 select-none cursor-ew-resize group"
-            title="Scroll horizontally across cards"
-          >
-            <div className="h-1 w-24 rounded-full bg-white/10 group-hover:bg-white/30 transition-colors" />
-          </div>
+            onWheel={handleThinSpaceWheel}
+            className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
+            title="Scroll subcategories or cards horizontally"
+          />
         </section>
       )}
     </main>

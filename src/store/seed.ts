@@ -69,7 +69,7 @@ interface SeedCategory {
   subs: SeedSub[];
 }
 
-const SEED_CATEGORIES: SeedCategory[] = [
+export const SEED_CATEGORIES: SeedCategory[] = [
   {
     name: 'Programming',
     color: '#a78bfa',
@@ -753,9 +753,6 @@ export function getBenchmark200State(): PersistedState {
   const categories: Category[] = [];
   const subcategories: Subcategory[] = [];
   const sites: Site[] = [];
-
-  const slug = (s: string) =>
-    s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   benchmarkCategories.forEach((cat, ci) => {
     const categoryId = `cat-bench-${slug(cat.name)}`;

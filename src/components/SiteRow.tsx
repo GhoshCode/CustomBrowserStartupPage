@@ -49,7 +49,7 @@ export const SiteRow = memo(function SiteRow({
       ref={setNodeRef}
       style={style}
       data-site-id={site.id}
-      className={`group/site flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors duration-150 ${
+      className={`group/site flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left transition-colors duration-150 ${
         isOverlay
           ? 'glass-inner bg-white/10 shadow-2xl border-white/20'
           : 'hover:bg-white/[0.07] hover:border-white/10'
@@ -58,24 +58,24 @@ export const SiteRow = memo(function SiteRow({
       <a
         href={site.url}
         onClick={handleClick}
-        className="flex min-w-0 flex-1 items-center gap-2.5 focus-visible:outline-none"
+        className="flex min-w-0 flex-1 items-center gap-3 focus-visible:outline-none"
       >
         <Favicon
           url={site.url}
           name={site.name}
           categoryColor={categoryColor}
-          className="size-5"
+          className="size-6 shrink-0"
         />
-        <div className="flex min-w-0 flex-1 items-baseline gap-2">
+        <div className="flex min-w-0 flex-1 items-baseline gap-2.5">
           <span
             title={site.name}
-            className="truncate text-xs font-medium text-white/85 group-hover/site:text-white"
+            className="truncate text-sm font-semibold text-white/95 group-hover/site:text-white shrink-0 max-w-[65%]"
           >
             {site.name}
           </span>
           <span
             title={site.url}
-            className="truncate text-[10px] text-white/35 group-hover/site:text-white/50"
+            className="truncate text-xs text-white/45 group-hover/site:text-white/70 min-w-0 flex-1 font-mono"
           >
             {hostname}
           </span>
@@ -91,9 +91,9 @@ export const SiteRow = memo(function SiteRow({
           onClick={handleClick}
           title="Open in new tab"
           aria-label={`Open ${site.name} in new tab`}
-          className="flex size-6 items-center justify-center rounded text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+          className="flex size-7 items-center justify-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
         >
-          <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
               d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h4a.75.75 0 010 1.5h-4z"
@@ -112,9 +112,9 @@ export const SiteRow = memo(function SiteRow({
           {...attributes}
           {...listeners}
           aria-label={`Drag to reorder ${site.name}`}
-          className="flex size-6 cursor-grab active:cursor-grabbing items-center justify-center rounded text-white/30 hover:text-white/70"
+          className="flex size-7 cursor-grab active:cursor-grabbing items-center justify-center rounded-lg text-white/30 hover:text-white/70"
         >
-          <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M7 2a2 2 0 100 4 2 2 0 000-4zM7 8a2 2 0 100 4 2 2 0 000-4zM7 14a2 2 0 100 4 2 2 0 000-4zM13 2a2 2 0 100 4 2 2 0 000-4zM13 8a2 2 0 100 4 2 2 0 000-4zM13 14a2 2 0 100 4 2 2 0 000-4z" />
           </svg>
         </button>

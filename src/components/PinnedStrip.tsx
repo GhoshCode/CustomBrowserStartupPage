@@ -1,6 +1,5 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { motion } from 'motion/react';
 
 export interface GroupItem {
   id: string;
@@ -47,7 +46,7 @@ const DroppablePill = memo(function DroppablePill({
       data-group-id={group.id}
       aria-current={isActive ? 'true' : undefined}
       onClick={() => onSelect(group.id)}
-      className={`relative flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 select-none ${
+      className={`relative flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold transition-all duration-150 select-none ${
         isOver
           ? 'scale-105 bg-white/25 text-white ring-2 ring-white/60 shadow-lg'
           : isActive
@@ -60,8 +59,8 @@ const DroppablePill = memo(function DroppablePill({
     >
       <span className="relative z-10">{group.name}</span>
       <span
-        className={`relative z-10 text-[10px] tabular-nums font-mono ${
-          isActive || isOver ? 'text-white/80' : 'text-white/30'
+        className={`relative z-10 text-xs tabular-nums font-mono ${
+          isActive || isOver ? 'text-white/90' : 'text-white/35'
         }`}
       >
         {group.count}
@@ -77,12 +76,41 @@ export const PinnedStrip = memo(function PinnedStrip({
   activeId,
   onSelect,
 }: PinnedStripProps) {
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const activePill = nav.querySelector<HTMLElement>(`[data-group-id="${activeId}"]`);
+    if (activePill) {
+      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeId]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (delta !== 0 && nav.scrollWidth > nav.clientWidth) {
+        e.preventDefault();
+        e.stopPropagation();
+        nav.scrollLeft += delta;
+      }
+    };
+
+    nav.addEventListener('wheel', handleWheel, { passive: false });
+    return () => nav.removeEventListener('wheel', handleWheel);
+  }, []);
+
   if (groups.length <= 1) return null;
 
   return (
     <nav
+      ref={navRef}
       aria-label="Subcategory groups"
-      className="shrink-0 flex items-center gap-1.5 px-4 py-2 border-b border-white/[0.04] overflow-x-auto ultra-thin-scrollbar select-none pb-1.5"
+      className="shrink-0 flex items-center gap-1.5 px-4 py-2 border-b border-white/[0.04] overflow-x-auto scrollbar-none flex-nowrap whitespace-nowrap select-none"
     >
       {groups.map((group) => (
         <DroppablePill

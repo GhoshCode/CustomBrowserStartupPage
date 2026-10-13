@@ -113,8 +113,7 @@ export const Backdrop = memo(function Backdrop() {
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-300"
           style={{ 
-            background: isGradient ? backgroundImage : undefined,
-            backgroundImage: !isGradient ? `url(${backgroundImage})` : undefined,
+            backgroundImage: isGradient ? backgroundImage : `url("${backgroundImage}")`,
             filter: backgroundBlur > 0 ? `blur(${backgroundBlur}px)` : undefined,
           }}
         />
