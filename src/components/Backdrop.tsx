@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 
-export function Backdrop() {
-  const { backgroundImage, overlayOpacity, backgroundBlur } = useStore((s) => s.settings);
+export const Backdrop = memo(function Backdrop() {
+  const { backgroundImage, overlayOpacity, backgroundBlur, themeMode } = useStore((s) => s.settings);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isLight = themeMode === 'light';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,8 +49,8 @@ export function Backdrop() {
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.fillStyle = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)';
       ctx.font = '14px var(--font-sans)';
 
       for (let i = 0; i < nodes.length; i++) {
@@ -75,9 +76,9 @@ export function Backdrop() {
           const other = nodes[j];
           const dx = node.x - other.x;
           const dy = node.y - other.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const distSq = dx * dx + dy * dy;
 
-          if (dist < 150) {
+          if (distSq < 22500) {
             ctx.beginPath();
             ctx.moveTo(node.x, node.y);
             ctx.lineTo(other.x, other.y);
@@ -100,21 +101,26 @@ export function Backdrop() {
       window.removeEventListener('resize', init);
       cancelAnimationFrame(animationFrame);
     };
-  }, []);
+  }, [isLight]);
+
+  const isGradient =
+    backgroundImage &&
+    (backgroundImage.startsWith('linear-gradient') || backgroundImage.startsWith('radial-gradient'));
 
   return (
-    <div className="fixed inset-0 -z-10 bg-[var(--color-base)]">
+    <div className="fixed inset-0 -z-10 bg-[var(--color-base)] transition-colors duration-300">
       {backgroundImage && (
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center transition-all duration-300"
           style={{ 
-            backgroundImage: `url(${backgroundImage})`,
-            filter: `blur(${backgroundBlur}px)`
+            background: isGradient ? backgroundImage : undefined,
+            backgroundImage: !isGradient ? `url(${backgroundImage})` : undefined,
+            filter: backgroundBlur > 0 ? `blur(${backgroundBlur}px)` : undefined,
           }}
         />
       )}
       <div 
-        className="absolute inset-0 bg-[var(--color-base)]" 
+        className="absolute inset-0 bg-[var(--color-base)] transition-opacity duration-300" 
         style={{ opacity: backgroundImage ? overlayOpacity : 0 }} 
       />
       <canvas 
@@ -123,4 +129,4 @@ export function Backdrop() {
       />
     </div>
   );
-}
+});

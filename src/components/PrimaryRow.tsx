@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent,
+  type WheelEvent,
+} from 'react';
 import type { Site } from '../types';
 import { useStore } from '../store';
 import { Favicon } from './Favicon';
@@ -8,7 +17,7 @@ interface PrimaryRowProps {
   categoryColor: string;
 }
 
-export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
+export const PrimaryRow = memo(function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
   const recordVisit = useStore((s) => s.recordVisit);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -41,7 +50,7 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
     scrollRef.current?.scrollBy({ left: distance, behavior: 'smooth' });
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+  const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
     if (e.deltaX !== 0) return;
     if (e.shiftKey || Math.abs(e.deltaY) > 0) {
       if (scrollRef.current) {
@@ -52,7 +61,7 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
   };
 
   // Pointer drag-to-pan
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     // Only primary button
     if (e.button !== 0) return;
     isPointerDownRef.current = true;
@@ -61,7 +70,7 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
     scrollStartRef.current = scrollRef.current?.scrollLeft ?? 0;
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!isPointerDownRef.current) return;
     const dx = e.clientX - startXRef.current;
     if (!isDraggingRef.current && Math.abs(dx) > 5) {
@@ -74,7 +83,7 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
     if (isDraggingRef.current) {
       try {
         scrollRef.current?.releasePointerCapture(e.pointerId);
@@ -89,7 +98,7 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
     }, 50);
   };
 
-  const handleTileClick = (e: React.MouseEvent, siteId: string) => {
+  const handleTileClick = (e: MouseEvent, siteId: string) => {
     if (isDraggingRef.current) {
       e.preventDefault();
       e.stopPropagation();
@@ -192,4 +201,4 @@ export function PrimaryRow({ sites, categoryColor }: PrimaryRowProps) {
       </div>
     </section>
   );
-}
+});

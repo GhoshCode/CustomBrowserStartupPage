@@ -68,13 +68,13 @@ export default function SettingsModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-            className="glass relative z-10 flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border-white/15 bg-[#0e0819]/95 shadow-2xl md:flex-row"
+            className="glass-raised relative z-10 flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/20 bg-[var(--color-base-elevated)]/90 backdrop-blur-3xl shadow-[0_32px_96px_rgba(0,0,0,0.65)] md:flex-row"
             role="dialog"
             aria-modal="true"
             aria-label="DevDeck Settings"
           >
             {/* Left Tab Rail */}
-            <aside className="flex shrink-0 flex-row border-b border-white/[0.06] bg-white/[0.02] p-4 md:w-60 md:flex-col md:justify-between md:border-r md:border-b-0">
+            <aside className="flex shrink-0 flex-row border-b border-white/[0.08] bg-white/[0.03] p-4 md:w-64 md:flex-col md:justify-between md:border-r md:border-b-0 backdrop-blur-xl">
               <div className="flex w-full flex-row items-center gap-1 md:flex-col md:items-stretch md:gap-1.5">
                 <div className="hidden pb-4 md:block select-none">
                   <div className="flex items-center gap-2">

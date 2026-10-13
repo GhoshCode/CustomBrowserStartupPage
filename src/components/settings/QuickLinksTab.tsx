@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -16,6 +16,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useStore } from '../../store';
 import type { QuickLink } from '../../types';
 import { Favicon } from '../Favicon';
+import { normalizeUrl } from '../../utils';
 
 function SortableQuickLinkItem({
   link,
@@ -35,7 +36,7 @@ function SortableQuickLinkItem({
     isDragging,
   } = useSortable({ id: link.id });
 
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
@@ -128,14 +129,11 @@ export function QuickLinksTab() {
     setIsAdding(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !url.trim()) return;
 
-    let normalizedUrl = url.trim();
-    if (!/^https?:\/\//i.test(normalizedUrl)) {
-      normalizedUrl = `https://${normalizedUrl}`;
-    }
+    const normalizedUrl = normalizeUrl(url);
 
     if (editingLink) {
       updateQuickLink(editingLink.id, { name: name.trim(), url: normalizedUrl });

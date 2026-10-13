@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import type { Site } from '../types';
-import { useStore } from './store';
-import { migrate, normalizePersisted, SCHEMA_VERSION } from './migrate';
+import { useStore, migrate, normalizePersisted, SCHEMA_VERSION } from './store';
 import { DEFAULT_SETTINGS } from './seed';
 
 const st = () => useStore.getState();
@@ -201,8 +200,9 @@ describe('export / import roundtrip', () => {
 describe('resetToSeed', () => {
   test('replaces state with the seed deck', () => {
     st().resetToSeed();
-    // seed has the three SPEC categories
-    expect(st().categories.map((c) => c.name)).toEqual(['Programming', 'Design', 'Social']);
-    expect(st().sites.length).toBeGreaterThan(0);
+    // seed has 10+ categories (13 total) and 200+ sites (336 total)
+    expect(st().categories.length).toBeGreaterThanOrEqual(10);
+    expect(st().sites.length).toBeGreaterThanOrEqual(200);
   });
 });
+

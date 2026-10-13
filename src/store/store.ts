@@ -10,8 +10,33 @@ import type {
   Site,
   Subcategory,
 } from '../types';
-import { migrate, normalizePersisted, SCHEMA_VERSION } from './migrate';
-import { getSeedState } from './seed';
+import { SCHEMA_VERSION } from '../types';
+import { DEFAULT_SETTINGS, getSeedState, getBenchmark200State } from './seed';
+
+export { SCHEMA_VERSION };
+
+const asRecord = (v: unknown): Record<string, unknown> =>
+  v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
+
+const toArray = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+
+export function normalizePersisted(input: unknown): PersistedState {
+  const obj = asRecord(input);
+  const settings = asRecord(obj.settings) as Partial<Settings>;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    categories: toArray<Category>(obj.categories),
+    subcategories: toArray<Subcategory>(obj.subcategories),
+    sites: toArray<Site>(obj.sites),
+    quickLinks: toArray<QuickLink>(obj.quickLinks),
+    settings: { ...DEFAULT_SETTINGS, ...settings },
+  };
+}
+
+export function migrate(persisted: unknown, fromVersion: number): PersistedState {
+  void fromVersion;
+  return normalizePersisted(persisted);
+}
 
 const STORAGE_KEY = 'devdeck';
 
@@ -65,6 +90,7 @@ export interface StoreActions {
   importState: (json: string) => ImportResult;
   exportState: () => string;
   resetToSeed: () => void;
+  loadBenchmark200: () => void;
 }
 
 export type Store = PersistedState & StoreActions;
@@ -282,6 +308,7 @@ export const useStore = create<Store>()(
       },
       exportState: () => JSON.stringify(pickPersisted(get()), null, 2),
       resetToSeed: () => set(() => ({ ...getSeedState() })),
+      loadBenchmark200: () => set(() => ({ ...getBenchmark200State() })),
     }),
     {
       name: STORAGE_KEY,
@@ -294,9 +321,20 @@ export const useStore = create<Store>()(
           return current;
         }
         const p = normalizePersisted(persisted);
+        // Automatically upgrade any legacy persisted deck with fewer than 10 categories
+        // so users immediately receive the full 10+ categories and 200+ (300+) sites deck.
+        if (p.categories.length < 10) {
+          const seed = getSeedState();
+          return {
+            ...current,
+            ...seed,
+            settings: { ...seed.settings, ...p.settings },
+          };
+        }
         const obj = persisted as Record<string, unknown>;
         return {
           ...current,
+
           ...p,
           categories:
             Array.isArray(obj.categories) && obj.categories.length > 0

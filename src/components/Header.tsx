@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useStore } from '../store';
 import { QUOTES } from '../store/seed';
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
+
 function useTime() {
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -13,11 +19,11 @@ function useTime() {
   return time;
 }
 
-export function Header() {
+export const Header = memo(function Header() {
   const time = useTime();
   const { clock24h, greetingName } = useStore((s) => s.settings);
   
-  // Use useMemo or state for a stable random quote to avoid hydration mismatch
+  // Stable random quote per session
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
   const hour = time.getHours();
@@ -27,11 +33,7 @@ export function Header() {
   else if (hour < 17) greeting = greetingName ? `Afternoon, ${greetingName}.` : 'Good afternoon.';
   else greeting = greetingName ? `Evening, ${greetingName}.` : 'Good evening.';
 
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(time).toUpperCase();
+  const formattedDate = dateFormatter.format(time).toUpperCase();
 
   const formattedTime = time.toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -40,15 +42,15 @@ export function Header() {
   });
 
   return (
-    <header className="flex w-full items-start justify-between p-8 sm:p-12">
-      <div className="flex flex-col gap-2">
-        <p className="text-gradient font-display text-xs tracking-[0.2em] font-semibold">
+    <header className="flex w-full items-center justify-between px-6 pt-5 pb-2 sm:px-10 sm:pt-6 sm:pb-2 shrink-0">
+      <div className="flex flex-col gap-1 min-w-0 pr-4">
+        <p className="text-gradient font-display text-[11px] sm:text-xs tracking-[0.2em] font-semibold">
           {formattedDate}
         </p>
-        <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-white/90">
+        <h1 className="font-display text-2xl sm:text-4xl font-semibold tracking-tight text-white/90 truncate">
           {greeting}
         </h1>
-        <p className="mt-2 max-w-xl text-sm text-white/50 opacity-80 mix-blend-screen">
+        <p className="mt-0.5 max-w-xl text-xs sm:text-sm text-white/50 opacity-80 mix-blend-screen line-clamp-1">
           {quote}
         </p>
       </div>
@@ -56,7 +58,7 @@ export function Header() {
       <div
         role="timer"
         aria-label="Digital clock"
-        className="font-clock text-4xl sm:text-6xl text-white/90 drop-shadow-md select-none"
+        className="font-clock text-3xl sm:text-5xl text-white/90 drop-shadow-md select-none shrink-0"
       >
         {formattedTime.replace(/AM|PM/, '').trim()}
         {!clock24h && (
@@ -67,4 +69,4 @@ export function Header() {
       </div>
     </header>
   );
-}
+});

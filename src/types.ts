@@ -34,14 +34,21 @@ export interface QuickLink {
   order: number;
 }
 
+export type ThemeMode = 'dark' | 'light';
+
 export interface Settings {
   accentColor: string;
-  backgroundImage: string | null; // data URL or remote URL
+  themeMode?: ThemeMode; // 'dark' | 'light'
+  presetTheme?: string | null; // e.g. 'default-dark', 'default-light', 'cyberpunk', etc.
+  backgroundImage: string | null; // data URL, remote URL, or css gradient
   overlayOpacity: number; // 0–1
   backgroundBlur: number; // px
   clock24h: boolean;
   greetingName: string; // used in greetings, may be empty
 }
+
+
+export const SCHEMA_VERSION = 1;
 
 export interface PersistedState {
   schemaVersion: number; // starts at 1; bump with every schema change

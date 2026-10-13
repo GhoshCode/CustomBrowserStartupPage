@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
+import { getHostname } from '../utils';
 
 interface FaviconProps {
   url: string;
@@ -7,21 +8,14 @@ interface FaviconProps {
   className?: string;
 }
 
-export function Favicon({
+export const Favicon = memo(function Favicon({
   url,
   name,
   categoryColor = '#a78bfa',
   className = 'size-6',
 }: FaviconProps) {
   const [hasError, setHasError] = useState(false);
-
-  let domain = '';
-  try {
-    domain = new URL(url).hostname;
-  } catch {
-    domain = '';
-  }
-
+  const domain = getHostname(url);
   const initial = (name.trim()[0] || '?').toUpperCase();
 
   if (hasError || !domain) {
@@ -45,4 +39,4 @@ export function Favicon({
       onError={() => setHasError(true)}
     />
   );
-}
+});

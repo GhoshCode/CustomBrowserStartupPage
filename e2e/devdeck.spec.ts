@@ -203,33 +203,19 @@ test.describe('Quick Links', () => {
 
 test.describe('Category Cards', () => {
 
-  test('renders all 3 seed categories', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  locator() uses CSS selectors to find elements.         │
-    // │  [data-category-id] is a custom attribute we put on    │
-    // │  each category card in CategoryCard.tsx.               │
-    // │                                                        │
-    // │  toHaveCount(3) checks that exactly 3 elements match.  │
-    // └─────────────────────────────────────────────────────────┘
-
+  test('renders all 10+ seed categories', async ({ page }) => {
     const cards = page.locator('[data-category-id]');
-    await expect(cards).toHaveCount(3);
+    await expect(cards).toHaveCount(13);
   });
 
   test('each category shows its name', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  We verify the category names are visible on screen.    │
-    // │                                                        │
-    // │  Note: these are <h2> tags inside the card headers.    │
-    // │  getByRole('heading') finds them by semantic meaning.  │
-    // └─────────────────────────────────────────────────────────┘
-
-    await expect(page.getByRole('heading', { name: 'Programming' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Social' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Frontend' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Backend' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'DevOps & Cloud' })).toBeVisible();
   });
 
-  test('Programming card has primary site tiles', async ({ page }) => {
+
+  test('First card has primary site tiles', async ({ page }) => {
     // ┌─────────────────────────────────────────────────────────┐
     // │  The primary row has aria-label="Primary sites rail"    │
     // │  (we set this in PrimaryRow.tsx).                       │
@@ -464,88 +450,66 @@ test.describe('Settings Modal', () => {
 // click to navigate between groups of sites.
 
 test.describe('Subcategory Navigation', () => {
-
-  test('shows subcategory pills inside the Programming card', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  The Programming category should have pills for:        │
-    // │  "General", "Frontend", "Backend", "AI"                │
-    // │                                                        │
-    // │  We scope our search to just the Programming card       │
-    // │  using the data-category-id attribute.                 │
-    // └─────────────────────────────────────────────────────────┘
-
-    // Find the first category card (Programming is order 0)
-    const programmingCard = page.locator('[data-category-id]').first();
+  test('shows subcategory pills inside the Frontend card', async ({ page }) => {
+    // Find the first category card (Frontend is order 0)
+    const frontendCard = page.locator('[data-category-id]').first();
 
     // It should have subcategory pills
-    await expect(programmingCard.getByRole('button', { name: /General/ })).toBeVisible();
-    await expect(programmingCard.getByRole('button', { name: /Frontend/ })).toBeVisible();
-    await expect(programmingCard.getByRole('button', { name: /Backend/ })).toBeVisible();
-    await expect(programmingCard.getByRole('button', { name: /AI/ })).toBeVisible();
+    await expect(frontendCard.getByRole('button', { name: /General/ })).toBeVisible();
+    await expect(frontendCard.getByRole('button', { name: /Frameworks/ })).toBeVisible();
+    await expect(frontendCard.getByRole('button', { name: /Styling/ })).toBeVisible();
   });
 
   test('clicking a subcategory pill scrolls to that section', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  When you click the "Frontend" pill, the subcategory    │
-    // │  rail should scroll to show the Frontend card.          │
-    // │                                                        │
-    // │  We verify by checking that the Frontend card exists   │
-    // │  and contains expected sites like "react.dev".         │
-    // └─────────────────────────────────────────────────────────┘
+    const frontendCard = page.locator('[data-category-id]').first();
 
-    const programmingCard = page.locator('[data-category-id]').first();
-
-    // Click the "Frontend" pill
-    await programmingCard.getByRole('button', { name: /Frontend/ }).click();
+    // Click the "Frameworks" pill
+    await frontendCard.getByRole('button', { name: /Frameworks/ }).click();
 
     // Wait a moment for the smooth scroll animation
     await page.waitForTimeout(500);
 
-    // The Frontend subcategory card should now be visible
-    // and should contain React (a Frontend site)
-    const frontendCard = programmingCard.locator('[data-subcategory-card-id]').filter({
-      hasText: 'react.dev'
+    // The Frameworks subcategory card should now be visible and contain Remix
+    const frameworksCard = frontendCard.locator('[data-subcategory-card-id]').filter({
+      hasText: /Remix|Frameworks/,
     });
-    // The card with react.dev should exist in the DOM
-    await expect(frontendCard).toHaveCount(1);
+    await expect(frameworksCard).toHaveCount(1);
   });
 });
-
 
 // ═══════════════════════════════════════════════════════════════════
 // TEST GROUP 7: RESPONSIVE LAYOUT
 // ═══════════════════════════════════════════════════════════════════
-//
-// DevDeck adapts its grid: 3 columns → 2 columns → 1 column
-// depending on screen width.
 
 test.describe('Responsive Layout', () => {
-
-  test('shows 1 column on narrow screens', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  setViewportSize() resizes the browser window.          │
-    // │  At 1000px wide, the CSS grid should show 1 column.    │
-    // │                                                        │
-    // │  We verify by checking that all 3 category cards are   │
-    // │  stacked vertically (each taking the full width).      │
-    // └─────────────────────────────────────────────────────────┘
-
-    await page.setViewportSize({ width: 1000, height: 900 });
-    // Give the CSS a moment to reflow
+  test('keeps viewport fixed with horizontal card deck on narrow screens', async ({ page }) => {
+    // Resize to narrow laptop screen
+    await page.setViewportSize({ width: 1000, height: 800 });
     await page.waitForTimeout(300);
 
     const cards = page.locator('[data-category-id]');
-    await expect(cards).toHaveCount(3);
+    const count = await cards.count();
+    expect(count).toBeGreaterThanOrEqual(10);
 
-    // Get the bounding boxes of all 3 cards
+
+    // Get the bounding boxes of cards
     const box0 = await cards.nth(0).boundingBox();
     const box1 = await cards.nth(1).boundingBox();
 
-    // In 1-column layout, each card should have the same x position
-    // (they're stacked vertically, not side by side)
-    expect(box0!.x).toBeCloseTo(box1!.x, 0);
-    // And card 1 should be BELOW card 0
-    expect(box1!.y).toBeGreaterThan(box0!.y);
+    // Cards are side-by-side in the horizontal container, sharing top alignment
+    expect(box1!.x).toBeGreaterThan(box0!.x);
+    expect(box0!.y).toBeCloseTo(box1!.y, 5);
+
+    // Verify the page itself has ZERO vertical or horizontal scroll
+    const pageScroll = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      scrollX: window.scrollX,
+      docHeight: document.documentElement.scrollHeight,
+      winHeight: window.innerHeight,
+    }));
+    expect(pageScroll.scrollY).toBe(0);
+    expect(pageScroll.scrollX).toBe(0);
+    expect(pageScroll.docHeight).toBeLessThanOrEqual(pageScroll.winHeight);
   });
 });
 

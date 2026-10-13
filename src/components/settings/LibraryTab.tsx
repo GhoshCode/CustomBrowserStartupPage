@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import type { Site } from '../../types';
 import { Favicon } from '../Favicon';
+import { deriveNameFromUrl, normalizeUrl } from '../../utils';
 
 interface LibraryTabProps {
   initialPrefillUrl?: string;
@@ -57,26 +58,11 @@ export function LibraryTab({
   const [editingSubcatId, setEditingSubcatId] = useState<string | null>(null);
   const [editingSubcatName, setEditingSubcatName] = useState('');
 
-  // Derive domain name into clean capitalized name
-  const deriveNameFromDomain = (rawUrl: string): string => {
-    try {
-      let normalized = rawUrl.trim();
-      if (!/^https?:\/\//i.test(normalized)) {
-        normalized = `https://${normalized}`;
-      }
-      const host = new URL(normalized).hostname.replace(/^www\./, '');
-      const part = host.split('.')[0] || '';
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    } catch {
-      return '';
-    }
-  };
-
   const handleUrlChange = (val: string) => {
     setSiteUrl(val);
     setUrlError(null);
-    if (!siteName || siteName === deriveNameFromDomain(siteUrl)) {
-      const derived = deriveNameFromDomain(val);
+    if (!siteName || siteName === deriveNameFromUrl(siteUrl)) {
+      const derived = deriveNameFromUrl(val);
       if (derived) setSiteName(derived);
     }
   };
@@ -103,14 +89,11 @@ export function LibraryTab({
     setIsAddingSite(true);
   };
 
-  const handleSaveSite = (e: React.FormEvent) => {
+  const handleSaveSite = (e: FormEvent) => {
     e.preventDefault();
     if (!siteUrl.trim() || !siteCategoryId) return;
 
-    let normalized = siteUrl.trim();
-    if (!/^https?:\/\//i.test(normalized)) {
-      normalized = `https://${normalized}`;
-    }
+    const normalized = normalizeUrl(siteUrl);
 
     try {
       const parsed = new URL(normalized);
@@ -123,7 +106,7 @@ export function LibraryTab({
       return;
     }
 
-    const finalName = siteName.trim() || deriveNameFromDomain(normalized) || 'Untitled';
+    const finalName = siteName.trim() || deriveNameFromUrl(normalized) || 'Untitled';
 
     if (editingSite) {
       updateSite(editingSite.id, {
@@ -148,7 +131,7 @@ export function LibraryTab({
     onClearPrefill?.();
   };
 
-  const handleSaveNewCategory = (e: React.FormEvent) => {
+  const handleSaveNewCategory = (e: FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
     addCategory({ name: newCatName.trim(), color: newCatColor });

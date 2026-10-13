@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -20,7 +20,7 @@ interface CategoryCardProps {
   category: Category;
 }
 
-export function CategoryCard({ category }: CategoryCardProps) {
+export const CategoryCard = memo(function CategoryCard({ category }: CategoryCardProps) {
   const allSites = useStore((s) => s.sites);
   const allSubcategories = useStore((s) => s.subcategories);
   const moveSite = useStore((s) => s.moveSite);
@@ -60,7 +60,26 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
   // Groups: "General" (sites with subcategoryId === null) + each subcategory in order
   const railGroups = useMemo<RailGroup[]>(() => {
-    const generalSites = categorySites.filter((s) => s.subcategoryId === null);
+    const generalSites: Site[] = [];
+    const subcatMap = new Map<string, Site[]>();
+
+    for (const sub of subcategories) {
+      subcatMap.set(sub.id, []);
+    }
+
+    for (const site of categorySites) {
+      if (!site.subcategoryId) {
+        generalSites.push(site);
+      } else {
+        const list = subcatMap.get(site.subcategoryId);
+        if (list) {
+          list.push(site);
+        } else {
+          generalSites.push(site);
+        }
+      }
+    }
+
     const groups: RailGroup[] = [];
 
     if (generalSites.length > 0 || subcategories.length === 0) {
@@ -75,7 +94,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
       groups.push({
         id: sub.id,
         name: sub.name,
-        sites: categorySites.filter((s) => s.subcategoryId === sub.id),
+        sites: subcatMap.get(sub.id) || [],
       });
     }
 
@@ -96,13 +115,25 @@ export function CategoryCard({ category }: CategoryCardProps) {
     railGroups[0]?.id ?? 'general',
   );
 
+  const isProgrammaticScrollRef = useRef(false);
+  const scrollTimerRef = useRef<number | null>(null);
+
   const handlePillSelect = useCallback((id: string) => {
     setActiveGroupId(id);
     const rootEl = railRef.current;
     if (!rootEl) return;
     const cardEl = rootEl.querySelector<HTMLElement>(`[data-subcategory-card-id="${id}"]`);
     if (cardEl) {
-      cardEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      isProgrammaticScrollRef.current = true;
+      if (scrollTimerRef.current !== null) {
+        window.clearTimeout(scrollTimerRef.current);
+      }
+      const targetLeft = Math.max(0, cardEl.offsetLeft - 16);
+      rootEl.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      scrollTimerRef.current = window.setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+        scrollTimerRef.current = null;
+      }, 450);
     }
   }, []);
 
@@ -160,10 +191,10 @@ export function CategoryCard({ category }: CategoryCardProps) {
   return (
     <article
       data-category-id={category.id}
-      className="glass flex h-[550px] flex-col overflow-hidden transition-all duration-300 hover:border-white/15"
+      className="glass flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:border-white/20 shadow-lg select-none"
     >
       {/* 1. Header Region: colored label + site count */}
-      <header className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06] select-none shrink-0">
+      <header className="flex items-center justify-between px-5 pt-3.5 pb-2.5 border-b border-white/[0.06] select-none shrink-0">
         <div className="flex items-center gap-2.5">
           <span
             className="size-2 rounded-full"
@@ -220,8 +251,40 @@ export function CategoryCard({ category }: CategoryCardProps) {
               categoryColor={category.color}
               activeId={activeGroupId}
               onActiveChange={setActiveGroupId}
+              onSelectGroup={handlePillSelect}
               scrollRef={railRef}
+              isProgrammaticScrollRef={isProgrammaticScrollRef}
             />
+
+            {/* 5. Subcategory Indicator Dots */}
+            {railGroups.length > 1 && (
+              <div
+                role="tablist"
+                aria-label={`Subcategory indicator for ${category.name}`}
+                className="flex items-center justify-center py-1.5 border-t border-white/[0.04] shrink-0 select-none bg-black/10"
+              >
+                <div className="flex items-center gap-1.5" aria-hidden="true">
+                  {railGroups.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => handlePillSelect(g.id)}
+                      tabIndex={-1}
+                      title={`Jump to ${g.name}`}
+                      className={`h-1.5 rounded-full transition-all duration-200 ${
+                        g.id === activeGroupId
+                          ? 'w-5'
+                          : 'w-1.5 bg-white/20 hover:bg-white/40'
+                      }`}
+                      style={{
+                        backgroundColor: g.id === activeGroupId ? category.color : undefined,
+                        boxShadow: g.id === activeGroupId ? `0 0 8px ${category.color}80` : undefined,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <DragOverlay>
@@ -239,4 +302,4 @@ export function CategoryCard({ category }: CategoryCardProps) {
       )}
     </article>
   );
-}
+});

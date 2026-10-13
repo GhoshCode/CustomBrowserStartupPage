@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '../store';
-import { searchSites, type ScoredSite } from '../utils/fuzzySearch';
+import { searchSites, type ScoredSite } from '../utils';
 import { Favicon } from './Favicon';
 
 interface CommandPaletteProps {
@@ -26,20 +26,33 @@ export function CommandPalette({
   const recordVisit = useStore((s) => s.recordVisit);
 
   const results = useMemo<ScoredSite[]>(
-    () => searchSites(query, sites, categories, subcategories),
-    [query, sites, categories, subcategories],
+    () => (isOpen ? searchSites(query, sites, categories, subcategories) : []),
+    [isOpen, query, sites, categories, subcategories],
   );
 
-  // Focus input when opened
+  // Focus input and handle global Escape when opened
   useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+
+    setQuery('');
+    setSelectedIndex(0);
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   // Keep selected index in bounds when results change
   useEffect(() => {
@@ -68,7 +81,7 @@ export function CommandPalette({
     onAddSite(query);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       onClose();
       e.preventDefault();

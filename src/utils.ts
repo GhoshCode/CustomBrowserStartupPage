@@ -1,4 +1,46 @@
-import type { Category, Site, Subcategory } from '../types';
+import type { Category, Site, Subcategory } from './types';
+
+// --- URL & Domain Utilities --------------------------------------------------
+
+/**
+ * Normalizes user-input URL strings by ensuring an https:// protocol prefix and trimmed whitespace.
+ */
+export function normalizeUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+/**
+ * Extracts a clean hostname from a URL, stripping 'www.'.
+ */
+export function getHostname(rawUrl: string): string {
+  try {
+    const normalized = normalizeUrl(rawUrl);
+    return new URL(normalized).hostname.replace(/^www\./, '');
+  } catch {
+    return rawUrl;
+  }
+}
+
+/**
+ * Derives a readable site name from a URL domain (e.g. "https://github.com/..." -> "Github").
+ */
+export function deriveNameFromUrl(rawUrl: string): string {
+  try {
+    const host = getHostname(rawUrl);
+    const part = host.split('.')[0] || '';
+    if (!part) return '';
+    return part.charAt(0).toUpperCase() + part.slice(1);
+  } catch {
+    return '';
+  }
+}
+
+// --- Fuzzy Search Utilities --------------------------------------------------
 
 export interface ScoredSite {
   site: Site;
@@ -72,12 +114,7 @@ export function searchSites(
     if (!category) continue;
     const subcategory = site.subcategoryId ? subMap.get(site.subcategoryId) ?? null : null;
 
-    let domain = '';
-    try {
-      domain = new URL(site.url).hostname.replace(/^www\./, '');
-    } catch {
-      domain = site.url;
-    }
+    const domain = getHostname(site.url);
 
     if (!trimmed) {
       // Empty query: rank by recent visits / popularity

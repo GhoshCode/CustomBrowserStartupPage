@@ -1,9 +1,10 @@
-import React from 'react';
+import { memo, type CSSProperties } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Site } from '../types';
 import { useStore } from '../store';
 import { Favicon } from './Favicon';
+import { getHostname } from '../utils';
 
 interface SiteRowProps {
   site: Site;
@@ -11,7 +12,7 @@ interface SiteRowProps {
   isOverlay?: boolean;
 }
 
-export const SiteRow = React.memo(function SiteRow({
+export const SiteRow = memo(function SiteRow({
   site,
   categoryColor,
   isOverlay = false,
@@ -31,18 +32,13 @@ export const SiteRow = React.memo(function SiteRow({
     disabled: isOverlay,
   });
 
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
   };
 
-  let hostname = '';
-  try {
-    hostname = new URL(site.url).hostname.replace(/^www\./, '');
-  } catch {
-    hostname = site.url;
-  }
+  const hostname = getHostname(site.url);
 
   const handleClick = () => {
     recordVisit(site.id);

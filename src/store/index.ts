@@ -7,5 +7,7 @@ export type {
   NewSite,
   NewQuickLink,
 } from './store';
-export { migrate, normalizePersisted, SCHEMA_VERSION } from './migrate';
-export { getSeedState, DEFAULT_SETTINGS, QUOTES } from './seed';
+export { migrate, normalizePersisted, SCHEMA_VERSION } from './store';
+export { getSeedState, getBenchmark200State, DEFAULT_SETTINGS, QUOTES } from './seed';
+export { PRESET_THEMES, type PresetTheme } from './themes';
+
