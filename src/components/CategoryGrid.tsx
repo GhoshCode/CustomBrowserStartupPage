@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useStore } from '../store';
 import { CategoryCard } from './CategoryCard';
+import { LinksStrip } from './links/LinksStrip';
 
 interface CategoryGridProps {
   onOpenSettings?: () => void;
@@ -11,10 +12,16 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
   const categories = useStore((s) => s.categories);
   const shouldReduceMotion = useReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const sortedCategories = useMemo(
-    () => [...categories].sort((a, b) => a.order - b.order),
-    [categories],
-  );
+
+  // Guarantee pinned card is placed at index 0
+  const sortedCategories = useMemo(() => {
+    const list = [...categories];
+    return list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return a.order - b.order;
+    });
+  }, [categories]);
 
   const handleThinSpaceWheel = (e: React.WheelEvent) => {
     e.stopPropagation();
@@ -130,10 +137,8 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
     },
   };
 
-  const isContainerized = sortedCategories.length > 3;
-
   return (
-    <main className="flex flex-1 min-h-0 w-full px-6 sm:px-10 pb-5 overflow-hidden">
+    <main className="flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden h-full">
       {sortedCategories.length === 0 ? (
         <div className="glass flex flex-1 items-center justify-center text-center p-8 rounded-3xl border border-white/10 shadow-2xl">
           <div className="flex flex-col items-center max-w-sm">
@@ -157,74 +162,51 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
             )}
           </div>
         </div>
-      ) : !isContainerized ? (
-        /* Independent cards when categories count <= 3 per user request */
-        <div className="flex flex-1 min-h-0 w-full flex-col overflow-hidden">
-          <motion.div
-            ref={scrollRef}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="flex flex-1 min-h-0 w-full flex-row gap-5 lg:gap-6 items-stretch justify-start overflow-x-auto overflow-y-hidden scrollbar-none"
-          >
-            {sortedCategories.map((category) => (
-              <motion.div
-                key={category.id}
-                variants={cardVariants}
-                className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
-              >
-                <CategoryCard category={category} />
-              </motion.div>
-            ))}
-          </motion.div>
-          {/* Thin interactive scroll space below cards - completely scrollbar-free */}
-          <div
-            data-testid="thin-cards-scroll-space"
-            onWheel={handleThinSpaceWheel}
-            className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
-            title="Scroll subcategories or cards horizontally"
-          />
-        </div>
       ) : (
-        /* Containerized when cards cross the limit (> 3 categories) */
+        /* Unified Center Cockpit Container with LinksStrip on Top */
         <section
           aria-label="Categories container"
           data-categories-container
-          className="glass-raised relative flex flex-1 min-h-0 flex-col overflow-hidden rounded-3xl border border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.5)] backdrop-blur-2xl p-3 sm:p-4"
+          className="glass-raised relative flex flex-1 min-h-0 flex-col overflow-hidden rounded-3xl border border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
         >
-          {/* Horizontal scroll track with cards */}
-          <motion.div
-            ref={scrollRef}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            onPointerDown={handleContainerPointerDown}
-            onPointerMove={handleContainerPointerMove}
-            onPointerUp={handleContainerPointerUp}
-            onPointerCancel={handleContainerPointerUp}
-            tabIndex={0}
-            role="region"
-            aria-label="Scrollable category cards"
-            className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-1 scroll-smooth scrollbar-none focus-visible:outline-none select-none cursor-grab active:cursor-grabbing"
-          >
-            {sortedCategories.map((category) => (
-              <motion.div
-                key={category.id}
-                variants={cardVariants}
-                className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
-              >
-                <CategoryCard category={category} />
-              </motion.div>
-            ))}
-          </motion.div>
+          {/* Header Strip: [E] 4 Fixed Quick Links | [F] Horizontally Scrollable Recent Links */}
+          <LinksStrip />
 
-          {/* Thin interactive scroll space below cards - completely scrollbar-free */}
-          <div
-            data-testid="thin-cards-scroll-space"
-            onWheel={handleThinSpaceWheel}
-            className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
-            title="Scroll subcategories or cards horizontally"
-          />
+          {/* Horizontal scroll track with 3 vertical category card columns */}
+          <div className="flex flex-1 min-h-0 flex-col p-3 sm:p-4 overflow-hidden">
+            <motion.div
+              ref={scrollRef}
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              onPointerDown={handleContainerPointerDown}
+              onPointerMove={handleContainerPointerMove}
+              onPointerUp={handleContainerPointerUp}
+              onPointerCancel={handleContainerPointerUp}
+              tabIndex={0}
+              role="region"
+              aria-label="Scrollable category cards"
+              className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-1 scroll-smooth scrollbar-none focus-visible:outline-none select-none cursor-grab active:cursor-grabbing"
+            >
+              {sortedCategories.map((category) => (
+                <motion.div
+                  key={category.id}
+                  variants={cardVariants}
+                  className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
+                >
+                  <CategoryCard category={category} />
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Thin interactive scroll space below cards - completely scrollbar-free */}
+            <div
+              data-testid="thin-cards-scroll-space"
+              onWheel={handleThinSpaceWheel}
+              className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
+              title="Scroll subcategories or cards horizontally"
+            />
+          </div>
         </section>
       )}
     </main>

@@ -26,6 +26,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
   const allSubcategories = useStore((s) => s.subcategories);
   const moveSite = useStore((s) => s.moveSite);
   const reorder = useStore((s) => s.reorder);
+  const togglePinCategory = useStore((s) => s.togglePinCategory);
 
   const railRef = useRef<HTMLDivElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
@@ -256,6 +257,31 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
           <span className="text-xs sm:text-sm font-medium text-white/50 tabular-nums">
             {totalSites} {totalSites === 1 ? 'site' : 'sites'}
           </span>
+          {/* Single-card Pin Button */}
+          <button
+            type="button"
+            onClick={() => togglePinCategory(category.id)}
+            title={
+              category.isPinned
+                ? 'Unpin card'
+                : 'Pin card to position #1 (only 1 card pinned at a time)'
+            }
+            aria-label="Pin category card"
+            aria-pressed={Boolean(category.isPinned)}
+            className={`flex size-7 items-center justify-center rounded-lg border transition-all ${
+              category.isPinned
+                ? 'border-cyan-400/50 bg-cyan-400/20 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.35)]'
+                : 'border-white/10 bg-white/5 text-white/40 hover:border-white/25 hover:text-white/80'
+            }`}
+          >
+            <svg
+              className={`size-3.5 transition-transform ${category.isPinned ? '-rotate-45 text-cyan-300' : ''}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+            </svg>
+          </button>
           {/* Segmented View Switcher: Grid vs List (per user request) */}
           <div
             role="group"

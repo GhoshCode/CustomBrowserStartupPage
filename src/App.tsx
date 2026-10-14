@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Backdrop } from './components/Backdrop';
 import { CategoryGrid } from './components/CategoryGrid';
-import { Header } from './components/Header';
-import { QuickLinks } from './components/QuickLinks';
+import { TopBarCockpit } from './components/cockpit/TopBarCockpit';
+import { SearchBar } from './components/search/SearchBar';
+import { CurrentlyProcessingPanel } from './components/processing/CurrentlyProcessingPanel';
+import { ScrapedNewsPanel } from './components/news/ScrapedNewsPanel';
+import { TopicChips } from './components/news/TopicChips';
 import { CommandPalette } from './components/CommandPalette';
 import SettingsModal, { type SettingsTabId } from './components/settings/SettingsModal';
 import { useStore } from './store';
@@ -20,7 +23,6 @@ export default function App() {
     setSettingsTab(tab);
     setIsSettingsOpen(true);
   };
-
 
   const themeMode = useStore((s) => s.settings.themeMode ?? 'dark');
 
@@ -67,7 +69,6 @@ export default function App() {
       }
     };
 
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPaletteOpen, isSettingsOpen]);
@@ -76,9 +77,31 @@ export default function App() {
     <>
       <Backdrop />
       <div className="flex h-screen w-screen max-h-screen max-w-screen flex-col relative z-0 overflow-hidden">
-        <Header />
-        <QuickLinks onOpenPalette={() => setIsPaletteOpen(true)} />
-        <CategoryGrid onOpenSettings={() => openSettings('library')} />
+        {/* Top Header Cockpit: 4 columns */}
+        <TopBarCockpit
+          onOpenSettings={() => openSettings('appearance')}
+          onOpenPalette={() => setIsPaletteOpen(true)}
+        />
+
+        {/* Search Row: [G] centered search bar with [G1] Bookmark Site Map */}
+        <SearchBar onOpenPalette={() => setIsPaletteOpen(true)} />
+
+        {/* Lower Cockpit: 3-Column Spatial Grid */}
+        <div className="flex flex-1 min-h-0 w-full gap-4 px-6 pb-4 overflow-hidden">
+          {/* Left Column: D (Currently Processing - 2 stacked cards with mini cog [⚙]) */}
+          <CurrentlyProcessingPanel
+            onOpenSettings={(tab) => openSettings(tab as SettingsTabId)}
+          />
+
+          {/* Center Column: Unified Container ([E] 4 Fixed Quick Links | [F] Recent Links + Category Cards) */}
+          <CategoryGrid onOpenSettings={() => openSettings('library')} />
+
+          {/* Right Column: I (Tech News items 1-4, Dev Jobs items 5-8) + J (Topic Chips) */}
+          <aside className="flex flex-col gap-3 w-64 lg:w-72 shrink-0 h-full min-h-0">
+            <ScrapedNewsPanel />
+            <TopicChips />
+          </aside>
+        </div>
 
         {/* Floating Settings Gear Button in bottom right */}
         <div className="fixed bottom-6 right-6 z-40 flex items-center">

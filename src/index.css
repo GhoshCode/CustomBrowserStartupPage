@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Seven-segment digital clock face from dseg npm package */
@@ -38,6 +38,7 @@
   --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-clock: 'DSEG7', 'Share Tech Mono', ui-monospace, monospace;
+  --font-cyberpunk: 'Orbitron', 'Chakra Petch', monospace, sans-serif;
 
   /* Radius */
   --radius-card: 24px;

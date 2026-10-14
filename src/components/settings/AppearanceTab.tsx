@@ -328,31 +328,134 @@ export function AppearanceTab() {
 
         <div className="space-y-2 pt-2">
           <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-            Digital Clock Format
+            Digital Clock Style
           </label>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {[
+              { id: 'dseg7', label: 'DSEG7 Classic', desc: '7-segment retro digital' },
+              { id: 'cyberpunk', label: 'Cyberpunk HUD', desc: 'Bold futuristic with neon' },
+              { id: 'macos', label: 'macOS Minimalist', desc: 'Clean Apple typography' },
+            ].map((style) => (
+              <button
+                key={style.id}
+                type="button"
+                onClick={() => updateSettings({ clockStyle: style.id as any })}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  settings.clockStyle === style.id
+                    ? 'border-cyan-400 bg-white/10 shadow-md ring-1 ring-cyan-400'
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 text-white/70'
+                }`}
+              >
+                <span className="font-semibold text-xs text-white block">{style.label}</span>
+                <span className="text-[10px] text-white/40 block mt-0.5">{style.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+              Hour Format
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => updateSettings({ clock24h: false })}
+                className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                  !settings.clock24h
+                    ? 'bg-white/15 text-white ring-1 ring-white/20'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                12-Hour
+              </button>
+              <button
+                type="button"
+                onClick={() => updateSettings({ clock24h: true })}
+                className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                  settings.clock24h
+                    ? 'bg-white/15 text-white ring-1 ring-white/20'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                24-Hour
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+              Seconds Display
+            </label>
             <button
               type="button"
-              onClick={() => updateSettings({ clock24h: false })}
-              className={`rounded-xl px-4 py-2 text-xs font-medium transition-colors ${
-                !settings.clock24h
-                  ? 'bg-white/15 text-white ring-1 ring-white/20'
+              onClick={() => updateSettings({ showSeconds: !settings.showSeconds })}
+              className={`w-full rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                settings.showSeconds
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                   : 'bg-white/5 text-white/50 hover:bg-white/10'
               }`}
             >
-              12-Hour (AM / PM)
+              {settings.showSeconds ? 'Showing Seconds (:SS)' : 'Seconds Hidden'}
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Cockpit Integrations: GitHub, Weather & Search Engine */}
+      <section className="glass-inner space-y-4 p-5 rounded-2xl border border-white/10">
+        <h4 className="font-display text-xs font-semibold text-white/90 uppercase tracking-wider">
+          Cockpit Integrations
+        </h4>
+
+        {/* GitHub Username */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+            GitHub Username (for Commit Tiles & Streaks)
+          </label>
+          <input
+            type="text"
+            value={settings.githubUsername}
+            onChange={(e) => updateSettings({ githubUsername: e.target.value.trim() })}
+            placeholder="e.g. torvalds"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs text-white placeholder-white/30 focus:border-white/20 focus:outline-none"
+          />
+        </div>
+
+        {/* Weather Settings */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+              Weather Widget
+            </label>
             <button
               type="button"
-              onClick={() => updateSettings({ clock24h: true })}
-              className={`rounded-xl px-4 py-2 text-xs font-medium transition-colors ${
-                settings.clock24h
-                  ? 'bg-white/15 text-white ring-1 ring-white/20'
+              onClick={() => updateSettings({ weatherEnabled: !settings.weatherEnabled })}
+              className={`w-full rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                settings.weatherEnabled
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                   : 'bg-white/5 text-white/50 hover:bg-white/10'
               }`}
             >
-              24-Hour
+              {settings.weatherEnabled ? 'Enabled (°C + UV Index)' : 'Disabled'}
             </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+              Search Engine
+            </label>
+            <select
+              value={settings.searchEngine ?? 'google'}
+              onChange={(e) => updateSettings({ searchEngine: e.target.value as any })}
+              className="w-full rounded-xl border border-white/10 bg-[#160e26] px-3 py-2 text-xs text-white focus:outline-none"
+            >
+              <option value="google">Google</option>
+              <option value="duckduckgo">DuckDuckGo</option>
+              <option value="github">GitHub</option>
+              <option value="perplexity">Perplexity</option>
+            </select>
           </div>
         </div>
       </section>
