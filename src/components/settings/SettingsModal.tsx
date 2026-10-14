@@ -4,9 +4,10 @@ import { LibraryTab } from './LibraryTab';
 import { SitemapTab } from './SitemapTab';
 import { QuickLinksTab } from './QuickLinksTab';
 import { AppearanceTab } from './AppearanceTab';
+import { ProfileTab } from './ProfileTab';
 import { DataTab } from './DataTab';
 
-export type SettingsTabId = 'library' | 'sitemap' | 'quicklinks' | 'appearance' | 'data';
+export type SettingsTabId = 'library' | 'sitemap' | 'quicklinks' | 'appearance' | 'profile' | 'data';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const TABS: Array<{ id: SettingsTabId; label: string; icon: string }> = [
   { id: 'sitemap', label: 'Sitemap', icon: '🗺️' },
   { id: 'quicklinks', label: 'Quick Links', icon: '⚡' },
   { id: 'appearance', label: 'Appearance', icon: '🎨' },
+  { id: 'profile', label: 'Profile', icon: '👤' },
   { id: 'data', label: 'Data', icon: '💾' },
 ];
 
@@ -143,6 +145,7 @@ export default function SettingsModal({
                 {activeTab === 'sitemap' && <SitemapTab />}
                 {activeTab === 'quicklinks' && <QuickLinksTab />}
                 {activeTab === 'appearance' && <AppearanceTab />}
+                {activeTab === 'profile' && <ProfileTab />}
                 {activeTab === 'data' && <DataTab />}
               </div>
             </section>
