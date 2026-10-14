@@ -107,6 +107,7 @@ export const CommandPrompt = memo(function CommandPrompt() {
       {result && (
         <div
           role="status"
+          data-testid="command-result"
           className={`glass-raised absolute top-full right-0 left-0 z-40 mt-1.5 rounded-xl px-3 py-2 font-mono text-[11px] leading-snug break-words select-text ${
             result.kind === 'error' ? 'text-red-300' : result.kind === 'copy' ? 'text-amber-200' : 'text-white/85'
           }`}

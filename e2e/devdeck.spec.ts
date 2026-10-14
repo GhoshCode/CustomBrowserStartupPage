@@ -78,7 +78,7 @@ test.beforeEach(async ({ page }) => {
 // ═══════════════════════════════════════════════════════════════════
 //
 // These tests verify that when you open DevDeck, the essential
-// elements are visible: clock, greeting, date, and a quote.
+// elements are visible: clock, greeting and date.
 
 test.describe('Page Load & Header', () => {
 
@@ -135,21 +135,14 @@ test.describe('Page Load & Header', () => {
     await expect(page.getByText(currentMonth)).toBeVisible();
   });
 
-  test('shows a developer quote', async ({ page }) => {
+  test('has no quote line (v2 DateGreet is date + greeting only)', async ({ page }) => {
     // ┌─────────────────────────────────────────────────────────┐
-    // │  The quote is a <p> tag with low-opacity text.          │
-    // │  We can't predict which quote, but we know the header  │
-    // │  section should have more than just the greeting.       │
-    // │                                                        │
-    // │  We check for a common word that appears in many       │
-    // │  dev quotes: "code" or common punctuation patterns.    │
+    // │  v2 moved the date and greeting to the far right of    │
+    // │  the top bar and dropped the quote (plan §7 Q5).        │
     // └─────────────────────────────────────────────────────────┘
-
-    // The header has 3 text elements: date, greeting, and quote
-    // Let's just verify there are at least 3 visible text blocks
-    const header = page.locator('header');
-    const paragraphs = header.locator('p');
-    await expect(paragraphs).toHaveCount(2); // date line + quote
+    const dateGreet = page.locator('[data-widget="date-greet"]');
+    await expect(dateGreet.locator('p')).toHaveCount(1); // just the date line
+    await expect(dateGreet.getByRole('heading', { level: 1 })).toBeVisible();
   });
 });
 
