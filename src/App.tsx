@@ -4,6 +4,7 @@ import { CategoryGrid } from './components/CategoryGrid';
 import { TopBar } from './components/topbar/TopBar';
 import { WeatherUV } from './components/topbar/WeatherUV';
 import { CommandPrompt } from './components/topbar/CommandPrompt';
+import { TodoWidget } from './components/topbar/todo/TodoWidget';
 import { DashboardLayout, ZonePlaceholder } from './components/layout/DashboardLayout';
 import { QuickLinks } from './components/QuickLinks';
 import { CommandPalette } from './components/CommandPalette';
@@ -105,7 +106,7 @@ export default function App() {
           <TopBar
             weather={<WeatherUV />}
             command={<CommandPrompt />}
-            todo={<ZonePlaceholder zone="TODO" title="To do" note="Tasks" />}
+            todo={<TodoWidget />}
             git={<ZonePlaceholder zone="GIT" title="Git commits" note="Contribution tiles" />}
           />
         }
