@@ -112,7 +112,7 @@ export const QuickLinks = memo(function QuickLinks({ onOpenPalette }: QuickLinks
   };
 
   return (
-    <div className="w-full px-6 sm:px-10 pb-3 shrink-0">
+    <div className="w-full shrink-0">
       {/* Single outer thin-border container with raised glassmorphism & shadow */}
       <div
         ref={containerRef}
