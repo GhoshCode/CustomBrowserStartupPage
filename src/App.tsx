@@ -3,6 +3,7 @@ import { Backdrop } from './components/Backdrop';
 import { CategoryGrid } from './components/CategoryGrid';
 import { TopBar } from './components/topbar/TopBar';
 import { WeatherUV } from './components/topbar/WeatherUV';
+import { CommandPrompt } from './components/topbar/CommandPrompt';
 import { DashboardLayout, ZonePlaceholder } from './components/layout/DashboardLayout';
 import { QuickLinks } from './components/QuickLinks';
 import { CommandPalette } from './components/CommandPalette';
@@ -103,7 +104,7 @@ export default function App() {
         topBar={
           <TopBar
             weather={<WeatherUV />}
-            command={<ZonePlaceholder zone="C" title="Command" note="Terminal prompt" />}
+            command={<CommandPrompt />}
             todo={<ZonePlaceholder zone="TODO" title="To do" note="Tasks" />}
             git={<ZonePlaceholder zone="GIT" title="Git commits" note="Contribution tiles" />}
           />
