@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Seven-segment digital clock face from dseg npm package */
@@ -38,6 +38,9 @@
   --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-clock: 'DSEG7', 'Share Tech Mono', ui-monospace, monospace;
+  --font-cyber: 'Rajdhani', 'Bahnschrift', 'Arial Narrow', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font-mac: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
 
   /* Radius */
   --radius-card: 24px;
@@ -676,3 +679,30 @@ html[data-theme='light'] .ultra-thin-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 
+
+/* ---------------------------------------------------------------------------
+   v2 top bar — TIME widget faces
+   --------------------------------------------------------------------------- */
+@keyframes clock-colon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.clock-colon {
+  animation: clock-colon-pulse 2s steps(1, end) infinite;
+}
+
+/* Chromatic split on the Cyberpunk digits: red and cyan offsets. */
+.cyber-digits {
+  text-shadow: -2px 0 0 rgb(255 0 60 / 0.55), 2px 0 0 rgb(0 240 255 / 0.35),
+    0 0 18px rgb(252 238 10 / 0.25);
+}
+.cyber-face {
+  background-image: linear-gradient(rgb(252 238 10 / 0.04) 1px, transparent 1px);
+  background-size: 100% 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-colon {
+    animation: none;
+  }
+}
