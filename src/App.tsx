@@ -5,6 +5,7 @@ import { TopBar } from './components/topbar/TopBar';
 import { WeatherUV } from './components/topbar/WeatherUV';
 import { CommandPrompt } from './components/topbar/CommandPrompt';
 import { TodoWidget } from './components/topbar/todo/TodoWidget';
+import { GitWidget } from './components/topbar/GitWidget';
 import { DashboardLayout, ZonePlaceholder } from './components/layout/DashboardLayout';
 import { QuickLinks } from './components/QuickLinks';
 import { CommandPalette } from './components/CommandPalette';
@@ -107,7 +108,7 @@ export default function App() {
             weather={<WeatherUV />}
             command={<CommandPrompt />}
             todo={<TodoWidget />}
-            git={<ZonePlaceholder zone="GIT" title="Git commits" note="Contribution tiles" />}
+            git={<GitWidget />}
           />
         }
         searchRow={<QuickLinks onOpenPalette={() => setIsPaletteOpen(true)} />}
