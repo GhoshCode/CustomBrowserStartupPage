@@ -115,7 +115,7 @@ function MacFace({ parts, showSeconds }: FaceProps) {
           {parts.hours}:{parts.minutes}
         </span>
         <span className="flex flex-col text-white/60">
-          {showSeconds && <span className="text-base font-light">{parts.seconds}</span>}
+          {showSeconds && <span className="text-[1rem] font-light">{parts.seconds}</span>}
           {parts.meridiem && <span className="text-[10px] font-medium tracking-wide">{parts.meridiem}</span>}
         </span>
       </div>
