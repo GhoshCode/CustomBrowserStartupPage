@@ -5,8 +5,18 @@ import type {
   Settings,
   Site,
   Subcategory,
+  TopicChip,
 } from '../types';
 import { SCHEMA_VERSION } from '../types';
+
+export const DEFAULT_TOPICS: TopicChip[] = [
+  { id: 'topic-ai', label: 'AI', tagQuery: 'ai,llm,gpt,deepseek,anthropic,openai' },
+  { id: 'topic-frontend', label: 'Frontend', tagQuery: 'javascript,react,typescript,css,webdev' },
+  { id: 'topic-dev', label: 'Dev', tagQuery: 'dev,programming,software,coding' },
+  { id: 'topic-cloud', label: 'Cloud', tagQuery: 'aws,gcp,azure,cloud,docker,k8s' },
+  { id: 'topic-security', label: 'Security', tagQuery: 'infosec,security,cybersecurity,vulnerability' },
+  { id: 'topic-jobs', label: 'Jobs', tagQuery: 'remote,job,hiring,career' },
+];
 
 // Default appearance settings applied on first run and whenever the user
 // resets. Accent is the magenta head of the SPEC §9 magenta→violet gradient.
@@ -19,6 +29,19 @@ export const DEFAULT_SETTINGS: Settings = {
   backgroundBlur: 0,
   clock24h: false,
   greetingName: '',
+
+  // v2 Additions
+  clockStyle: 'dseg7',
+  showSeconds: true,
+  githubUsername: '',
+  githubToken: '',
+  weatherEnabled: true,
+  useGeolocation: true,
+  manualCityName: '',
+  searchEngine: 'google',
+  autoQuickLinkCount: 6,
+  recentLinkCount: 8,
+  enabledTopics: ['topic-ai', 'topic-frontend', 'topic-dev'],
 };
 
 // Built-in rotating dev quotes (SPEC §2 header — one per page load, ~20).
@@ -804,6 +827,9 @@ export function getBenchmark200State(): PersistedState {
     subcategories,
     sites,
     quickLinks,
+    todos: [],
+    processingSites: [],
+    topicChips: [...DEFAULT_TOPICS],
     settings: { ...DEFAULT_SETTINGS },
   };
 }

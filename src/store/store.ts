@@ -4,14 +4,22 @@ import type {
   Category,
   ImportResult,
   PersistedState,
+  ProcessingSite,
   QuickLink,
   ReorderKind,
   Settings,
   Site,
   Subcategory,
+  TodoItem,
+  TopicChip,
 } from '../types';
 import { SCHEMA_VERSION } from '../types';
-import { DEFAULT_SETTINGS, getSeedState, getBenchmark200State } from './seed';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_TOPICS,
+  getSeedState,
+  getBenchmark200State,
+} from './seed';
 
 export { SCHEMA_VERSION };
 
@@ -23,19 +31,40 @@ const toArray = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 export function normalizePersisted(input: unknown): PersistedState {
   const obj = asRecord(input);
   const settings = asRecord(obj.settings) as Partial<Settings>;
+  const now = Date.now();
   return {
     schemaVersion: SCHEMA_VERSION,
-    categories: toArray<Category>(obj.categories),
+    categories: toArray<Category>(obj.categories).map((c) => ({
+      ...c,
+      isPinned: Boolean(c.isPinned),
+    })),
     subcategories: toArray<Subcategory>(obj.subcategories),
     sites: toArray<Site>(obj.sites),
     quickLinks: toArray<QuickLink>(obj.quickLinks),
+    todos: toArray<TodoItem>(obj.todos).map((t) => ({
+      ...t,
+      completed: Boolean(t.completed),
+      archived: Boolean(t.archived),
+      isOverdue: Boolean(t.dueTimestamp && !t.completed && now > t.dueTimestamp),
+    })),
+    processingSites: toArray<ProcessingSite>(obj.processingSites),
+    topicChips:
+      Array.isArray(obj.topicChips) && obj.topicChips.length > 0
+        ? (obj.topicChips as TopicChip[])
+        : [...DEFAULT_TOPICS],
     settings: { ...DEFAULT_SETTINGS, ...settings },
   };
 }
 
 export function migrate(persisted: unknown, fromVersion: number): PersistedState {
-  void fromVersion;
-  return normalizePersisted(persisted);
+  const normalized = normalizePersisted(persisted);
+  if (fromVersion < 2) {
+    normalized.categories = normalized.categories.map((c) => ({
+      ...c,
+      isPinned: c.isPinned ?? false,
+    }));
+  }
+  return normalized;
 }
 
 const STORAGE_KEY = 'devdeck';
@@ -49,6 +78,13 @@ const newId = (): string =>
 const nextOrder = (items: ReadonlyArray<{ order: number }>): number =>
   items.reduce((max, i) => (i.order > max ? i.order : max), -1) + 1;
 
+const computeDueTimestamp = (dueDate?: string, dueTime?: string): number | undefined => {
+  if (!dueDate) return undefined;
+  const timeStr = dueTime || '23:59';
+  const ts = new Date(`${dueDate}T${timeStr}:00`).getTime();
+  return isNaN(ts) ? undefined : ts;
+};
+
 // ---- Action input shapes (ids/order/derived fields are generated) ----------
 
 export type NewCategory = { name: string; color: string };
@@ -61,31 +97,68 @@ export type NewSite = {
   primary?: boolean;
 };
 export type NewQuickLink = { name: string; url: string };
+export type NewTodo = {
+  text: string;
+  dueDate?: string;
+  dueTime?: string;
+  priority?: 'low' | 'normal' | 'urgent';
+};
+export type NewProcessingSite = {
+  name: string;
+  url: string;
+  icon?: string;
+  notes?: string;
+  schedule: ProcessingSite['schedule'];
+};
 
 export interface StoreActions {
-  // Category CRUD
+  // Category CRUD & Pinning
   addCategory: (input: NewCategory) => Category;
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
   deleteCategory: (id: string) => void;
+  togglePinCategory: (id: string) => void;
+
   // Subcategory CRUD
   addSubcategory: (input: NewSubcategory) => Subcategory;
   updateSubcategory: (id: string, patch: Partial<Omit<Subcategory, 'id'>>) => void;
   deleteSubcategory: (id: string) => void;
+
   // Site CRUD
   addSite: (input: NewSite) => Site;
   updateSite: (id: string, patch: Partial<Omit<Site, 'id'>>) => void;
   deleteSite: (id: string) => void;
+
   // Quick link CRUD
   addQuickLink: (input: NewQuickLink) => QuickLink;
   updateQuickLink: (id: string, patch: Partial<Omit<QuickLink, 'id'>>) => void;
   deleteQuickLink: (id: string) => void;
+
+  // To-Do CRUD
+  addTodo: (input: NewTodo) => TodoItem;
+  updateTodo: (id: string, patch: Partial<Omit<TodoItem, 'id'>>) => void;
+  toggleTodo: (id: string) => void;
+  archiveTodo: (id: string) => void;
+  deleteTodo: (id: string) => void;
+  clearArchivedTodos: () => void;
+
+  // Processing Sites CRUD
+  addProcessingSite: (input: NewProcessingSite) => ProcessingSite;
+  updateProcessingSite: (id: string, patch: Partial<Omit<ProcessingSite, 'id'>>) => void;
+  deleteProcessingSite: (id: string) => void;
+
+  // Topic Chips
+  setTopicChips: (chips: TopicChip[]) => void;
+  toggleTopicChip: (chipId: string) => void;
+
   // Movement / ordering / flags
   moveSite: (siteId: string, categoryId: string, subcategoryId: string | null) => void;
   reorder: (kind: ReorderKind, ids: string[]) => void;
   togglePrimary: (siteId: string) => void;
   recordVisit: (siteId: string) => void;
+
   // Settings
   updateSettings: (patch: Partial<Settings>) => void;
+
   // Data
   importState: (json: string) => ImportResult;
   exportState: () => string;
@@ -102,6 +175,9 @@ const pickPersisted = (s: Store): PersistedState => ({
   subcategories: s.subcategories,
   sites: s.sites,
   quickLinks: s.quickLinks,
+  todos: s.todos,
+  processingSites: s.processingSites,
+  topicChips: s.topicChips,
   settings: s.settings,
 });
 
@@ -144,6 +220,30 @@ export const useStore = create<Store>()(
           subcategories: s.subcategories.filter((sc) => sc.categoryId !== id),
           sites: s.sites.filter((site) => site.categoryId !== id),
         })),
+      togglePinCategory: (id) =>
+        set((s) => {
+          const target = s.categories.find((c) => c.id === id);
+          if (!target) return {};
+          const willPin = !target.isPinned;
+
+          if (willPin) {
+            const others = s.categories
+              .filter((c) => c.id !== id)
+              .sort((a, b) => a.order - b.order);
+            return {
+              categories: [
+                { ...target, isPinned: true, order: 0 },
+                ...others.map((c, i) => ({ ...c, isPinned: false, order: i + 1 })),
+              ],
+            };
+          } else {
+            return {
+              categories: s.categories.map((c) =>
+                c.id === id ? { ...c, isPinned: false } : c,
+              ),
+            };
+          }
+        }),
 
       // ---- Subcategories -------------------------------------------------
       addSubcategory: ({ name, categoryId }) => {
@@ -228,6 +328,103 @@ export const useStore = create<Store>()(
       deleteQuickLink: (id) =>
         set((s) => ({ quickLinks: s.quickLinks.filter((q) => q.id !== id) })),
 
+      // ---- To-Dos --------------------------------------------------------
+      addTodo: ({ text, dueDate, dueTime, priority = 'normal' }) => {
+        const dueTimestamp = computeDueTimestamp(dueDate, dueTime);
+        const now = Date.now();
+        const todo: TodoItem = {
+          id: newId(),
+          text,
+          dueDate,
+          dueTime,
+          dueTimestamp,
+          isOverdue: Boolean(dueTimestamp && now > dueTimestamp),
+          completed: false,
+          completedAt: null,
+          archived: false,
+          priority,
+          order: nextOrder(get().todos),
+        };
+        set((s) => ({ todos: [...s.todos, todo] }));
+        return todo;
+      },
+      updateTodo: (id, patch) =>
+        set((s) => ({
+          todos: s.todos.map((t) => {
+            if (t.id !== id) return t;
+            const updated = { ...t, ...patch };
+            if (patch.dueDate !== undefined || patch.dueTime !== undefined) {
+              updated.dueTimestamp = computeDueTimestamp(updated.dueDate, updated.dueTime);
+            }
+            if (updated.dueTimestamp) {
+              updated.isOverdue = !updated.completed && Date.now() > updated.dueTimestamp;
+            } else {
+              updated.isOverdue = false;
+            }
+            return updated;
+          }),
+        })),
+      toggleTodo: (id) =>
+        set((s) => ({
+          todos: s.todos.map((t) => {
+            if (t.id !== id) return t;
+            const nextCompleted = !t.completed;
+            return {
+              ...t,
+              completed: nextCompleted,
+              completedAt: nextCompleted ? Date.now() : null,
+              isOverdue: !nextCompleted && Boolean(t.dueTimestamp && Date.now() > t.dueTimestamp),
+            };
+          }),
+        })),
+      archiveTodo: (id) =>
+        set((s) => ({
+          todos: s.todos.map((t) => (t.id === id ? { ...t, archived: true } : t)),
+        })),
+      deleteTodo: (id) =>
+        set((s) => ({ todos: s.todos.filter((t) => t.id !== id) })),
+      clearArchivedTodos: () =>
+        set((s) => ({ todos: s.todos.filter((t) => !t.archived) })),
+
+      // ---- Processing Sites ----------------------------------------------
+      addProcessingSite: ({ name, url, icon, notes, schedule }) => {
+        const site: ProcessingSite = {
+          id: newId(),
+          name,
+          url,
+          icon,
+          notes,
+          schedule,
+          order: nextOrder(get().processingSites),
+        };
+        set((s) => ({ processingSites: [...s.processingSites, site] }));
+        return site;
+      },
+      updateProcessingSite: (id, patch) =>
+        set((s) => ({
+          processingSites: s.processingSites.map((ps) =>
+            ps.id === id ? { ...ps, ...patch } : ps,
+          ),
+        })),
+      deleteProcessingSite: (id) =>
+        set((s) => ({
+          processingSites: s.processingSites.filter((ps) => ps.id !== id),
+        })),
+
+      // ---- Topic Chips ---------------------------------------------------
+      setTopicChips: (chips) => set(() => ({ topicChips: chips })),
+      toggleTopicChip: (chipId) =>
+        set((s) => {
+          const current = s.settings.enabledTopics ?? [];
+          const exists = current.includes(chipId);
+          const enabledTopics = exists
+            ? current.filter((id) => id !== chipId)
+            : [...current, chipId];
+          return {
+            settings: { ...s.settings, enabledTopics },
+          };
+        }),
+
       // ---- Movement / ordering / flags -----------------------------------
       // Move a site to a new category/subcategory, appended at the tail of the
       // destination group so it lands predictably.
@@ -255,6 +452,10 @@ export const useStore = create<Store>()(
               return { sites: applyOrder(s.sites, ids) };
             case 'quickLink':
               return { quickLinks: applyOrder(s.quickLinks, ids) };
+            case 'todo':
+              return { todos: applyOrder(s.todos, ids) };
+            case 'processingSite':
+              return { processingSites: applyOrder(s.processingSites, ids) };
             default:
               return {};
           }
@@ -303,6 +504,8 @@ export const useStore = create<Store>()(
             subcategories: next.subcategories.length,
             sites: next.sites.length,
             quickLinks: next.quickLinks.length,
+            todos: next.todos.length,
+            processingSites: next.processingSites.length,
           },
         };
       },
@@ -334,7 +537,6 @@ export const useStore = create<Store>()(
         const obj = persisted as Record<string, unknown>;
         return {
           ...current,
-
           ...p,
           categories:
             Array.isArray(obj.categories) && obj.categories.length > 0
@@ -352,6 +554,14 @@ export const useStore = create<Store>()(
             Array.isArray(obj.quickLinks) && obj.quickLinks.length > 0
               ? p.quickLinks
               : current.quickLinks,
+          todos: Array.isArray(obj.todos) ? p.todos : current.todos,
+          processingSites: Array.isArray(obj.processingSites)
+            ? p.processingSites
+            : current.processingSites,
+          topicChips:
+            Array.isArray(obj.topicChips) && obj.topicChips.length > 0
+              ? p.topicChips
+              : current.topicChips,
           settings: { ...current.settings, ...p.settings },
         };
       },

@@ -181,6 +181,8 @@ describe('export / import roundtrip', () => {
         subcategories: 2,
         sites: 4,
         quickLinks: 2,
+        todos: 0,
+        processingSites: 0,
       });
     }
     expect(st().sites.map((s) => s.id).sort()).toEqual(['a', 'b', 'c', 'd']);
@@ -197,12 +199,126 @@ describe('export / import roundtrip', () => {
   });
 });
 
+describe('category single-pin behavior', () => {
+  beforeEach(() => {
+    st().resetToSeed();
+  });
+
+  test('pinning a category gives it order 0 and unpins all other categories', () => {
+    const cats = st().categories;
+    const catToPin = cats[2];
+    st().togglePinCategory(catToPin.id);
+
+    const updated = st().categories;
+    const pinned = updated.find((c) => c.id === catToPin.id);
+    expect(pinned?.isPinned).toBe(true);
+    expect(pinned?.order).toBe(0);
+
+    const otherPinned = updated.filter((c) => c.id !== catToPin.id && c.isPinned);
+    expect(otherPinned).toHaveLength(0);
+
+    // Pinning another category unpins the previous one
+    const nextCat = updated[3];
+    st().togglePinCategory(nextCat.id);
+
+    const updated2 = st().categories;
+    expect(updated2.find((c) => c.id === catToPin.id)?.isPinned).toBe(false);
+    expect(updated2.find((c) => c.id === nextCat.id)?.isPinned).toBe(true);
+    expect(updated2.find((c) => c.id === nextCat.id)?.order).toBe(0);
+  });
+
+  test('unpinning a pinned category toggles isPinned to false', () => {
+    const cat = st().categories[0];
+    st().togglePinCategory(cat.id);
+    expect(st().categories.find((c) => c.id === cat.id)?.isPinned).toBe(true);
+
+    st().togglePinCategory(cat.id);
+    expect(st().categories.find((c) => c.id === cat.id)?.isPinned).toBe(false);
+  });
+});
+
+describe('to-dos CRUD and overdue logic', () => {
+  beforeEach(() => {
+    st().resetToSeed();
+  });
+
+  test('adds and toggles a to-do item', () => {
+    const item = st().addTodo({ text: 'Review PR #42', priority: 'urgent' });
+    expect(item.text).toBe('Review PR #42');
+    expect(item.completed).toBe(false);
+    expect(item.archived).toBe(false);
+    expect(item.priority).toBe('urgent');
+
+    st().toggleTodo(item.id);
+    const toggled = st().todos.find((t) => t.id === item.id);
+    expect(toggled?.completed).toBe(true);
+    expect(toggled?.completedAt).toBeTypeOf('number');
+
+    st().archiveTodo(item.id);
+    expect(st().todos.find((t) => t.id === item.id)?.archived).toBe(true);
+  });
+
+  test('computes overdue status correctly', () => {
+    // Past date
+    const overdueItem = st().addTodo({
+      text: 'Submit patch',
+      dueDate: '2020-01-01',
+      dueTime: '12:00',
+    });
+    expect(overdueItem.isOverdue).toBe(true);
+
+    // Future date
+    const futureItem = st().addTodo({
+      text: 'Future release',
+      dueDate: '2099-01-01',
+      dueTime: '12:00',
+    });
+    expect(futureItem.isOverdue).toBe(false);
+  });
+});
+
+describe('processing sites and topic chips', () => {
+  beforeEach(() => {
+    st().resetToSeed();
+  });
+
+  test('adds and deletes a processing site', () => {
+    const ps = st().addProcessingSite({
+      name: 'Batch Worker',
+      url: 'https://worker.internal/batch',
+      schedule: {
+        enabled: true,
+        frequency: 'daily',
+        daysOfWeek: [1, 2, 3, 4, 5],
+        timeOfDay: '09:00',
+      },
+    });
+    expect(st().processingSites.find((p) => p.id === ps.id)).toBeDefined();
+
+    st().deleteProcessingSite(ps.id);
+    expect(st().processingSites.find((p) => p.id === ps.id)).toBeUndefined();
+  });
+
+  test('toggles topic chip in settings.enabledTopics', () => {
+    const topicId = 'topic-cloud';
+    const initialEnabled = st().settings.enabledTopics.includes(topicId);
+
+    st().toggleTopicChip(topicId);
+    expect(st().settings.enabledTopics.includes(topicId)).toBe(!initialEnabled);
+
+    st().toggleTopicChip(topicId);
+    expect(st().settings.enabledTopics.includes(topicId)).toBe(initialEnabled);
+  });
+});
+
 describe('resetToSeed', () => {
   test('replaces state with the seed deck', () => {
     st().resetToSeed();
     // seed has 10+ categories (13 total) and 200+ sites (336 total)
     expect(st().categories.length).toBeGreaterThanOrEqual(10);
     expect(st().sites.length).toBeGreaterThanOrEqual(200);
+    expect(st().topicChips.length).toBeGreaterThanOrEqual(5);
   });
 });
+
 
