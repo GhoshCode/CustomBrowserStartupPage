@@ -1,11 +1,22 @@
 {
   "manifest_version": 3,
   "name": "DevDeck",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Custom browser landing page and new tab for developers",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
+  "permissions": ["alarms", "notifications", "storage"],
+  "host_permissions": [
+    "https://api.open-meteo.com/*",
+    "https://geocoding-api.open-meteo.com/*",
+    "https://api.github.com/*",
+    "https://github-contributions-api.jogruber.de/*",
+    "https://hn.algolia.com/*",
+    "https://dev.to/*",
+    "https://remoteok.com/*",
+    "https://suggestqueries.google.com/*"
+  ],
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
