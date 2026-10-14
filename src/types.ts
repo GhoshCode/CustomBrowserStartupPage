@@ -36,6 +36,9 @@ export interface QuickLink {
 
 export type ThemeMode = 'dark' | 'light';
 
+// TIME widget face — IMPLEMENTATION_PLAN §7 Q9 / spec §3.1.
+export type ClockStyle = 'dseg7' | 'cyberpunk' | 'macos';
+
 export interface Settings {
   accentColor: string;
   themeMode?: ThemeMode; // 'dark' | 'light'
@@ -45,10 +48,76 @@ export interface Settings {
   backgroundBlur: number; // px
   clock24h: boolean;
   greetingName: string; // used in greetings, may be empty
+  // ---- v2 ----
+  clockStyle: ClockStyle;
+  showSeconds: boolean;
+  githubUsername: string; // empty = Git widget shows its setup prompt
+  githubToken: string; // optional PAT; never exported
+  autoQuickLinkCount: number; // 2–12 auto-picked links after the fixed 4
+  recentLinkCount: number; // chips in the Recent (F) strip
+  weatherEnabled: boolean;
+  useGeolocation: boolean;
+  manualCity: string; // used when geolocation is off or denied
 }
 
+// A to-do carries at most one due moment: a date, optionally with a time.
+// Completing a to-do archives it (bullet click) — there is no "done but visible".
+export interface Todo {
+  id: string;
+  text: string;
+  dueDate: string | null; // 'YYYY-MM-DD'
+  dueTime: string | null; // 'HH:mm' — only meaningful with dueDate
+  createdAt: number; // epoch ms
+  order: number;
+  archivedAt: number | null; // epoch ms; non-null = completed + archived
+}
 
-export const SCHEMA_VERSION = 1;
+export type ScheduleFrequency = 'minute' | 'hourly' | 'daily';
+
+// Cron-style reminder window for a Currently Processing item (Phase 4).
+export interface Schedule {
+  enabled: boolean;
+  frequency: ScheduleFrequency;
+  daysOfWeek: number[]; // 0 = Sun … 6 = Sat
+  timeOfDay: string | null; // 'HH:mm' for daily reminders
+  from: string; // 'YYYY-MM'
+  to: string; // 'YYYY-MM'
+}
+
+export interface ProcessingItem {
+  id: string;
+  name: string;
+  url: string;
+  siteId: string | null; // set when picked from the library
+  section: string; // free-form group label inside panel D
+  order: number;
+  schedule: Schedule;
+}
+
+export interface Topic {
+  id: string;
+  label: string; // shown as '#label'
+  query: string; // comma-separated keywords matched against feed titles/tags
+}
+
+export type FeedKind = 'hn' | 'devto' | 'remoteok' | 'rss';
+export type FeedCategory = 'news' | 'jobs';
+
+export interface FeedSource {
+  id: string;
+  name: string;
+  kind: FeedKind;
+  url: string; // endpoint; for built-ins it documents what is fetched
+  category: FeedCategory;
+  enabled: boolean;
+}
+
+export interface FeedsConfig {
+  topics: Topic[];
+  sources: FeedSource[];
+}
+
+export const SCHEMA_VERSION = 2;
 
 export interface PersistedState {
   schemaVersion: number; // starts at 1; bump with every schema change
@@ -57,10 +126,18 @@ export interface PersistedState {
   sites: Site[];
   quickLinks: QuickLink[];
   settings: Settings;
+  // ---- v2 ----
+  // Exactly one category may be pinned (§7 Q6). Holding a single id instead of
+  // a per-category flag makes "more than one pinned" unrepresentable; the
+  // card's `order` is untouched, so unpinning restores its position for free.
+  pinnedCategoryId: string | null;
+  todos: Todo[];
+  processing: ProcessingItem[];
+  feeds: FeedsConfig;
 }
 
 // Discriminates which collection a `reorder` call targets.
-export type ReorderKind = 'category' | 'subcategory' | 'site' | 'quickLink';
+export type ReorderKind = 'category' | 'subcategory' | 'site' | 'quickLink' | 'todo' | 'processing';
 
 // Result of importing a state blob — either the applied summary or an error.
 export interface ImportSummary {
@@ -68,6 +145,8 @@ export interface ImportSummary {
   subcategories: number;
   sites: number;
   quickLinks: number;
+  todos: number;
+  processing: number;
 }
 
 export type ImportResult =

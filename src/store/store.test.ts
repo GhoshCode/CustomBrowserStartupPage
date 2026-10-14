@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import type { Site } from '../types';
 import { useStore, migrate, normalizePersisted, SCHEMA_VERSION } from './store';
-import { DEFAULT_SETTINGS } from './seed';
+import { DEFAULT_FEEDS, DEFAULT_SETTINGS } from './seed';
 
 const st = () => useStore.getState();
 const site = (over: Partial<Site> & Pick<Site, 'id'>): Site => ({
@@ -41,6 +41,10 @@ beforeEach(() => {
       { id: 'q2', name: 'Two', url: 'https://two.com', order: 1 },
     ],
     settings: { ...DEFAULT_SETTINGS },
+    pinnedCategoryId: null,
+    todos: [],
+    processing: [],
+    feeds: structuredClone(DEFAULT_FEEDS),
   });
 });
 
@@ -181,6 +185,8 @@ describe('export / import roundtrip', () => {
         subcategories: 2,
         sites: 4,
         quickLinks: 2,
+        todos: 0,
+        processing: 0,
       });
     }
     expect(st().sites.map((s) => s.id).sort()).toEqual(['a', 'b', 'c', 'd']);
@@ -206,3 +212,130 @@ describe('resetToSeed', () => {
   });
 });
 
+
+describe('schema v2 migration', () => {
+  const v1Blob = {
+    schemaVersion: 1,
+    categories: [{ id: 'x', name: 'X', color: '#fff', order: 0 }],
+    subcategories: [],
+    sites: [],
+    quickLinks: [],
+    settings: { accentColor: '#123456', clock24h: true, greetingName: 'Ada' },
+  };
+
+  test('v1 data survives untouched and every v2 field gets its default', () => {
+    const out = migrate(v1Blob, 1);
+    expect(out.schemaVersion).toBe(2);
+    expect(out.categories).toEqual(v1Blob.categories);
+    expect(out.settings.accentColor).toBe('#123456');
+    expect(out.settings.greetingName).toBe('Ada');
+    expect(out.settings.clockStyle).toBe('dseg7');
+    expect(out.settings.autoQuickLinkCount).toBe(6);
+    expect(out.pinnedCategoryId).toBeNull();
+    expect(out.todos).toEqual([]);
+    expect(out.processing).toEqual([]);
+    expect(out.feeds).toEqual(DEFAULT_FEEDS);
+  });
+
+  test('invalid v2 settings are coerced back into range', () => {
+    const out = migrate(
+      { ...v1Blob, settings: { clockStyle: 'sundial', autoQuickLinkCount: 99 } },
+      2,
+    );
+    expect(out.settings.clockStyle).toBe('dseg7');
+    expect(out.settings.autoQuickLinkCount).toBe(12);
+  });
+
+  test('drops a pin that points at a missing category', () => {
+    expect(migrate({ ...v1Blob, pinnedCategoryId: 'ghost' }, 2).pinnedCategoryId).toBeNull();
+    expect(migrate({ ...v1Blob, pinnedCategoryId: 'x' }, 2).pinnedCategoryId).toBe('x');
+  });
+
+  test('a time without a date is discarded on load', () => {
+    const out = migrate(
+      { ...v1Blob, todos: [{ id: 't', text: 'T', dueDate: null, dueTime: '10:00' }, { bad: 1 }] },
+      2,
+    );
+    expect(out.todos).toHaveLength(1);
+    expect(out.todos[0].dueTime).toBeNull();
+    expect(out.todos[0].archivedAt).toBeNull();
+  });
+});
+
+describe('single-card pinning', () => {
+  test('pinning a second card replaces the first; order is untouched', () => {
+    st().pinCategory('c1');
+    st().pinCategory('c2');
+    expect(st().pinnedCategoryId).toBe('c2');
+    expect(st().categories.map((c) => c.order)).toEqual([0, 1]);
+    st().pinCategory(null);
+    expect(st().pinnedCategoryId).toBeNull();
+  });
+
+  test('ignores unknown ids and clears the pin when its category is deleted', () => {
+    st().pinCategory('nope');
+    expect(st().pinnedCategoryId).toBeNull();
+    st().pinCategory('c1');
+    st().deleteCategory('c1');
+    expect(st().pinnedCategoryId).toBeNull();
+  });
+});
+
+describe('to-dos', () => {
+  test('add → complete archives → restore returns it to the tail', () => {
+    const a = st().addTodo({ text: 'a' });
+    const b = st().addTodo({ text: 'b', dueDate: '2026-10-20', dueTime: '18:00' });
+    expect(b.dueTime).toBe('18:00');
+    st().completeTodo(a.id);
+    expect(st().todos.find((t) => t.id === a.id)!.archivedAt).not.toBeNull();
+    st().restoreTodo(a.id);
+    const restored = st().todos.find((t) => t.id === a.id)!;
+    expect(restored.archivedAt).toBeNull();
+    expect(restored.order).toBeGreaterThan(b.order);
+  });
+
+  test('clearing the date also clears the time', () => {
+    const t = st().addTodo({ text: 't', dueDate: '2026-10-20', dueTime: '09:00' });
+    st().updateTodo(t.id, { dueDate: null });
+    expect(st().todos[0].dueTime).toBeNull();
+    expect(st().addTodo({ text: 'u', dueTime: '09:00' }).dueTime).toBeNull();
+  });
+
+  test('purge removes only archived items', () => {
+    const a = st().addTodo({ text: 'a' });
+    st().addTodo({ text: 'b' });
+    st().completeTodo(a.id);
+    st().purgeArchivedTodos();
+    expect(st().todos.map((t) => t.text)).toEqual(['b']);
+  });
+});
+
+describe('v2 export / import', () => {
+  test('export never contains the GitHub token', () => {
+    st().updateSettings({ githubToken: 'ghp_secret' });
+    expect(st().exportState()).not.toContain('ghp_secret');
+  });
+
+  test('importing a v1 backup keeps current to-dos and the local token', () => {
+    st().addTodo({ text: 'keep me' });
+    st().updateSettings({ githubToken: 'ghp_local' });
+    const v1 = JSON.stringify({
+      schemaVersion: 1,
+      categories: [{ id: 'x', name: 'X', color: '#fff', order: 0 }],
+      sites: [],
+      settings: {},
+    });
+    expect(st().importState(v1).ok).toBe(true);
+    expect(st().todos.map((t) => t.text)).toEqual(['keep me']);
+    expect(st().settings.githubToken).toBe('ghp_local');
+  });
+
+  test('reseedLibrary replaces bookmarks but keeps to-dos and settings', () => {
+    st().addTodo({ text: 'survivor' });
+    st().updateSettings({ greetingName: 'Ada' });
+    st().reseedLibrary();
+    expect(st().categories.length).toBeGreaterThanOrEqual(10);
+    expect(st().todos.map((t) => t.text)).toEqual(['survivor']);
+    expect(st().settings.greetingName).toBe('Ada');
+  });
+});

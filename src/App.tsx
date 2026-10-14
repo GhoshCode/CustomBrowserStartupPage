@@ -36,7 +36,7 @@ export default function App() {
   useEffect(() => {
     const st = useStore.getState();
     if (st.categories.length < 10) {
-      st.resetToSeed();
+      st.reseedLibrary();
     }
   }, []);
 

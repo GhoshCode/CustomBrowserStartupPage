@@ -2,16 +2,27 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   Category,
+  ClockStyle,
+  FeedsConfig,
   ImportResult,
   PersistedState,
+  ProcessingItem,
   QuickLink,
   ReorderKind,
+  Schedule,
   Settings,
   Site,
   Subcategory,
+  Todo,
+  Topic,
 } from '../types';
 import { SCHEMA_VERSION } from '../types';
-import { DEFAULT_SETTINGS, getSeedState, getBenchmark200State } from './seed';
+import {
+  DEFAULT_FEEDS,
+  DEFAULT_SETTINGS,
+  getSeedState,
+  getBenchmark200State,
+} from './seed';
 
 export { SCHEMA_VERSION };
 
@@ -20,19 +31,100 @@ const asRecord = (v: unknown): Record<string, unknown> =>
 
 const toArray = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
-export function normalizePersisted(input: unknown): PersistedState {
-  const obj = asRecord(input);
-  const settings = asRecord(obj.settings) as Partial<Settings>;
+const CLOCK_STYLES: readonly ClockStyle[] = ['dseg7', 'cyberpunk', 'macos'];
+
+const clamp = (n: unknown, min: number, max: number, fallback: number): number =>
+  typeof n === 'number' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
+
+// Settings arrive from localStorage or an imported file, so every v2 field is
+// re-validated rather than trusted; unknown values fall back to defaults.
+function normalizeSettings(raw: unknown): Settings {
+  const s = { ...DEFAULT_SETTINGS, ...(asRecord(raw) as Partial<Settings>) };
   return {
-    schemaVersion: SCHEMA_VERSION,
-    categories: toArray<Category>(obj.categories),
-    subcategories: toArray<Subcategory>(obj.subcategories),
-    sites: toArray<Site>(obj.sites),
-    quickLinks: toArray<QuickLink>(obj.quickLinks),
-    settings: { ...DEFAULT_SETTINGS, ...settings },
+    ...s,
+    clockStyle: CLOCK_STYLES.includes(s.clockStyle) ? s.clockStyle : DEFAULT_SETTINGS.clockStyle,
+    autoQuickLinkCount: clamp(s.autoQuickLinkCount, 2, 12, DEFAULT_SETTINGS.autoQuickLinkCount),
+    recentLinkCount: clamp(s.recentLinkCount, 0, 24, DEFAULT_SETTINGS.recentLinkCount),
+    githubUsername: typeof s.githubUsername === 'string' ? s.githubUsername.trim() : '',
+    githubToken: typeof s.githubToken === 'string' ? s.githubToken : '',
+    manualCity: typeof s.manualCity === 'string' ? s.manualCity : '',
   };
 }
 
+const normalizeTodo = (raw: unknown, i: number): Todo | null => {
+  const t = asRecord(raw);
+  if (typeof t.id !== 'string' || typeof t.text !== 'string') return null;
+  const dueDate = typeof t.dueDate === 'string' && t.dueDate ? t.dueDate : null;
+  return {
+    id: t.id,
+    text: t.text,
+    dueDate,
+    // A time without a date has no meaning in the single-attachment model.
+    dueTime: dueDate && typeof t.dueTime === 'string' && t.dueTime ? t.dueTime : null,
+    createdAt: typeof t.createdAt === 'number' ? t.createdAt : Date.now(),
+    order: typeof t.order === 'number' ? t.order : i,
+    archivedAt: typeof t.archivedAt === 'number' ? t.archivedAt : null,
+  };
+};
+
+const thisMonth = (): string => new Date().toISOString().slice(0, 7);
+
+export const defaultSchedule = (): Schedule => ({
+  enabled: false,
+  frequency: 'daily',
+  daysOfWeek: [1, 2, 3, 4, 5],
+  timeOfDay: '09:00',
+  from: thisMonth(),
+  to: thisMonth(),
+});
+
+const normalizeProcessing = (raw: unknown, i: number): ProcessingItem | null => {
+  const p = asRecord(raw);
+  if (typeof p.id !== 'string' || typeof p.url !== 'string') return null;
+  return {
+    id: p.id,
+    name: typeof p.name === 'string' ? p.name : p.url,
+    url: p.url,
+    siteId: typeof p.siteId === 'string' ? p.siteId : null,
+    section: typeof p.section === 'string' ? p.section : 'Active',
+    order: typeof p.order === 'number' ? p.order : i,
+    schedule: { ...defaultSchedule(), ...(asRecord(p.schedule) as Partial<Schedule>) },
+  };
+};
+
+function normalizeFeeds(raw: unknown): FeedsConfig {
+  const f = asRecord(raw);
+  return {
+    topics: Array.isArray(f.topics) ? (f.topics as Topic[]) : structuredClone(DEFAULT_FEEDS.topics),
+    sources: Array.isArray(f.sources)
+      ? (f.sources as FeedsConfig['sources'])
+      : structuredClone(DEFAULT_FEEDS.sources),
+  };
+}
+
+const notNull = <T>(x: T | null): x is T => x !== null;
+
+export function normalizePersisted(input: unknown): PersistedState {
+  const obj = asRecord(input);
+  const categories = toArray<Category>(obj.categories);
+  const pinned = typeof obj.pinnedCategoryId === 'string' ? obj.pinnedCategoryId : null;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    categories,
+    subcategories: toArray<Subcategory>(obj.subcategories),
+    sites: toArray<Site>(obj.sites),
+    quickLinks: toArray<QuickLink>(obj.quickLinks),
+    settings: normalizeSettings(obj.settings),
+    // A pin pointing at a deleted category is dropped, never left dangling.
+    pinnedCategoryId: pinned && categories.some((c) => c.id === pinned) ? pinned : null,
+    todos: toArray<unknown>(obj.todos).map(normalizeTodo).filter(notNull),
+    processing: toArray<unknown>(obj.processing).map(normalizeProcessing).filter(notNull),
+    feeds: normalizeFeeds(obj.feeds),
+  };
+}
+
+// v1 → v2 is purely additive: normalizePersisted fills every new collection
+// and setting with its default, so no v1 data is rewritten or dropped.
 export function migrate(persisted: unknown, fromVersion: number): PersistedState {
   void fromVersion;
   return normalizePersisted(persisted);
@@ -61,6 +153,15 @@ export type NewSite = {
   primary?: boolean;
 };
 export type NewQuickLink = { name: string; url: string };
+export type NewTodo = { text: string; dueDate?: string | null; dueTime?: string | null };
+export type NewProcessingItem = {
+  name: string;
+  url: string;
+  siteId?: string | null;
+  section?: string;
+  schedule?: Partial<Schedule>;
+};
+export type NewTopic = { label: string; query: string };
 
 export interface StoreActions {
   // Category CRUD
@@ -86,10 +187,29 @@ export interface StoreActions {
   recordVisit: (siteId: string) => void;
   // Settings
   updateSettings: (patch: Partial<Settings>) => void;
+  // Single-card pin (§7 Q6): pinning replaces any previous pin; null unpins.
+  pinCategory: (id: string | null) => void;
+  // To-dos
+  addTodo: (input: NewTodo) => Todo;
+  updateTodo: (id: string, patch: Partial<Pick<Todo, 'text' | 'dueDate' | 'dueTime'>>) => void;
+  completeTodo: (id: string) => void; // bullet click → archived
+  restoreTodo: (id: string) => void;
+  deleteTodo: (id: string) => void;
+  purgeArchivedTodos: () => void;
+  // Currently Processing (D)
+  addProcessingItem: (input: NewProcessingItem) => ProcessingItem;
+  updateProcessingItem: (id: string, patch: Partial<Omit<ProcessingItem, 'id'>>) => void;
+  deleteProcessingItem: (id: string) => void;
+  // Feed topics (J)
+  addTopic: (input: NewTopic) => Topic;
+  deleteTopic: (id: string) => void;
   // Data
   importState: (json: string) => ImportResult;
   exportState: () => string;
   resetToSeed: () => void;
+  // Replaces only the bookmark library with the seed, keeping settings, to-dos,
+  // processing items and feeds — used by the "fewer than 10 categories" upgrade.
+  reseedLibrary: () => void;
   loadBenchmark200: () => void;
 }
 
@@ -103,7 +223,17 @@ const pickPersisted = (s: Store): PersistedState => ({
   sites: s.sites,
   quickLinks: s.quickLinks,
   settings: s.settings,
+  pinnedCategoryId: s.pinnedCategoryId,
+  todos: s.todos,
+  processing: s.processing,
+  feeds: s.feeds,
 });
+
+// The seed's bookmark library only — no settings and no v2 collections.
+const seedLibrary = () => {
+  const { categories, subcategories, sites, quickLinks } = getSeedState();
+  return { categories, subcategories, sites, quickLinks, pinnedCategoryId: null };
+};
 
 // Re-index `order` (0..n-1) for the items named in `ids`, preserving that
 // order; items not named are left untouched.
@@ -143,6 +273,11 @@ export const useStore = create<Store>()(
           categories: s.categories.filter((c) => c.id !== id),
           subcategories: s.subcategories.filter((sc) => sc.categoryId !== id),
           sites: s.sites.filter((site) => site.categoryId !== id),
+          pinnedCategoryId: s.pinnedCategoryId === id ? null : s.pinnedCategoryId,
+        })),
+      pinCategory: (id) =>
+        set((s) => ({
+          pinnedCategoryId: id && s.categories.some((c) => c.id === id) ? id : null,
         })),
 
       // ---- Subcategories -------------------------------------------------
@@ -255,6 +390,10 @@ export const useStore = create<Store>()(
               return { sites: applyOrder(s.sites, ids) };
             case 'quickLink':
               return { quickLinks: applyOrder(s.quickLinks, ids) };
+            case 'todo':
+              return { todos: applyOrder(s.todos, ids) };
+            case 'processing':
+              return { processing: applyOrder(s.processing, ids) };
             default:
               return {};
           }
@@ -277,6 +416,77 @@ export const useStore = create<Store>()(
       // ---- Settings ------------------------------------------------------
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
+      // ---- To-dos --------------------------------------------------------
+      addTodo: ({ text, dueDate = null, dueTime = null }) => {
+        const todo: Todo = {
+          id: newId(),
+          text,
+          dueDate: dueDate || null,
+          dueTime: dueDate && dueTime ? dueTime : null,
+          createdAt: Date.now(),
+          order: nextOrder(get().todos),
+          archivedAt: null,
+        };
+        set((s) => ({ todos: [...s.todos, todo] }));
+        return todo;
+      },
+      updateTodo: (id, patch) =>
+        set((s) => ({
+          todos: s.todos.map((t) => {
+            if (t.id !== id) return t;
+            const next = { ...t, ...patch };
+            if (!next.dueDate) next.dueTime = null;
+            return next;
+          }),
+        })),
+      completeTodo: (id) =>
+        set((s) => ({
+          todos: s.todos.map((t) => (t.id === id ? { ...t, archivedAt: Date.now() } : t)),
+        })),
+      // Restored items rejoin at the tail of the active list.
+      restoreTodo: (id) =>
+        set((s) => {
+          const order = nextOrder(s.todos.filter((t) => t.archivedAt === null));
+          return {
+            todos: s.todos.map((t) => (t.id === id ? { ...t, archivedAt: null, order } : t)),
+          };
+        }),
+      deleteTodo: (id) => set((s) => ({ todos: s.todos.filter((t) => t.id !== id) })),
+      purgeArchivedTodos: () =>
+        set((s) => ({ todos: s.todos.filter((t) => t.archivedAt === null) })),
+
+      // ---- Currently Processing -----------------------------------------
+      addProcessingItem: ({ name, url, siteId = null, section = 'Active', schedule }) => {
+        const item: ProcessingItem = {
+          id: newId(),
+          name,
+          url,
+          siteId,
+          section,
+          order: nextOrder(get().processing),
+          schedule: { ...defaultSchedule(), ...schedule },
+        };
+        set((s) => ({ processing: [...s.processing, item] }));
+        return item;
+      },
+      updateProcessingItem: (id, patch) =>
+        set((s) => ({
+          processing: s.processing.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        })),
+      deleteProcessingItem: (id) =>
+        set((s) => ({ processing: s.processing.filter((p) => p.id !== id) })),
+
+      // ---- Feed topics ---------------------------------------------------
+      addTopic: ({ label, query }) => {
+        const topic: Topic = { id: newId(), label: label.replace(/^#/, ''), query };
+        set((s) => ({ feeds: { ...s.feeds, topics: [...s.feeds.topics, topic] } }));
+        return topic;
+      },
+      deleteTopic: (id) =>
+        set((s) => ({
+          feeds: { ...s.feeds, topics: s.feeds.topics.filter((t) => t.id !== id) },
+        })),
+
       // ---- Data ----------------------------------------------------------
       importState: (json) => {
         let parsed: unknown;
@@ -295,20 +505,46 @@ export const useStore = create<Store>()(
         const fromVersion =
           typeof record.schemaVersion === 'number' ? record.schemaVersion : 0;
         const next = migrate(record, fromVersion);
-        set(() => ({ ...next }));
+        const cur = get();
+        // A v1 backup has no to-dos/processing/feeds; keep the current ones
+        // rather than silently wiping them. The PAT is never in a backup, so
+        // the locally stored one survives an import too.
+        set(() => ({
+          ...next,
+          todos: Array.isArray(record.todos) ? next.todos : cur.todos,
+          processing: Array.isArray(record.processing) ? next.processing : cur.processing,
+          feeds: record.feeds ? next.feeds : cur.feeds,
+          settings: {
+            ...next.settings,
+            githubToken: next.settings.githubToken || cur.settings.githubToken,
+          },
+        }));
+        const applied = get();
         return {
           ok: true,
           summary: {
-            categories: next.categories.length,
-            subcategories: next.subcategories.length,
-            sites: next.sites.length,
-            quickLinks: next.quickLinks.length,
+            categories: applied.categories.length,
+            subcategories: applied.subcategories.length,
+            sites: applied.sites.length,
+            quickLinks: applied.quickLinks.length,
+            todos: applied.todos.length,
+            processing: applied.processing.length,
           },
         };
       },
-      exportState: () => JSON.stringify(pickPersisted(get()), null, 2),
+      // Exports never carry the GitHub token (plan §3).
+      exportState: () => {
+        const data = pickPersisted(get());
+        return JSON.stringify(
+          { ...data, settings: { ...data.settings, githubToken: '' } },
+          null,
+          2,
+        );
+      },
       resetToSeed: () => set(() => ({ ...getSeedState() })),
-      loadBenchmark200: () => set(() => ({ ...getBenchmark200State() })),
+      reseedLibrary: () => set(() => seedLibrary()),
+      loadBenchmark200: () =>
+        set((s) => ({ ...getBenchmark200State(), settings: s.settings, todos: s.todos, processing: s.processing, feeds: s.feeds })),
     }),
     {
       name: STORAGE_KEY,
@@ -323,12 +559,12 @@ export const useStore = create<Store>()(
         const p = normalizePersisted(persisted);
         // Automatically upgrade any legacy persisted deck with fewer than 10 categories
         // so users immediately receive the full 10+ categories and 200+ (300+) sites deck.
+        // Only the library is replaced — to-dos, processing and feeds survive.
         if (p.categories.length < 10) {
-          const seed = getSeedState();
           return {
             ...current,
-            ...seed,
-            settings: { ...seed.settings, ...p.settings },
+            ...p,
+            ...seedLibrary(),
           };
         }
         const obj = persisted as Record<string, unknown>;
