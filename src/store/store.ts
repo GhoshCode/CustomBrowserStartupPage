@@ -185,6 +185,8 @@ export interface StoreActions {
   reorder: (kind: ReorderKind, ids: string[]) => void;
   togglePrimary: (siteId: string) => void;
   recordVisit: (siteId: string) => void;
+  // Forgets every lastVisited (empties the Recent strip); visit counts stay.
+  clearRecentHistory: () => void;
   // Settings
   updateSettings: (patch: Partial<Settings>) => void;
   // Single-card pin (§7 Q6): pinning replaces any previous pin; null unpins.
@@ -412,6 +414,8 @@ export const useStore = create<Store>()(
               : site,
           ),
         })),
+      clearRecentHistory: () =>
+        set((s) => ({ sites: s.sites.map((site) => ({ ...site, lastVisited: null })) })),
 
       // ---- Settings ------------------------------------------------------
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),

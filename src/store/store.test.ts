@@ -339,3 +339,10 @@ describe('v2 export / import', () => {
     expect(st().settings.greetingName).toBe('Ada');
   });
 });
+
+test('clearRecentHistory forgets lastVisited but keeps visit counts', () => {
+  st().recordVisit('a');
+  st().clearRecentHistory();
+  expect(byId('a').lastVisited).toBeNull();
+  expect(byId('a').visits).toBe(1);
+});
