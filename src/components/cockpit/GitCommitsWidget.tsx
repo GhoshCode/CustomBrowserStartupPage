@@ -46,30 +46,30 @@ function generateSyntheticDays(days = 112) {
   return result;
 }
 
-interface ExtendedGitStats extends GitStats {
+interface GitHudStats extends GitStats {
   publicRepos: number;
-  followers: number;
-  stars: number;
-  prsMerged: number;
-  topLanguages: Array<{ name: string; color: string }>;
+  activeBranch: string;
+  latestCommitSha: string;
+  latestCommitMsg: string;
+  latestCommitTime: string;
+  lastMergedPr: string;
+  lastMergedTime: string;
 }
 
 export const GitCommitsWidget = memo(function GitCommitsWidget() {
   const githubUsername = useStore((s) => s.settings.githubUsername);
-  const [stats, setStats] = useState<ExtendedGitStats>(() => ({
+  const [stats, setStats] = useState<GitHudStats>(() => ({
     username: githubUsername || 'GhoshCode',
     totalCommitsYear: 1420,
     currentStreak: 14,
     longestStreak: 42,
-    publicRepos: 28,
-    followers: 64,
-    stars: 118,
-    prsMerged: 32,
-    topLanguages: [
-      { name: 'TypeScript', color: '#3178c6' },
-      { name: 'Rust', color: '#dea584' },
-      { name: 'Go', color: '#00add8' },
-    ],
+    publicRepos: 34,
+    activeBranch: 'v6.0-gemini',
+    latestCommitSha: '621f5d1',
+    latestCommitMsg: 'feat: theme system & diverse presets',
+    latestCommitTime: '12m ago',
+    lastMergedPr: 'PR #22',
+    lastMergedTime: '2h ago',
     contributions: generateSyntheticDays(112), // 16 weeks * 7 days
     lastFetched: Date.now(),
   }));
@@ -81,14 +81,44 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
     let isMounted = true;
     const fetchGitHub = async () => {
       try {
-        // Fetch user metadata for repos and followers
+        // Fetch user metadata for repos count
         const userRes = await fetch(`https://api.github.com/users/${githubUsername}`).catch(() => null);
-        let publicRepos = 28;
-        let followers = 64;
+        let publicRepos = 34;
         if (userRes && userRes.ok) {
           const userData = await userRes.json();
-          publicRepos = userData.public_repos ?? 28;
-          followers = userData.followers ?? 64;
+          publicRepos = userData.public_repos ?? 34;
+        }
+
+        // Fetch user public events or repos for latest commit info
+        const eventsRes = await fetch(`https://api.github.com/users/${githubUsername}/events/public`).catch(() => null);
+        let latestCommitSha = '621f5d1';
+        let latestCommitMsg = 'feat: theme system & diverse presets';
+        let latestCommitTime = '12m ago';
+        let lastMergedPr = 'PR #22';
+        let lastMergedTime = '2h ago';
+        let activeBranch = 'v6.0-gemini';
+
+        if (eventsRes && eventsRes.ok) {
+          const events = await eventsRes.json();
+          if (Array.isArray(events) && events.length > 0) {
+            const pushEvent = events.find((e: any) => e.type === 'PushEvent');
+            if (pushEvent) {
+              const headCommit = pushEvent.payload?.commits?.[0];
+              if (headCommit) {
+                latestCommitSha = headCommit.sha ? headCommit.sha.slice(0, 7) : '621f5d1';
+                latestCommitMsg = headCommit.message ? headCommit.message.split('\n')[0].slice(0, 38) : latestCommitMsg;
+              }
+              if (pushEvent.payload?.ref) {
+                activeBranch = pushEvent.payload.ref.replace('refs/heads/', '');
+              }
+            }
+
+            const prEvent = events.find((e: any) => e.type === 'PullRequestEvent');
+            if (prEvent && prEvent.payload?.pull_request) {
+              lastMergedPr = `PR #${prEvent.payload.number || 22}`;
+              lastMergedTime = 'today';
+            }
+          }
         }
 
         // Fetch contribution history
@@ -110,7 +140,12 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
             username: githubUsername,
             totalCommitsYear: data.total?.[Object.keys(data.total)[0]] ?? 1420,
             publicRepos,
-            followers,
+            activeBranch,
+            latestCommitSha,
+            latestCommitMsg,
+            latestCommitTime,
+            lastMergedPr,
+            lastMergedTime,
             contributions: recentDays,
             lastFetched: Date.now(),
           }));
@@ -128,7 +163,7 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
 
   return (
     <div className="glass group relative flex h-[142px] w-full flex-col justify-between overflow-hidden rounded-2xl p-3 border border-white/10 hover:border-white/15 transition-all select-none">
-      {/* Header row */}
+      {/* Header row: Username + Repos Count + Commits Count */}
       <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
         <div className="flex items-center gap-1.5 min-w-0">
           <svg className="size-3.5 text-emerald-400 shrink-0" viewBox="0 0 16 16" fill="currentColor">
@@ -137,15 +172,17 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
           <span className="font-display text-xs font-bold tracking-wider text-white/90 uppercase truncate">
             {stats.username}
           </span>
-          <span className="text-[10px] text-white/40 font-mono hidden sm:inline">
-            · {stats.publicRepos} repos
+          {/* Explicit Repository Count badge */}
+          <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-mono text-white/80 border border-white/10">
+            {stats.publicRepos} repos
           </span>
         </div>
 
-        {/* Stats badges */}
+        {/* Branch & Merge Status badge */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono text-amber-300/90 hidden sm:inline">
-            ⭐ {stats.stars}
+          <span className="rounded-md bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-purple-300 border border-purple-500/30 flex items-center gap-1">
+            <span>🌿</span>
+            <span className="truncate max-w-[80px]">{stats.activeBranch}</span>
           </span>
           <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/25">
             {stats.totalCommitsYear.toLocaleString()} commits
@@ -174,29 +211,33 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
         })}
       </div>
 
-      {/* Footer stats row: Repos, Streaks, Languages */}
-      <div className="flex items-center justify-between pt-1 text-[10px] text-white/40 border-t border-white/[0.04]">
+      {/* Footer Git Status Row: Branch Details, Merged Status & Latest Commit (Replaces Languages) */}
+      <div className="flex items-center justify-between pt-1 text-[10px] text-white/50 border-t border-white/[0.04]">
         {hoveredDay ? (
           <span className="font-mono text-emerald-300">
             {hoveredDay.count} commits on {hoveredDay.date}
           </span>
         ) : (
-          <div className="flex items-center gap-2.5">
-            <span>🔥 <strong className="text-emerald-400 font-semibold">{stats.currentStreak}d</strong> streak</span>
-            <span className="text-white/20">|</span>
-            <div className="flex items-center gap-1.5">
-              {stats.topLanguages.map((lang) => (
-                <span key={lang.name} className="flex items-center gap-1 text-[9px] text-white/60">
-                  <span className="size-1.5 rounded-full" style={{ backgroundColor: lang.color }} />
-                  <span>{lang.name}</span>
-                </span>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 truncate min-w-0">
+            {/* Merged Status */}
+            <span className="flex items-center gap-1 text-[9px] text-cyan-300 shrink-0 font-medium">
+              <span>🔀</span>
+              <span>{stats.lastMergedPr} merged ({stats.lastMergedTime})</span>
+            </span>
+
+            <span className="text-white/20">·</span>
+
+            {/* Latest Commit */}
+            <span className="flex items-center gap-1 text-[9px] text-white/70 truncate">
+              <span className="font-mono text-amber-300">{stats.latestCommitSha}</span>
+              <span className="truncate">"{stats.latestCommitMsg}"</span>
+              <span className="text-white/40 shrink-0">({stats.latestCommitTime})</span>
+            </span>
           </div>
         )}
 
         {/* Legend */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0 ml-2">
           <span className="text-[9px] text-white/30">Less</span>
           <div className="flex gap-0.5">
             {[0, 1, 2, 3, 4].map((lvl) => (

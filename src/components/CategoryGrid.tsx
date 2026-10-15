@@ -23,30 +23,11 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
     });
   }, [categories]);
 
-  const handleThinSpaceWheel = (e: React.WheelEvent) => {
+  const handleBottomCardsWheel = (e: React.WheelEvent) => {
     e.stopPropagation();
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (Math.abs(delta) < 2) return;
-
-    // Check if directly below a specific card
-    const elements = document.elementsFromPoint(e.clientX, Math.max(0, e.clientY - 25));
-    const card = elements.find((el) => el.closest('[data-category-id]'))?.closest<HTMLElement>('[data-category-id]');
-    if (card) {
-      const bottomToolbar = card.querySelector<HTMLElement>('[data-category-card-bottom]');
-      if (bottomToolbar) {
-        const btn =
-          delta > 0
-            ? bottomToolbar.querySelector<HTMLButtonElement>('button[title*="Next"]')
-            : bottomToolbar.querySelector<HTMLButtonElement>('button[title*="Previous"]');
-        if (btn && !btn.disabled) {
-          btn.click();
-          return;
-        }
-      }
-    }
-    // Fallback: translate to horizontal scroll of category container
+    const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
     if (scrollRef.current) {
-      scrollRef.current.scrollLeft += delta;
+      scrollRef.current.scrollLeft += delta * 1.5;
     }
   };
 
@@ -206,13 +187,15 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
               ))}
             </motion.div>
 
-            {/* Thin interactive scroll space below cards - completely scrollbar-free */}
+            {/* Interactive scroll track below cards — guaranteed horizontal card scroll on wheel */}
             <div
               data-testid="thin-cards-scroll-space"
-              onWheel={handleThinSpaceWheel}
-              className="w-full h-1.5 shrink-0 select-none cursor-ew-resize opacity-0"
-              title="Scroll subcategories or cards horizontally"
-            />
+              onWheel={handleBottomCardsWheel}
+              className="w-full h-3.5 shrink-0 flex items-center justify-center select-none cursor-ew-resize mt-1 group"
+              title="Scroll cards horizontally (Wheel / Drag)"
+            >
+              <div className="h-1 w-28 rounded-full bg-white/10 group-hover:bg-cyan-400/50 transition-colors" />
+            </div>
           </div>
         </section>
       )}

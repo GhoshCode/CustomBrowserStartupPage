@@ -75,6 +75,15 @@ interface CurrentlyProcessingPanelProps {
 export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
   onOpenSettings,
 }: CurrentlyProcessingPanelProps) {
+  // Custom user-managed sections
+  const [sections, setSections] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('devdeck_working_sections');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_WORKING_SECTIONS;
+  });
+
   const [sites, setSites] = useState<WorkingSite[]>(() => {
     try {
       const saved = localStorage.getItem('devdeck_working_sites');
@@ -83,18 +92,62 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
     return INITIAL_WORKING_SITES;
   });
 
-  const [activeSection, setActiveSection] = useState<string>('All');
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  // Add site form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newUrl, setNewUrl] = useState('');
-  const [newSection, setNewSection] = useState('Local Dev');
+  const [newSection, setNewSection] = useState(sections[0] || 'Local Dev');
   const [newPort, setNewPort] = useState('');
+
+  // Add new section state
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+
+  const saveSections = (next: string[]) => {
+    setSections(next);
+    try {
+      localStorage.setItem('devdeck_working_sections', JSON.stringify(next));
+    } catch {}
+  };
 
   const saveSites = (next: WorkingSite[]) => {
     setSites(next);
     try {
       localStorage.setItem('devdeck_working_sites', JSON.stringify(next));
     } catch {}
+  };
+
+  const handleCreateSection = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newSectionTitle.trim();
+    if (!trimmed || sections.includes(trimmed)) return;
+    const next = [...sections, trimmed];
+    saveSections(next);
+    setNewSection(trimmed);
+    setNewSectionTitle('');
+    setShowAddSection(false);
+  };
+
+  const handleDeleteSection = (secName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (sections.length <= 1) return;
+    const nextSecs = sections.filter((s) => s !== secName);
+    saveSections(nextSecs);
+    // Reassign orphan sites to first available section
+    const fallback = nextSecs[0];
+    const nextSites = sites.map((s) => (s.section === secName ? { ...s, section: fallback } : s));
+    saveSites(nextSites);
+    if (activeFilter === secName) setActiveFilter('All');
+  };
+
+  const toggleCollapse = (secName: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [secName]: !prev[secName],
+    }));
   };
 
   const handleAddSite = (e: React.FormEvent) => {
@@ -127,25 +180,21 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
     saveSites(sites.filter((s) => s.id !== id));
   };
 
+  const handleMoveSiteSection = (id: string, targetSection: string, e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
+    saveSites(sites.map((s) => (s.id === id ? { ...s, section: targetSection } : s)));
+  };
+
   const handleOpenSite = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const filteredSites =
-    activeSection === 'All'
-      ? sites
-      : sites.filter((s) => s.section === activeSection);
-
-  // Group sites by section when in "All" view
-  const sectionsToRender =
-    activeSection === 'All'
-      ? DEFAULT_WORKING_SECTIONS
-      : [activeSection];
+  const visibleSections = activeFilter === 'All' ? sections : sections.filter((s) => s === activeFilter);
 
   return (
     <aside className="flex flex-col w-64 lg:w-72 shrink-0 h-full pb-14 min-h-0 select-none">
       {/* Tall Single Card: CURRENTLY WORKING SITES */}
-      <div className="glass-raised flex flex-1 min-h-0 flex-col rounded-3xl border border-white/15 p-5 shadow-xl backdrop-blur-2xl overflow-hidden justify-between">
+      <div className="glass-raised flex flex-1 min-h-0 flex-col rounded-3xl border border-white/15 p-4 sm:p-5 shadow-xl backdrop-blur-2xl overflow-hidden justify-between">
         <div className="flex flex-col min-h-0 flex-1">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] shrink-0">
@@ -156,6 +205,9 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
               </span>
               <span className="font-display text-xs font-bold tracking-wider text-white/95 uppercase">
                 WORKING SITES
+              </span>
+              <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.2 text-[9px] font-mono text-cyan-300">
+                {sites.length}
               </span>
             </div>
 
@@ -179,15 +231,26 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
             </div>
           </div>
 
-          {/* Section Partition Filters */}
+          {/* Section Partition Filter Pills */}
           <div className="mt-2.5 flex items-center gap-1 overflow-x-auto no-scrollbar scrollbar-none pb-1 shrink-0">
-            {['All', ...DEFAULT_WORKING_SECTIONS].map((sec) => (
+            <button
+              type="button"
+              onClick={() => setActiveFilter('All')}
+              className={`rounded-lg px-2 py-1 text-[10px] font-semibold tracking-tight transition-all shrink-0 ${
+                activeFilter === 'All'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                  : 'bg-white/[0.03] text-white/50 hover:bg-white/[0.08] hover:text-white/80 border border-white/[0.04]'
+              }`}
+            >
+              All Partitions
+            </button>
+            {sections.map((sec) => (
               <button
                 key={sec}
                 type="button"
-                onClick={() => setActiveSection(sec)}
+                onClick={() => setActiveFilter(sec)}
                 className={`rounded-lg px-2 py-1 text-[10px] font-semibold tracking-tight transition-all shrink-0 ${
-                  activeSection === sec
+                  activeFilter === sec
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
                     : 'bg-white/[0.03] text-white/50 hover:bg-white/[0.08] hover:text-white/80 border border-white/[0.04]'
                 }`}
@@ -195,11 +258,49 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
                 {sec}
               </button>
             ))}
+
+            {/* + Add New Section Button */}
+            <button
+              type="button"
+              onClick={() => setShowAddSection((prev) => !prev)}
+              title="Create new section partition"
+              className="rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all border border-cyan-500/25 shrink-0 flex items-center gap-0.5"
+            >
+              <span>+</span>
+              <span>Section</span>
+            </button>
           </div>
+
+          {/* New Section Inline Creator */}
+          {showAddSection && (
+            <form onSubmit={handleCreateSection} className="mt-1.5 flex items-center gap-1 p-2 rounded-xl bg-cyan-950/30 border border-cyan-500/30 shrink-0">
+              <input
+                type="text"
+                placeholder="New partition name..."
+                value={newSectionTitle}
+                onChange={(e) => setNewSectionTitle(e.target.value)}
+                className="flex-1 rounded-lg bg-black/40 px-2 py-1 text-xs text-white placeholder-white/40 focus:outline-none border border-white/10"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-cyan-500/30 px-2.5 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/40 border border-cyan-500/40"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddSection(false)}
+                className="rounded-lg bg-white/5 px-2 py-1 text-xs text-white/50 hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </form>
+          )}
 
           {/* Quick Add Form Drawer */}
           {showAddForm && (
-            <form onSubmit={handleAddSite} className="mt-2 flex flex-col gap-1.5 p-2 rounded-xl bg-white/[0.04] border border-white/10 shrink-0">
+            <form onSubmit={handleAddSite} className="mt-2 flex flex-col gap-1.5 p-2.5 rounded-xl bg-white/[0.04] border border-white/10 shrink-0">
               <input
                 type="text"
                 placeholder="Site name (e.g. Next.js App)"
@@ -220,7 +321,7 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
                   onChange={(e) => setNewSection(e.target.value)}
                   className="flex-1 rounded-lg bg-[#181126] px-1.5 py-1 text-[11px] text-white/80 border border-white/10 focus:outline-none"
                 >
-                  {DEFAULT_WORKING_SECTIONS.map((s) => (
+                  {sections.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
@@ -241,68 +342,130 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
             </form>
           )}
 
-          {/* Scrollable Partitioned Sites List */}
+          {/* Scrollable Section-wise Partitioned Sites Track */}
           <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-3">
-            {sectionsToRender.map((sectionName) => {
-              const sectionSites = filteredSites.filter((s) => s.section === sectionName);
-              if (sectionSites.length === 0 && activeSection === 'All') return null;
+            {visibleSections.map((sectionName) => {
+              const sectionSites = sites.filter((s) => s.section === sectionName);
+              const isCollapsed = Boolean(collapsedSections[sectionName]);
 
               return (
-                <div key={sectionName} className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-white/40 px-1">
-                    {sectionName}
-                  </span>
-                  {sectionSites.map((site) => (
-                    <div
-                      key={site.id}
-                      onClick={() => handleOpenSite(site.url)}
-                      className="group/item flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] p-2 hover:bg-white/[0.08] hover:border-cyan-400/30 transition-all cursor-pointer shadow-sm"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Favicon url={site.url} name={site.name} className="size-4 shrink-0" />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-semibold text-white/90 truncate group-hover/item:text-cyan-300 transition-colors">
-                            {site.name}
-                          </span>
-                          <span className="text-[9px] font-mono text-white/40 truncate max-w-[130px]">
-                            {site.url.replace(/^https?:\/\//, '')}
-                          </span>
-                        </div>
-                      </div>
+                <div
+                  key={sectionName}
+                  className="flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 transition-all"
+                >
+                  {/* Partition Header */}
+                  <div
+                    onClick={() => toggleCollapse(sectionName)}
+                    className="flex items-center justify-between pb-1.5 px-1 cursor-pointer select-none group"
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[10px] text-cyan-400/80 transition-transform duration-200">
+                        {isCollapsed ? '▸' : '▾'}
+                      </span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/90 truncate">
+                        {sectionName}
+                      </span>
+                      <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-mono text-white/60">
+                        {sectionSites.length}
+                      </span>
+                    </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {site.portOrDesc && (
-                          <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[9px] text-cyan-300 font-semibold border border-cyan-500/25">
-                            {site.portOrDesc}
-                          </span>
-                        )}
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {/* Add directly to this section */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewSection(sectionName);
+                          setShowAddForm(true);
+                        }}
+                        title={`Add site to ${sectionName}`}
+                        className="size-5 rounded flex items-center justify-center text-white/40 hover:text-cyan-300 hover:bg-white/10 text-xs"
+                      >
+                        +
+                      </button>
+
+                      {/* Delete custom section */}
+                      {sections.length > 1 && (
                         <button
                           type="button"
-                          onClick={(e) => handleDeleteSite(site.id, e)}
-                          title="Remove from working sites"
-                          className="opacity-0 group-hover/item:opacity-100 size-4 flex items-center justify-center text-white/30 hover:text-rose-400 text-[10px] transition-all"
+                          onClick={(e) => handleDeleteSection(sectionName, e)}
+                          title={`Delete ${sectionName} partition`}
+                          className="size-5 rounded flex items-center justify-center text-white/30 hover:text-rose-400 hover:bg-rose-500/10 text-[10px]"
                         >
                           ✕
                         </button>
-                      </div>
+                      )}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Partition Sites Body */}
+                  {!isCollapsed && (
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      {sectionSites.length === 0 ? (
+                        <p className="text-[10px] text-white/30 italic py-1 px-2 text-center">
+                          No sites in this partition
+                        </p>
+                      ) : (
+                        sectionSites.map((site) => (
+                          <div
+                            key={site.id}
+                            onClick={() => handleOpenSite(site.url)}
+                            className="group/item flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] p-2 hover:bg-white/[0.08] hover:border-cyan-400/30 transition-all cursor-pointer shadow-sm"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Favicon url={site.url} name={site.name} className="size-4 shrink-0" />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-semibold text-white/90 truncate group-hover/item:text-cyan-300 transition-colors">
+                                  {site.name}
+                                </span>
+                                <span className="text-[9px] font-mono text-white/40 truncate max-w-[125px]">
+                                  {site.url.replace(/^https?:\/\//, '')}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              {site.portOrDesc && (
+                                <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[9px] text-cyan-300 font-semibold border border-cyan-500/25">
+                                  {site.portOrDesc}
+                                </span>
+                              )}
+
+                              {/* Section Switcher dropdown */}
+                              <select
+                                value={site.section}
+                                onChange={(e) => handleMoveSiteSection(site.id, e.target.value, e)}
+                                title="Move to another section"
+                                className="bg-[#120a1c] text-[9px] font-mono text-white/50 border border-white/10 rounded px-1 py-0.5 focus:outline-none"
+                              >
+                                {sections.map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteSite(site.id, e)}
+                                title="Remove from working sites"
+                                className="size-4 flex items-center justify-center rounded text-white/30 hover:bg-rose-500/20 hover:text-rose-400 text-[10px] transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
-
-            {filteredSites.length === 0 && (
-              <p className="py-6 text-center text-xs text-white/40">
-                No sites in this section. Click + to add one.
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Bottom stats / summary */}
-        <div className="pt-2 text-[10px] text-white/40 font-mono flex items-center justify-between border-t border-white/[0.06] shrink-0">
-          <span>{sites.length} Active Sites</span>
-          <span className="text-emerald-400/80">● Ready to launch</span>
+        {/* Footer info */}
+        <div className="pt-2 text-[9px] text-white/30 text-center font-mono border-t border-white/[0.04] shrink-0">
+          Click any site to launch · Switch partitions
         </div>
       </div>
     </aside>

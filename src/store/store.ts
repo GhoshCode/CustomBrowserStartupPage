@@ -148,6 +148,8 @@ export interface StoreActions {
 
   // Topic Chips
   setTopicChips: (chips: TopicChip[]) => void;
+  addTopicChip: (label: string, tagQuery?: string) => TopicChip;
+  deleteTopicChip: (chipId: string) => void;
   toggleTopicChip: (chipId: string) => void;
 
   // Movement / ordering / flags
@@ -413,6 +415,30 @@ export const useStore = create<Store>()(
 
       // ---- Topic Chips ---------------------------------------------------
       setTopicChips: (chips) => set(() => ({ topicChips: chips })),
+      addTopicChip: (label, tagQuery) => {
+        const id = label.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const chip: TopicChip = {
+          id: `${id}-${Date.now().toString(36)}`,
+          label: label.trim(),
+          tagQuery: tagQuery || label.toLowerCase().trim(),
+        };
+        set((s) => ({
+          topicChips: [...s.topicChips, chip],
+          settings: {
+            ...s.settings,
+            enabledTopics: [...(s.settings.enabledTopics ?? []), chip.id],
+          },
+        }));
+        return chip;
+      },
+      deleteTopicChip: (chipId) =>
+        set((s) => ({
+          topicChips: s.topicChips.filter((c) => c.id !== chipId),
+          settings: {
+            ...s.settings,
+            enabledTopics: (s.settings.enabledTopics ?? []).filter((id) => id !== chipId),
+          },
+        })),
       toggleTopicChip: (chipId) =>
         set((s) => {
           const current = s.settings.enabledTopics ?? [];

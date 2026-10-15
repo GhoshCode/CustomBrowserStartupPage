@@ -88,23 +88,23 @@ export default function App() {
 
         {/* Lower Cockpit: 3-Column Spatial Grid */}
         <div className="flex flex-1 min-h-0 w-full gap-4 px-6 pb-2 overflow-hidden">
-          {/* Left Column: D (Currently Working Sites partitioned by section) */}
-          <CurrentlyProcessingPanel
-            onOpenSettings={(tab) => openSettings(tab as SettingsTabId)}
-          />
+          {/* Left Column: I (Tech News items 1-4, Dev Jobs items 5-8) + J (Topic Chips) */}
+          <aside className="flex flex-col gap-3 w-64 lg:w-72 shrink-0 h-full min-h-0 select-none">
+            <ScrapedNewsPanel />
+            <TopicChips />
+          </aside>
 
           {/* Center Column: Unified Container ([E] 4 Fixed Quick Links | [F] Recent Links + Category Cards) */}
           <CategoryGrid onOpenSettings={() => openSettings('library')} />
 
-          {/* Right Column: I (Tech News items 1-4, Dev Jobs items 5-8) + J (Topic Chips) */}
-          <aside className="flex flex-col gap-3 w-64 lg:w-72 shrink-0 h-full min-h-0">
-            <ScrapedNewsPanel />
-            <TopicChips />
-          </aside>
+          {/* Right Column: D (Currently Working Sites partitioned by section) */}
+          <CurrentlyProcessingPanel
+            onOpenSettings={(tab) => openSettings(tab as SettingsTabId)}
+          />
         </div>
 
-        {/* Main Settings Button in bottom left */}
-        <div className="fixed bottom-3 left-6 z-40 flex items-center">
+        {/* Main Settings Button in bottom right */}
+        <div className="fixed bottom-3 right-6 z-40 flex items-center">
           <button
             type="button"
             onClick={() => openSettings('library')}

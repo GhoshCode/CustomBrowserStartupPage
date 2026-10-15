@@ -309,6 +309,18 @@ describe('processing sites and topic chips', () => {
     st().toggleTopicChip(topicId);
     expect(st().settings.enabledTopics.includes(topicId)).toBe(initialEnabled);
   });
+
+  test('adds and deletes custom topic chips', () => {
+    const newChip = st().addTopicChip('Kubernetes', 'k8s');
+    expect(newChip.label).toBe('Kubernetes');
+    expect(newChip.tagQuery).toBe('k8s');
+    expect(st().topicChips.find((t) => t.id === newChip.id)).toBeDefined();
+    expect(st().settings.enabledTopics.includes(newChip.id)).toBe(true);
+
+    st().deleteTopicChip(newChip.id);
+    expect(st().topicChips.find((t) => t.id === newChip.id)).toBeUndefined();
+    expect(st().settings.enabledTopics.includes(newChip.id)).toBe(false);
+  });
 });
 
 describe('resetToSeed', () => {
