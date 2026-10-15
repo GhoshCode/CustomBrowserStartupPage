@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { useStore } from '../../store';
 import type { TodoItem } from '../../types';
+import { PrimeDateTimePicker } from '../common/PrimeDateTimePicker';
 
 export const TodoWidget = memo(function TodoWidget() {
   const todos = useStore((s) => s.todos);
@@ -60,13 +61,6 @@ export const TodoWidget = memo(function TodoWidget() {
     resetInactivityTimer();
   };
 
-  // Helper date shortcuts
-  const setQuickDate = (offsetDays: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + offsetDays);
-    setNewDate(d.toISOString().split('T')[0]);
-  };
-
   // Active unarchived tasks
   const activeTodos = todos.filter((t) => !t.archived && !t.completed);
   const archivedTodos = todos.filter((t) => t.archived || t.completed);
@@ -99,7 +93,9 @@ export const TodoWidget = memo(function TodoWidget() {
         onKeyDown={resetInactivityTimer}
         className={`glass group flex flex-col justify-between overflow-hidden p-3 transition-all duration-300 ${
           isExpanded
-            ? 'absolute top-0 left-0 right-0 z-50 h-[390px] bg-[#0d0718]/98 shadow-[0_24px_64px_rgba(0,0,0,0.85)] backdrop-blur-2xl border border-white/25 rounded-2xl'
+            ? `absolute top-0 left-0 right-0 z-50 ${
+                showScheduleModal ? 'h-[500px]' : 'h-[390px]'
+              } bg-[#0d0718]/98 shadow-[0_24px_64px_rgba(0,0,0,0.85)] backdrop-blur-2xl border border-white/25 rounded-2xl`
             : 'h-[142px] w-full rounded-2xl border border-white/10 hover:border-white/15'
         }`}
       >
@@ -119,6 +115,7 @@ export const TodoWidget = memo(function TodoWidget() {
             {/* Visual Calendar & Clock trigger button */}
             <button
               type="button"
+              data-testid="todo-schedule-btn"
               onClick={() => {
                 setShowScheduleModal((prev) => {
                   const next = !prev;
@@ -176,84 +173,19 @@ export const TodoWidget = memo(function TodoWidget() {
           </button>
         </form>
 
-        {/* Visual Calendar & Clock Popover / Drawer */}
+        {/* PrimeNG-Style Visual Calendar & Clock Popover / Drawer */}
         {showScheduleModal && (
-          <div data-testid="todo-schedule-drawer" className="my-1 rounded-xl border border-rose-500/30 bg-[#160a1e] p-2.5 shadow-2xl backdrop-blur-2xl space-y-2 z-20 shrink-0">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-rose-300">
-              <span className="flex items-center gap-1">
-                <span>📅 Due Date</span> & <span>🕒 Clock Time</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowScheduleModal(false)}
-                className="text-white/40 hover:text-white text-xs"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Visual Date & Time Inputs */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-[9px] uppercase tracking-wider text-white/50 block">Calendar</label>
-                <input
-                  type="date"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs text-white focus:outline-none focus:border-rose-400 cursor-pointer"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] uppercase tracking-wider text-white/50 block">Clock</label>
-                <input
-                  type="time"
-                  value={newTime}
-                  onChange={(e) => setNewTime(e.target.value)}
-                  className="w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs text-white focus:outline-none focus:border-rose-400 cursor-pointer"
-                />
-              </div>
-            </div>
-
-            {/* Quick Preset Buttons */}
-            <div className="flex flex-wrap items-center gap-1 pt-0.5">
-              <span className="text-[9px] text-white/40 mr-1">Presets:</span>
-              <button
-                type="button"
-                onClick={() => setQuickDate(0)}
-                className="rounded px-1.5 py-0.5 bg-white/5 hover:bg-white/10 text-[9px] text-white/80"
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => setQuickDate(1)}
-                className="rounded px-1.5 py-0.5 bg-white/5 hover:bg-white/10 text-[9px] text-white/80"
-              >
-                Tomorrow
-              </button>
-              <button
-                type="button"
-                onClick={() => setQuickDate(3)}
-                className="rounded px-1.5 py-0.5 bg-white/5 hover:bg-white/10 text-[9px] text-white/80"
-              >
-                +3 Days
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewTime('09:00')}
-                className="rounded px-1.5 py-0.5 bg-white/5 hover:bg-white/10 text-[9px] text-rose-300"
-              >
-                09:00 AM
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewTime('18:00')}
-                className="rounded px-1.5 py-0.5 bg-white/5 hover:bg-white/10 text-[9px] text-rose-300"
-              >
-                06:00 PM
-              </button>
-            </div>
+          <div data-testid="todo-schedule-drawer" className="my-1.5 flex justify-center z-20 shrink-0">
+            <PrimeDateTimePicker
+              valueDate={newDate}
+              valueTime={newTime}
+              onChange={(date, time) => {
+                setNewDate(date);
+                setNewTime(time);
+                resetInactivityTimer();
+              }}
+              onClose={() => setShowScheduleModal(false)}
+            />
           </div>
         )}
 
@@ -334,13 +266,22 @@ export const TodoWidget = memo(function TodoWidget() {
                         </span>
                       )}
                       {todo.dueDate && (
-                        <span
-                          className={`text-[9px] font-mono ${
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNewDate(todo.dueDate || '');
+                            setNewTime(todo.dueTime || '');
+                            setShowScheduleModal(true);
+                            setIsExpanded(true);
+                          }}
+                          title="Click to reschedule with Prime Calendar & Clock"
+                          className={`text-[9px] font-mono hover:underline cursor-pointer ${
                             isOverdue ? 'text-rose-400 font-semibold' : 'text-white/40'
                           }`}
                         >
                           {todo.dueDate.slice(5)} {todo.dueTime || ''}
-                        </span>
+                        </button>
                       )}
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { Favicon } from '../Favicon';
+import { PrimeDateTimePicker } from '../common/PrimeDateTimePicker';
 
 interface WorkingSite {
   id: string;
@@ -8,6 +9,7 @@ interface WorkingSite {
   section: string;
   status: 'active' | 'idle' | 'ready';
   portOrDesc?: string;
+  scheduledTime?: string;
 }
 
 const DEFAULT_WORKING_SECTIONS = [
@@ -101,6 +103,8 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
   const [newUrl, setNewUrl] = useState('');
   const [newSection, setNewSection] = useState(sections[0] || 'Local Dev');
   const [newPort, setNewPort] = useState('');
+  const [newScheduledTime, setNewScheduledTime] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Add new section state
   const [showAddSection, setShowAddSection] = useState(false);
@@ -166,12 +170,15 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
       section: newSection,
       status: 'active',
       portOrDesc: newPort.trim() || undefined,
+      scheduledTime: newScheduledTime || undefined,
     };
 
     saveSites([...sites, newItem]);
     setNewName('');
     setNewUrl('');
     setNewPort('');
+    setNewScheduledTime('');
+    setShowTimePicker(false);
     setShowAddForm(false);
   };
 
@@ -333,6 +340,50 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
                   className="w-20 rounded-lg bg-white/[0.05] px-2 py-1 text-[11px] text-white placeholder-white/30 focus:outline-none border border-white/10"
                 />
               </div>
+
+              {/* Optional Schedule Run Time with PrimeNG DateTimePicker */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowTimePicker((prev) => !prev)}
+                  className={`w-full flex items-center justify-between px-2 py-1 rounded-lg text-[11px] border transition-colors ${
+                    newScheduledTime
+                      ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/40'
+                      : 'bg-white/[0.04] text-white/50 border-white/10 hover:bg-white/[0.08] hover:text-white'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span>🕒</span>
+                    <span>{newScheduledTime ? `Schedule: ${newScheduledTime}` : 'Add Schedule Time'}</span>
+                  </span>
+                  {newScheduledTime && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setNewScheduledTime('');
+                      }}
+                      className="text-white/40 hover:text-white text-xs"
+                    >
+                      ✕
+                    </span>
+                  )}
+                </button>
+
+                {showTimePicker && (
+                  <div className="absolute right-0 top-8 z-50 shadow-2xl">
+                    <PrimeDateTimePicker
+                      valueTime={newScheduledTime}
+                      showTime={true}
+                      showPresets={true}
+                      onChange={(_d, t) => {
+                        setNewScheduledTime(t);
+                      }}
+                      onClose={() => setShowTimePicker(false)}
+                    />
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
                 className="mt-0.5 rounded-lg bg-cyan-500/25 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/35 border border-cyan-500/40"
@@ -428,6 +479,13 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
                               {site.portOrDesc && (
                                 <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[9px] text-cyan-300 font-semibold border border-cyan-500/25">
                                   {site.portOrDesc}
+                                </span>
+                              )}
+
+                              {site.scheduledTime && (
+                                <span className="rounded bg-violet-500/15 px-1.5 py-0.5 font-mono text-[9px] text-violet-300 font-semibold border border-violet-500/25 flex items-center gap-0.5">
+                                  <span>🕒</span>
+                                  <span>{site.scheduledTime}</span>
                                 </span>
                               )}
 

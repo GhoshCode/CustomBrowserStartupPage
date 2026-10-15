@@ -293,6 +293,35 @@ html[data-theme='light'] [data-testid="todo-schedule-drawer"] button {
   color: #1e293b !important;
 }
 
+/* PrimeNG DateTimePicker styling for Light Theme */
+html[data-theme='light'] [data-testid="prime-date-time-picker"] {
+  background-color: #ffffff !important;
+  border-color: rgba(203, 213, 225, 0.95) !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16) !important;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .border-b,
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .border-t {
+  border-color: rgba(226, 232, 240, 0.95) !important;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] button {
+  color: #1e293b;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] button:hover {
+  background-color: rgba(241, 245, 249, 0.95) !important;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .text-white\/30 {
+  color: #94a3b8 !important;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .text-white\/90,
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .text-white\/95 {
+  color: #0f172a !important;
+}
+html[data-theme='light'] [data-testid="prime-date-time-picker"] .bg-white.text-black {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
 /* 2. Top Bar & Search Input */
 html[data-theme='light'] .glass-raised a.glass-inner {
   background-color: rgba(255, 255, 255, 0.85) !important;
