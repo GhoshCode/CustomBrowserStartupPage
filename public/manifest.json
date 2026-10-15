@@ -6,6 +6,10 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "permissions": ["alarms", "notifications", "storage"],
   "host_permissions": [
     "https://api.open-meteo.com/*",
