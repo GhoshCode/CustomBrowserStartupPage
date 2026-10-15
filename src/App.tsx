@@ -8,7 +8,8 @@ import { WeatherUV } from './components/topbar/WeatherUV';
 import { CommandPrompt } from './components/topbar/CommandPrompt';
 import { TodoWidget } from './components/topbar/todo/TodoWidget';
 import { GitWidget } from './components/topbar/GitWidget';
-import { DashboardLayout, ZonePlaceholder } from './components/layout/DashboardLayout';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import { FeedColumn } from './components/feeds/FeedColumn';
 import { SearchBar } from './components/search/SearchBar';
 import { BookmarkButton } from './components/search/BookmarkDrawer';
 import { LinksStrip } from './components/links/LinksStrip';
@@ -130,13 +131,7 @@ export default function App() {
             </div>
           </div>
         }
-        right={
-          <div className="flex h-full min-h-0 flex-col gap-3">
-            <ZonePlaceholder zone="I" title="Tech news" note="Items 1–4 · Phase 5." />
-            <ZonePlaceholder zone="I" title="Dev jobs" note="Items 5–8 · Phase 5." />
-            <ZonePlaceholder zone="J" title="Topics" note="#AI · #Frontend · #DevOps" />
-          </div>
-        }
+        right={<FeedColumn onManage={() => openSettings('scraping')} />}
       />
 
       {/* Settings Overlay */}

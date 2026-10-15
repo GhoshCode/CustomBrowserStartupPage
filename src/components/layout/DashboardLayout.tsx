@@ -152,20 +152,3 @@ function DrawerToggle({ side, label, onClick }: { side: Side; label: string; onC
     </button>
   );
 }
-
-// Empty glass slot used for zones whose widgets land in later phases.
-export function ZonePlaceholder({ zone, title, note }: { zone: string; title: string; note: string }) {
-  return (
-    <div className="glass flex min-h-0 flex-1 flex-col gap-1 p-4">
-      <div className="flex items-center gap-2">
-        <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white/60">
-          {zone}
-        </span>
-        <h2 className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
-          {title}
-        </h2>
-      </div>
-      <p className="text-xs text-white/40">{note}</p>
-    </div>
-  );
-}

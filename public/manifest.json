@@ -19,8 +19,10 @@
     "https://hn.algolia.com/*",
     "https://dev.to/*",
     "https://remoteok.com/*",
+    "https://remotive.com/*",
     "https://suggestqueries.google.com/*"
   ],
+  "optional_host_permissions": ["https://*/*"],
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
