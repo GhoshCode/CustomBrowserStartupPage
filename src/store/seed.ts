@@ -23,9 +23,10 @@ export const DEFAULT_TOPICS: TopicChip[] = [
 export const DEFAULT_SETTINGS: Settings = {
   accentColor: '#ff2e9a',
   themeMode: 'dark',
-  presetTheme: 'default-dark',
-  backgroundImage: null,
-  overlayOpacity: 0.5,
+  presetTheme: 'macos-sonoma',
+  backgroundImage:
+    'radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.45) 0px, transparent 55%), radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.4) 0px, transparent 50%), radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.45) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.35) 0px, transparent 50%), linear-gradient(135deg, #0b0713 0%, #150928 45%, #0d061c 100%)',
+  overlayOpacity: 0.25,
   backgroundBlur: 0,
   clock24h: false,
   greetingName: '',
