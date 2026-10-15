@@ -168,7 +168,7 @@ export const ScrapedNewsPanel = memo(function ScrapedNewsPanel() {
   return (
     <div className="flex flex-col gap-3.5 flex-1 min-h-0 select-none">
       {/* Top Card: TECH NEWS (items 1–4) */}
-      <div className="glass flex-1 rounded-3xl border border-white/10 p-3.5 flex flex-col justify-between overflow-hidden shadow-lg backdrop-blur-xl">
+      <div className="glass flex-1 rounded-3xl border border-white/10 p-4.5 flex flex-col justify-between overflow-hidden shadow-lg backdrop-blur-xl">
         <div className="flex flex-col min-h-0">
           <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
             <div className="flex items-center gap-1.5">
@@ -220,7 +220,7 @@ export const ScrapedNewsPanel = memo(function ScrapedNewsPanel() {
       </div>
 
       {/* Middle Card: DEV OPPORTUNITIES (items 5–8) */}
-      <div className="glass flex-1 rounded-3xl border border-white/10 p-3.5 flex flex-col justify-between overflow-hidden shadow-lg backdrop-blur-xl">
+      <div className="glass flex-1 rounded-3xl border border-white/10 p-4.5 flex flex-col justify-between overflow-hidden shadow-lg backdrop-blur-xl">
         <div className="flex flex-col min-h-0">
           <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
             <div className="flex items-center gap-1.5">

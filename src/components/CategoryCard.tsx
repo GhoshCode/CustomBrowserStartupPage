@@ -237,7 +237,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
       className="glass flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:border-white/20 shadow-lg select-none"
     >
       {/* 1. Header Region: colored label + site count + segmented view switcher */}
-      <header className="flex items-center justify-between px-4.5 pt-3.5 pb-2.5 border-b border-white/[0.06] select-none shrink-0">
+      <header className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/[0.06] select-none shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <span
             className="size-2.5 rounded-full shrink-0"

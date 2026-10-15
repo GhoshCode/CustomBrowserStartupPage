@@ -180,7 +180,7 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
           <LinksStrip />
 
           {/* Horizontal scroll track with category card columns */}
-          <div className="flex flex-1 min-h-0 flex-col p-3 sm:p-4 overflow-hidden relative">
+          <div className="flex flex-1 min-h-0 flex-col p-4 sm:p-5 overflow-hidden relative">
             <motion.div
               ref={scrollRef}
               variants={containerVariants}

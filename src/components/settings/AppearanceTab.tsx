@@ -1,6 +1,6 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState, useMemo, type ChangeEvent } from 'react';
 import { useStore } from '../../store';
-import { PRESET_THEMES, type PresetTheme } from '../../store/themes';
+import { PRESET_THEMES, type PresetTheme, type ThemeCategory } from '../../store/themes';
 
 const MACOS_ACCENT_PALETTE = [
   { id: 'multicolor', name: 'Multicolor', hex: '#ff2e9a', gradient: 'linear-gradient(135deg, #ff2e9a, #8b5cf6)' },
@@ -14,12 +14,133 @@ const MACOS_ACCENT_PALETTE = [
   { id: 'graphite', name: 'Graphite', hex: '#8e8e93', gradient: null },
 ];
 
-type WallpaperCategory = 'all' | 'macos' | 'abstract' | 'solids' | 'light';
+type WallpaperFilter = 'all' | ThemeCategory;
+
+const GRADIENT_INSPIRATIONS = [
+  {
+    name: '🌅 Twilight Dusk',
+    type: 'linear' as const,
+    angle: 135,
+    s1: '#0b0713',
+    s2: '#3b0764',
+    s3: '#f59e0b',
+    use3: true,
+  },
+  {
+    name: '🌊 Ocean Reef',
+    type: 'linear' as const,
+    angle: 120,
+    s1: '#020b17',
+    s2: '#0284c7',
+    s3: '#38bdf8',
+    use3: true,
+  },
+  {
+    name: '🌲 Alpine Pine',
+    type: 'linear' as const,
+    angle: 140,
+    s1: '#02140e',
+    s2: '#059669',
+    s3: '#34d399',
+    use3: true,
+  },
+  {
+    name: '🔮 Cyber Neon',
+    type: 'linear' as const,
+    angle: 135,
+    s1: '#090214',
+    s2: '#c026d3',
+    s3: '#00f0ff',
+    use3: true,
+  },
+  {
+    name: '🌸 Peach Sorbet',
+    type: 'linear' as const,
+    angle: 135,
+    s1: '#fff7ed',
+    s2: '#fed7aa',
+    s3: '#f472b6',
+    use3: true,
+  },
+  {
+    name: '☁️ Nordic Fog',
+    type: 'linear' as const,
+    angle: 135,
+    s1: '#f8fafc',
+    s2: '#cbd5e1',
+    s3: '#64748b',
+    use3: true,
+  },
+  {
+    name: '🎯 Radial Amethyst',
+    type: 'radial' as const,
+    angle: 0,
+    s1: '#090114',
+    s2: '#220538',
+    s3: '#a855f7',
+    use3: true,
+  },
+  {
+    name: '✨ Gold Velvet',
+    type: 'linear' as const,
+    angle: 90,
+    s1: '#1c1917',
+    s2: '#78350f',
+    s3: '#f59e0b',
+    use3: true,
+  },
+];
 
 export function AppearanceTab() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
-  const [selectedCategory, setSelectedCategory] = useState<WallpaperCategory>('all');
+  const [selectedCategory, setSelectedCategory] = useState<WallpaperFilter>('all');
+
+  // Custom Gradient Builder State
+  const [gradientType, setGradientType] = useState<'linear' | 'radial'>('linear');
+  const [gradientAngle, setGradientAngle] = useState<number>(135);
+  const [colorStop1, setColorStop1] = useState<string>('#0b0713');
+  const [colorStop2, setColorStop2] = useState<string>('#3b0764');
+  const [useStop3, setUseStop3] = useState<boolean>(true);
+  const [colorStop3, setColorStop3] = useState<string>('#f59e0b');
+  const [copied, setCopied] = useState<boolean>(false);
+
+  // Compute live custom gradient CSS
+  const generatedGradient = useMemo(() => {
+    if (gradientType === 'linear') {
+      if (useStop3) {
+        return `linear-gradient(${gradientAngle}deg, ${colorStop1} 0%, ${colorStop2} 50%, ${colorStop3} 100%)`;
+      }
+      return `linear-gradient(${gradientAngle}deg, ${colorStop1} 0%, ${colorStop2} 100%)`;
+    } else {
+      if (useStop3) {
+        return `radial-gradient(circle at 50% 50%, ${colorStop3} 0%, ${colorStop2} 50%, ${colorStop1} 100%)`;
+      }
+      return `radial-gradient(circle at 50% 50%, ${colorStop2} 0%, ${colorStop1} 100%)`;
+    }
+  }, [gradientType, gradientAngle, colorStop1, colorStop2, useStop3, colorStop3]);
+
+  const handleApplyGradient = () => {
+    updateSettings({
+      backgroundImage: generatedGradient,
+      presetTheme: 'custom-gradient',
+    });
+  };
+
+  const handleCopyCss = () => {
+    navigator.clipboard.writeText(generatedGradient);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleApplyInspiration = (insp: (typeof GRADIENT_INSPIRATIONS)[number]) => {
+    setGradientType(insp.type);
+    setGradientAngle(insp.angle);
+    setColorStop1(insp.s1);
+    setColorStop2(insp.s2);
+    setUseStop3(insp.use3);
+    setColorStop3(insp.s3);
+  };
 
   const handleModeChange = (mode: 'dark' | 'light') => {
     if (mode === 'dark') {
@@ -70,24 +191,24 @@ export function AppearanceTab() {
       : PRESET_THEMES.filter((t) => t.category === selectedCategory);
 
   return (
-    <div className="max-w-3xl space-y-7 p-6 text-sm text-white/90 select-none">
+    <div className="max-w-3xl space-y-8 p-6 sm:p-7 text-sm text-white/90 select-none">
       {/* Header & Title */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
         <div>
           <h3 className="font-display text-lg font-bold text-white tracking-wide flex items-center gap-2">
             <span>Appearance & Display</span>
             <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-mono font-semibold text-cyan-300 border border-cyan-500/30">
-              macOS Sonoma Edition
+              macOS Sequoia Edition
             </span>
           </h3>
-          <p className="text-xs text-white/50 mt-0.5">
-            Customize window vibrancy, wallpapers, accent colors, and cockpit typography.
+          <p className="text-xs text-white/50 mt-1">
+            Customize window vibrancy, wallpapers, accent colors, custom gradient direction & stops, and typography.
           </p>
         </div>
       </div>
 
       {/* 1. Live Apple Studio Display Mockup Preview */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-2xl backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 shadow-2xl backdrop-blur-2xl">
         <div className="flex items-center justify-between pb-3">
           <div className="flex items-center gap-1.5">
             <span className="size-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/50 shadow-sm" />
@@ -104,7 +225,7 @@ export function AppearanceTab() {
 
         {/* Mini Desktop Stage */}
         <div
-          className="relative h-44 w-full rounded-xl overflow-hidden border border-white/15 p-3 flex flex-col justify-between transition-all duration-500 shadow-inner"
+          className="relative h-48 w-full rounded-xl overflow-hidden border border-white/15 p-3.5 flex flex-col justify-between transition-all duration-500 shadow-inner"
           style={{
             background:
               settings.backgroundImage ||
@@ -115,38 +236,42 @@ export function AppearanceTab() {
         >
           {/* Simulated Top Bar Cockpit */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="glass h-10 rounded-lg border border-white/20 p-1 flex items-center justify-between px-2">
+            <div className="glass h-11 rounded-lg border border-white/20 p-1 flex items-center justify-between px-2.5">
               <span className="font-bold text-xs text-white">14:48</span>
               <span className="text-[9px] text-white/70">27°C</span>
             </div>
-            <div className="glass h-10 rounded-lg border border-white/20 p-1 flex items-center px-2">
-              <span className="text-[9px] text-rose-300 font-semibold">✓ 3 Tasks</span>
+            <div className="glass h-11 rounded-lg border border-white/20 p-1 flex items-center justify-between px-2.5">
+              <span className="text-[9px] font-semibold text-cyan-300">GH COMMITS</span>
+              <span className="text-[9px] text-white/80">388</span>
             </div>
-            <div className="glass h-10 rounded-lg border border-white/20 p-1 flex items-center px-2">
-              <span className="text-[9px] text-emerald-300 font-semibold">1,420 commits</span>
+            <div className="glass h-11 rounded-lg border border-white/20 p-1 flex items-center justify-between px-2.5">
+              <span className="text-[9px] font-semibold text-amber-300">ACTIVE TODO</span>
+              <span className="text-[9px] text-white/80">4 pending</span>
             </div>
-            <div className="glass h-10 rounded-lg border border-white/20 p-1 flex items-center px-2">
-              <span className="text-[9px] text-white/80 font-medium">Good Afternoon</span>
+            <div className="glass h-11 rounded-lg border border-white/20 p-1 flex items-center justify-between px-2.5">
+              <span className="text-[9px] font-semibold text-rose-300">UV INDEX</span>
+              <span className="text-[9px] text-white/80">6 Moderate</span>
             </div>
           </div>
 
           {/* Simulated Search Bar */}
-          <div className="mx-auto flex h-7 w-2/3 items-center justify-between rounded-xl border border-white/25 bg-white/10 px-3 shadow-lg backdrop-blur-md">
-            <span className="text-[10px] text-white/60">Search web or deck...</span>
-            <div className="flex items-center gap-1">
-              <span
-                className="size-2 rounded-full"
-                style={{ backgroundColor: settings.accentColor }}
-              />
-              <span className="font-mono text-[8px] text-white/50">⌘K</span>
-            </div>
+          <div className="h-8 w-2/3 mx-auto rounded-lg border border-white/30 bg-black/30 backdrop-blur-md flex items-center px-3 justify-between shadow-sm">
+            <span className="text-[10px] text-white/50 flex items-center gap-1.5">
+              <span>🔍</span> Search or execute command...
+            </span>
+            <span
+              className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm text-white"
+              style={{ backgroundColor: settings.accentColor }}
+            >
+              ⌘K
+            </span>
           </div>
 
-          {/* Simulated 3-Column Cockpit Bottom Cards */}
+          {/* Simulated 3-Column Deck */}
           <div className="grid grid-cols-3 gap-2">
             <div className="glass h-12 rounded-lg border border-white/15 p-1 flex flex-col justify-center px-2">
-              <span className="text-[9px] font-bold text-cyan-300 uppercase">Working Sites</span>
-              <span className="text-[8px] text-white/50">:5173 · :3000</span>
+              <span className="text-[9px] font-bold text-white/90 uppercase">Active Sites</span>
+              <span className="text-[8px] text-white/50">4 running</span>
             </div>
             <div className="glass h-12 rounded-lg border border-white/25 p-1 flex flex-col justify-center px-2">
               <span
@@ -166,16 +291,16 @@ export function AppearanceTab() {
       </div>
 
       {/* 2. Apple Appearance Mode (Light / Dark) */}
-      <section className="glass-inner space-y-3 p-5 rounded-2xl border border-white/10">
+      <section className="glass-inner space-y-3.5 p-5 sm:p-6 rounded-2xl border border-white/10">
         <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
           Appearance Mode
         </label>
-        <div className="grid grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-2 gap-4">
           {/* Dark Mode Monitor */}
           <button
             type="button"
             onClick={() => handleModeChange('dark')}
-            className={`group flex flex-col items-center gap-2.5 p-3 rounded-2xl border transition-all ${
+            className={`group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${
               settings.themeMode === 'dark'
                 ? 'border-[var(--color-accent)] bg-white/15 ring-2 ring-[var(--color-accent)] shadow-xl'
                 : 'border-white/10 bg-white/5 hover:bg-white/10 text-white/70'
@@ -204,13 +329,13 @@ export function AppearanceTab() {
           <button
             type="button"
             onClick={() => handleModeChange('light')}
-            className={`group flex flex-col items-center gap-2.5 p-3 rounded-2xl border transition-all ${
+            className={`group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${
               settings.themeMode === 'light'
                 ? 'border-[var(--color-accent)] bg-white/20 ring-2 ring-[var(--color-accent)] shadow-xl'
                 : 'border-white/10 bg-white/5 hover:bg-white/10 text-white/70'
             }`}
           >
-            <div className="relative h-20 w-32 rounded-xl border border-black/10 bg-[#f1f5f9] p-2 flex flex-col justify-between shadow-inner">
+            <div className="relative h-20 w-32 rounded-xl border border-black/10 bg-[#f4f6fa] p-2 flex flex-col justify-between shadow-inner">
               <div className="flex gap-1">
                 <span className="size-1.5 rounded-full bg-red-400" />
                 <span className="size-1.5 rounded-full bg-amber-400" />
@@ -232,7 +357,7 @@ export function AppearanceTab() {
       </section>
 
       {/* 3. Apple macOS Accent Color Palette */}
-      <section className="glass-inner space-y-3 p-5 rounded-2xl border border-white/10">
+      <section className="glass-inner space-y-3.5 p-5 sm:p-6 rounded-2xl border border-white/10">
         <div className="flex items-center justify-between">
           <div>
             <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
@@ -285,31 +410,259 @@ export function AppearanceTab() {
         </div>
       </section>
 
-      {/* 4. macOS Wallpapers & Themes Gallery */}
-      <section className="glass-inner space-y-4 p-5 rounded-2xl border border-white/10">
+      {/* 4. Interactive Custom Gradient Studio (Direction, Colors, Stops) */}
+      <section className="glass-inner space-y-4 p-5 sm:p-6 rounded-2xl border border-cyan-500/20 bg-cyan-950/10">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <label className="text-xs font-semibold text-cyan-300 uppercase tracking-wider block flex items-center gap-2">
+              <span>Custom Gradient Studio</span>
+              <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-[9px] font-mono text-cyan-300">
+                Live Builder
+              </span>
+            </label>
+            <p className="text-[11px] text-white/50">
+              Manually set gradient angle direction, start, middle, and end color stops.
+            </p>
+          </div>
+
+          {/* Gradient Type Switcher */}
+          <div className="flex items-center rounded-xl bg-black/40 p-1 border border-white/10">
+            <button
+              type="button"
+              onClick={() => setGradientType('linear')}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                gradientType === 'linear'
+                  ? 'bg-cyan-500 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white'
+              }`}
+            >
+              Linear
+            </button>
+            <button
+              type="button"
+              onClick={() => setGradientType('radial')}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                gradientType === 'radial'
+                  ? 'bg-cyan-500 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white'
+              }`}
+            >
+              Radial
+            </button>
+          </div>
+        </div>
+
+        {/* Gradient Angle Direction Slider & Quick Chips (if Linear) */}
+        {gradientType === 'linear' && (
+          <div className="space-y-2 rounded-xl bg-white/[0.03] p-3.5 border border-white/10">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-white/70 font-medium">
+                Gradient Direction (Angle): <span className="font-mono text-cyan-300">{gradientAngle}°</span>
+              </span>
+              {/* Quick directional chips */}
+              <div className="flex items-center gap-1">
+                {[
+                  { angle: 135, label: '↘ 135°' },
+                  { angle: 90, label: '→ 90°' },
+                  { angle: 180, label: '↓ 180°' },
+                  { angle: 45, label: '↗ 45°' },
+                  { angle: 315, label: '↖ 315°' },
+                  { angle: 0, label: '↑ 0°' },
+                ].map((item) => (
+                  <button
+                    key={item.angle}
+                    type="button"
+                    onClick={() => setGradientAngle(item.angle)}
+                    className={`rounded-md px-2 py-0.5 text-[10px] font-mono transition-all ${
+                      gradientAngle === item.angle
+                        ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/50'
+                        : 'bg-white/5 text-white/50 hover:bg-white/10'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="360"
+              step="5"
+              value={gradientAngle}
+              onChange={(e) => setGradientAngle(parseInt(e.target.value, 10))}
+              className="w-full accent-cyan-400 cursor-pointer"
+            />
+          </div>
+        )}
+
+        {/* Color Stops Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Stop 1 */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5">
+            <span className="text-[11px] font-semibold text-white/60 uppercase tracking-wider block">
+              Color Stop 1 (Start)
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={colorStop1}
+                onChange={(e) => setColorStop1(e.target.value)}
+                className="size-7 cursor-pointer rounded-lg border-0 bg-transparent p-0 shrink-0"
+              />
+              <input
+                type="text"
+                value={colorStop1}
+                onChange={(e) => setColorStop1(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+          </div>
+
+          {/* Stop 2 */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5">
+            <span className="text-[11px] font-semibold text-white/60 uppercase tracking-wider block">
+              Color Stop 2 (Middle)
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={colorStop2}
+                onChange={(e) => setColorStop2(e.target.value)}
+                className="size-7 cursor-pointer rounded-lg border-0 bg-transparent p-0 shrink-0"
+              />
+              <input
+                type="text"
+                value={colorStop2}
+                onChange={(e) => setColorStop2(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+          </div>
+
+          {/* Stop 3 (Optional) */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-white/60 uppercase tracking-wider block">
+                Color Stop 3 (End)
+              </span>
+              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-white/60">
+                <input
+                  type="checkbox"
+                  checked={useStop3}
+                  onChange={(e) => setUseStop3(e.target.checked)}
+                  className="rounded accent-cyan-400"
+                />
+                <span>Active</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                disabled={!useStop3}
+                value={colorStop3}
+                onChange={(e) => setColorStop3(e.target.value)}
+                className="size-7 cursor-pointer rounded-lg border-0 bg-transparent p-0 shrink-0 disabled:opacity-30"
+              />
+              <input
+                type="text"
+                disabled={!useStop3}
+                value={colorStop3}
+                onChange={(e) => setColorStop3(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-cyan-400 disabled:opacity-30"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Inspiration Palettes */}
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wider block">
+            Quick Palettes for Inspiration
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {GRADIENT_INSPIRATIONS.map((insp) => (
+              <button
+                key={insp.name}
+                type="button"
+                onClick={() => handleApplyInspiration(insp)}
+                className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80 hover:bg-white/10 hover:border-cyan-400/40 transition-all flex items-center gap-1.5"
+              >
+                <span
+                  className="size-2 rounded-full border border-white/30"
+                  style={{ backgroundColor: insp.s3 || insp.s2 }}
+                />
+                <span>{insp.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Mini Preview & Action Buttons */}
+        <div className="rounded-xl border border-white/15 bg-black/30 p-3.5 space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/70 font-semibold flex items-center gap-1.5">
+              <span>Preview:</span>
+              <code className="text-[10px] font-mono text-cyan-300 max-w-sm truncate bg-black/40 px-2 py-0.5 rounded">
+                {generatedGradient}
+              </code>
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyCss}
+              className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80 transition-colors"
+            >
+              {copied ? '✓ Copied' : 'Copy CSS'}
+            </button>
+          </div>
+
+          {/* Visual gradient swatch */}
+          <div
+            className="h-14 w-full rounded-lg border border-white/20 shadow-md transition-all"
+            style={{ background: generatedGradient }}
+          />
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleApplyGradient}
+              className="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2 text-xs font-bold text-slate-950 shadow-lg transition-all hover:scale-[1.02] flex items-center gap-2"
+            >
+              <span>Apply Custom Gradient to Workspace</span>
+              <span>✨</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Diverse macOS Wallpapers & Themes Gallery */}
+      <section className="glass-inner space-y-4 p-5 sm:p-6 rounded-2xl border border-white/10">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-              macOS Dynamic Wallpapers & Backdrops
+              Diverse Preset Themes & Wallpapers ({PRESET_THEMES.length} Presets)
             </label>
             <p className="text-[11px] text-white/40">
-              Apple-grade dynamic mesh gradients and authentic macOS horizons
+              Curated across macOS flagships, vibrant neons, earth & nature, jewel tones, pastels, and solids
             </p>
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-1 rounded-xl bg-white/[0.04] p-1 border border-white/10">
+          <div className="flex items-center gap-1 rounded-xl bg-white/[0.04] p-1 border border-white/10 flex-wrap">
             {[
               { id: 'all', label: 'All' },
               { id: 'macos', label: '🍏 macOS' },
-              { id: 'abstract', label: '🌌 Cosmic' },
-              { id: 'solids', label: '🎨 Solids' },
+              { id: 'vibrant', label: '⚡ Vibrant' },
+              { id: 'nature', label: '🌲 Nature' },
+              { id: 'jewel', label: '💎 Jewel' },
+              { id: 'pastel', label: '🌸 Pastel' },
               { id: 'light', label: '☀️ Light' },
+              { id: 'solids', label: '🎨 Solids' },
             ].map((cat) => (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.id as WallpaperCategory)}
+                onClick={() => setSelectedCategory(cat.id as WallpaperFilter)}
                 className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all ${
                   selectedCategory === cat.id
                     ? 'bg-white/20 text-white shadow-sm'
@@ -323,7 +676,7 @@ export function AppearanceTab() {
         </div>
 
         {/* Wallpaper Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 max-h-[460px] overflow-y-auto pr-1">
           {filteredThemes.map((preset) => {
             const isSelected = settings.presetTheme === preset.id;
             return (
@@ -377,8 +730,8 @@ export function AppearanceTab() {
         </div>
       </section>
 
-      {/* 5. Custom Backdrop Image / URL */}
-      <section className="glass-inner space-y-3 p-5 rounded-2xl border border-white/10">
+      {/* 6. Custom Backdrop Image / URL */}
+      <section className="glass-inner space-y-3 p-5 sm:p-6 rounded-2xl border border-white/10">
         <div>
           <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
             Custom Wallpaper (Image URL or File Upload)
@@ -419,8 +772,8 @@ export function AppearanceTab() {
         </div>
       </section>
 
-      {/* 6. macOS Liquid Glass Vibrancy & Blur Controls */}
-      <section className="glass-inner space-y-4 p-5 rounded-2xl border border-white/10">
+      {/* 7. macOS Liquid Glass Vibrancy & Blur Controls */}
+      <section className="glass-inner space-y-4 p-5 sm:p-6 rounded-2xl border border-white/10">
         <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
           macOS Glass Vibrancy & Translucency
         </label>
@@ -462,8 +815,8 @@ export function AppearanceTab() {
         </div>
       </section>
 
-      {/* 7. Clock & Cockpit Customization */}
-      <section className="glass-inner space-y-4 p-5 rounded-2xl border border-white/10">
+      {/* 8. Clock & Cockpit Customization */}
+      <section className="glass-inner space-y-4 p-5 sm:p-6 rounded-2xl border border-white/10">
         <h4 className="font-display text-xs font-semibold text-white/90 uppercase tracking-wider">
           Clock & Cockpit Preferences
         </h4>

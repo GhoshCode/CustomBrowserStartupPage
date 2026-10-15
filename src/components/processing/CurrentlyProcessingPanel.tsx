@@ -145,7 +145,7 @@ export const CurrentlyProcessingPanel = memo(function CurrentlyProcessingPanel({
   return (
     <aside className="flex flex-col w-64 lg:w-72 shrink-0 h-full pb-14 min-h-0 select-none">
       {/* Tall Single Card: CURRENTLY WORKING SITES */}
-      <div className="glass-raised flex flex-1 min-h-0 flex-col rounded-3xl border border-white/15 p-4 shadow-xl backdrop-blur-2xl overflow-hidden justify-between">
+      <div className="glass-raised flex flex-1 min-h-0 flex-col rounded-3xl border border-white/15 p-5 shadow-xl backdrop-blur-2xl overflow-hidden justify-between">
         <div className="flex flex-col min-h-0 flex-1">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] shrink-0">
