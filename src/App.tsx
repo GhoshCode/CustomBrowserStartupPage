@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Backdrop } from './components/Backdrop';
 import { CategoryGrid } from './components/CategoryGrid';
 import { TopBar } from './components/topbar/TopBar';
@@ -7,15 +7,16 @@ import { CommandPrompt } from './components/topbar/CommandPrompt';
 import { TodoWidget } from './components/topbar/todo/TodoWidget';
 import { GitWidget } from './components/topbar/GitWidget';
 import { DashboardLayout, ZonePlaceholder } from './components/layout/DashboardLayout';
-import { QuickLinks } from './components/QuickLinks';
-import { CommandPalette } from './components/CommandPalette';
+import { SearchBar } from './components/search/SearchBar';
+import { BookmarkButton } from './components/search/BookmarkDrawer';
+import { LinksStrip } from './components/links/LinksStrip';
 import SettingsModal, { type SettingsTabId } from './components/settings/SettingsModal';
 import { useStore } from './store';
 
 export default function App() {
   const accentColor = useStore((s) => s.settings.accentColor);
 
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTabId>('library');
   const [settingsPrefill, setSettingsPrefill] = useState('');
@@ -45,7 +46,8 @@ export default function App() {
     }
   }, []);
 
-  // Global hotkeys for Command Palette (Ctrl+K, Cmd+K, /) and Settings (,)
+  // Global hotkeys (§7 Q4): Ctrl/⌘+K and "/" focus the search bar; "," opens
+  // Settings; Escape closes Settings.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -56,26 +58,22 @@ export default function App() {
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsPaletteOpen((prev) => !prev);
-      } else if (e.key === '/' && !isInput && !isPaletteOpen && !isSettingsOpen) {
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      } else if (e.key === '/' && !isInput && !isSettingsOpen) {
         e.preventDefault();
-        setIsPaletteOpen(true);
-      } else if (e.key === ',' && !isInput && !isPaletteOpen && !isSettingsOpen) {
+        searchRef.current?.focus();
+      } else if (e.key === ',' && !isInput && !isSettingsOpen) {
         e.preventDefault();
         openSettings();
-      } else if (e.key === 'Escape') {
-        if (isSettingsOpen) {
-          setIsSettingsOpen(false);
-        } else if (isPaletteOpen) {
-          setIsPaletteOpen(false);
-        }
+      } else if (e.key === 'Escape' && isSettingsOpen) {
+        setIsSettingsOpen(false);
       }
     };
 
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPaletteOpen, isSettingsOpen]);
+  }, [isSettingsOpen]);
 
   const settingsButton = (
     <button
@@ -111,7 +109,12 @@ export default function App() {
             git={<GitWidget />}
           />
         }
-        searchRow={<QuickLinks onOpenPalette={() => setIsPaletteOpen(true)} />}
+        searchRow={
+          <div className="mx-auto flex w-full max-w-5xl items-center gap-3">
+            <SearchBar inputRef={searchRef} onAddSite={(url) => openSettings('library', url)} />
+            <BookmarkButton />
+          </div>
+        }
         left={
           <>
             <ZonePlaceholder zone="D" title="Processing" note="Active workspaces land here in Phase 4." />
@@ -119,7 +122,14 @@ export default function App() {
           </>
         }
         leftFooter={settingsButton}
-        center={<CategoryGrid onOpenSettings={() => openSettings('library')} />}
+        center={
+          <div data-testid="center-frame" className="glass flex h-full min-h-0 flex-col overflow-hidden">
+            <LinksStrip />
+            <div className="flex min-h-0 flex-1 p-3">
+              <CategoryGrid onOpenSettings={() => openSettings('library')} />
+            </div>
+          </div>
+        }
         right={
           <div className="flex h-full min-h-0 flex-col gap-3">
             <ZonePlaceholder zone="I" title="Tech news" note="Items 1–4 · Phase 5." />
@@ -127,13 +137,6 @@ export default function App() {
             <ZonePlaceholder zone="J" title="Topics" note="#AI · #Frontend · #DevOps" />
           </div>
         }
-      />
-
-      {/* Command Palette Overlay */}
-      <CommandPalette
-        isOpen={isPaletteOpen}
-        onClose={() => setIsPaletteOpen(false)}
-        onAddSite={(prefill) => openSettings('library', prefill)}
       />
 
       {/* Settings Overlay */}

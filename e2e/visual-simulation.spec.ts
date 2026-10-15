@@ -13,11 +13,11 @@ test.describe('Complete Playwright Visual Testing Simulation', () => {
     const deck = page.locator('[data-categories-container]');
     await expect(deck).toBeVisible();
 
-    const topBar = page.locator('div.glass-raised').first();
-    await expect(topBar).toBeVisible();
+    const linksStrip = page.getByTestId('links-strip');
+    await expect(linksStrip).toBeVisible();
 
-    // Check quick links rendered
-    const quickLinks = topBar.locator('a.glass-inner');
+    // Check the 4 fixed quick links rendered
+    const quickLinks = linksStrip.locator('[data-chip=fixed]');
     await expect(quickLinks).toHaveCount(4);
 
     // Check category cards rendered
@@ -125,7 +125,7 @@ test.describe('Complete Playwright Visual Testing Simulation', () => {
     // 3. Quick Links Tab
     const quickLinksTab = modal.getByRole('button', { name: /Quick Links/i });
     await quickLinksTab.click();
-    await expect(modal.getByText('Manage the shortcut bar')).toBeVisible();
+    await expect(modal.getByText('The links strip at the top of the centre frame')).toBeVisible();
 
     // 4. Data Tab
     const dataTab = modal.getByRole('button', { name: /Data/i });
@@ -184,15 +184,20 @@ test.describe('Complete Playwright Visual Testing Simulation', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     // Interact with search bar
-    const searchInput = page.locator('input[aria-label="Direct search bar"]');
+    const searchInput = page.getByRole('combobox', { name: 'Search' });
     await searchInput.fill('developer');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
 
-    // Interact with command palette
+    // Ctrl+K focuses the search bar (v2 replaced the palette)
     await page.keyboard.press('Control+k');
-    const palette = page.locator('[role="dialog"][aria-label="Command palette"]');
-    await expect(palette).toBeVisible();
+    await expect(searchInput).toBeFocused();
+    await page.keyboard.press('Escape');
+
+    // Open and close the G1 bookmarks drawer
+    await page.getByRole('button', { name: 'Bookmarks and site map' }).click();
+    await expect(page.getByRole('dialog', { name: 'Bookmarks and site map' })).toBeVisible();
     await page.keyboard.press('Escape');
 
     // Switch subcategories back and forth

@@ -243,114 +243,55 @@ test.describe('Category Cards', () => {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// TEST GROUP 4: COMMAND PALETTE
+// TEST GROUP 4: SEARCH BAR
 // ═══════════════════════════════════════════════════════════════════
 //
-// The Ctrl+K search overlay — the keyboard-powered site finder.
+// v2 retired the Ctrl+K palette for an always-visible search bar
+// (plan §7 Q4). Ctrl+K and "/" now just focus it.
 
-test.describe('Command Palette', () => {
+test.describe('Search Bar', () => {
 
-  test('opens with Ctrl+K and closes with Escape', async ({ page }) => {
+  test('Ctrl+K and "/" focus the always-visible search bar', async ({ page }) => {
     // ┌─────────────────────────────────────────────────────────┐
-    // │  keyboard.press() simulates real key presses.           │
-    // │  'Control+k' = holding Ctrl and pressing K.            │
-    // │                                                        │
-    // │  We check the palette dialog appears, then press Esc   │
-    // │  to close it and verify it's gone.                     │
+    // │  toBeFocused() checks the element has keyboard focus.  │
     // └─────────────────────────────────────────────────────────┘
-
-    // Initially the palette should NOT be visible
-    const palette = page.locator('[aria-label="Command palette"]');
-    await expect(palette).not.toBeVisible();
-
-    // Press Ctrl+K to open
-    await page.keyboard.press('Control+k');
-
-    // Now it SHOULD be visible
-    await expect(palette).toBeVisible();
-
-    // Press Escape to close
-    await page.keyboard.press('Escape');
-
-    // Should be gone again
-    await expect(palette).not.toBeVisible();
-  });
-
-  test('shows the search input with placeholder text', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  getByPlaceholder() finds <input> by its placeholder.   │
-    // │  This is great for finding search boxes!                │
-    // └─────────────────────────────────────────────────────────┘
-
-    await page.keyboard.press('Control+k');
-
-    const input = page.getByPlaceholder('Search sites or type URL...');
+    const input = page.getByRole('combobox', { name: 'Search' });
     await expect(input).toBeVisible();
-  });
-
-  test('searches and finds sites by name', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  fill() types text into an input field.                 │
-    // │  Unlike type(), fill() replaces everything instantly.  │
-    // │                                                        │
-    // │  After typing "github", the fuzzy search should show   │
-    // │  GitHub in the results.                                │
-    // └─────────────────────────────────────────────────────────┘
 
     await page.keyboard.press('Control+k');
-    await page.getByPlaceholder('Search sites or type URL...').fill('github');
+    await expect(input).toBeFocused();
 
-    // The search results should show "GitHub"
-    const result = page.locator('[aria-label="Command palette"]').getByText('GitHub', { exact: true });
-    await expect(result).toBeVisible();
-  });
+    await page.keyboard.press('Escape'); // empty query → blur
+    await expect(input).not.toBeFocused();
 
-  test('keyboard navigation works (Arrow Down + Enter)', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  We test the full keyboard flow:                        │
-    // │    1. Open palette                                     │
-    // │    2. Type a search                                    │
-    // │    3. Press ArrowDown to move selection                │
-    // │    4. Check the selected item is highlighted           │
-    // │                                                        │
-    // │  This tests ACCESSIBILITY — can someone use DevDeck    │
-    // │  without a mouse? This test proves: YES!               │
-    // └─────────────────────────────────────────────────────────┘
-
-    await page.keyboard.press('Control+k');
-    await page.getByPlaceholder('Search sites or type URL...').fill('dev');
-
-    // There should be at least one result
-    const results = page.locator('[aria-label="Command palette"] [data-result-index]');
-    const count = await results.count();
-    expect(count).toBeGreaterThan(0);
-
-    // First result should be highlighted (has bg-white/10 class)
-    const firstResult = results.first();
-    await expect(firstResult).toHaveClass(/bg-white/);
-  });
-
-  test('shows "Add as new site" when no results match', async ({ page }) => {
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  When you search for something that doesn't exist,      │
-    // │  the palette should offer to add it as a new site.     │
-    // │  This is a great UX pattern — no dead ends!            │
-    // └─────────────────────────────────────────────────────────┘
-
-    await page.keyboard.press('Control+k');
-    await page.getByPlaceholder('Search sites or type URL...').fill('xyznonexistent');
-
-    // Should show the "Add as new site" fallback
-    await expect(
-      page.locator('[aria-label="Command palette"]').getByText(/Add.*xyznonexistent.*as a new site/)
-    ).toBeVisible();
-  });
-
-  test('also opens with "/" key', async ({ page }) => {
-    // "/" is a shortcut to open the palette (like many dev tools)
     await page.keyboard.press('/');
-    const palette = page.locator('[aria-label="Command palette"]');
-    await expect(palette).toBeVisible();
+    await expect(input).toBeFocused();
+  });
+
+  test('tier 1 lists your matching sites', async ({ page }) => {
+    await page.getByRole('combobox', { name: 'Search' }).fill('github');
+    const list = page.getByRole('listbox', { name: 'Search suggestions' });
+    await expect(list.getByText('Your sites')).toBeVisible();
+    await expect(list.getByRole('option', { name: /^GitHub/ }).first()).toBeVisible();
+  });
+
+  test('arrow keys move the highlighted option', async ({ page }) => {
+    const input = page.getByRole('combobox', { name: 'Search' });
+    await input.fill('dev');
+    await page.keyboard.press('ArrowDown');
+    const first = page.getByRole('option').first();
+    await expect(first).toHaveAttribute('aria-selected', 'true');
+    await expect(input).toHaveAttribute('aria-activedescendant', 'search-opt-0');
+  });
+
+  test('tier 3 offers a Google search, and unknown URLs can be added', async ({ page }) => {
+    const input = page.getByRole('combobox', { name: 'Search' });
+    await input.fill('xyznonexistent');
+    await expect(page.getByRole('option', { name: /Search Google for “xyznonexistent”/ })).toBeVisible();
+
+    await input.fill('my-new-tool.dev');
+    await page.getByRole('option', { name: /Add my-new-tool\.dev to your library/ }).click();
+    await expect(page.locator('[aria-label="DevDeck Settings"]')).toBeVisible();
   });
 });
 
