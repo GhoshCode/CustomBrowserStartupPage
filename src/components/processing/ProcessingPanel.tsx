@@ -49,7 +49,7 @@ export const ProcessingPanel = memo(function ProcessingPanel() {
         <button
           type="button"
           onClick={() => setManagerOpen(true)}
-          aria-label="Currently processing settings"
+          aria-label="Manage currently processing"
           title="Add/remove sites and set reminders"
           className="group absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-lg text-white/45 hover:bg-white/10 hover:text-white"
         >
@@ -177,7 +177,7 @@ function ProcessingManager({ onClose }: { onClose: () => void }) {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
       <motion.div
         role="dialog"
-        aria-label="Currently processing settings"
+        aria-label="Manage currently processing"
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -16 }}

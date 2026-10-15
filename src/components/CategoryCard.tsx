@@ -128,7 +128,9 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
       if (!container) return;
       const groupEl = container.querySelector<HTMLElement>(`[data-list-group-id="${id}"]`);
       if (groupEl) {
-        groupEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll the list only — scrollIntoView would also move ancestors.
+        const top = groupEl.getBoundingClientRect().top - container.getBoundingClientRect().top;
+        container.scrollBy({ top, behavior: 'smooth' });
       }
       return;
     }

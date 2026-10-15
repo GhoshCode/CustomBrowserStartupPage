@@ -17,15 +17,15 @@ test('panel D is two stacked cards with the settings cog in the lower one', asyn
   const [t, l] = [await top.boundingBox(), await lower.boundingBox()];
   expect(l!.y).toBeGreaterThan(t!.y + t!.height - 1);
 
-  const cog = lower.getByRole('button', { name: 'Currently processing settings' });
+  const cog = lower.getByRole('button', { name: 'Manage currently processing' });
   const c = await cog.boundingBox();
   expect(c!.x + c!.width).toBeGreaterThan(l!.x + l!.width - 24); // bottom-right corner
   expect(c!.y + c!.height).toBeGreaterThan(l!.y + l!.height - 24);
 });
 
 test('add a library site, schedule it, and file a second one under another section', async ({ page }) => {
-  await page.getByRole('button', { name: 'Currently processing settings' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Currently processing settings' });
+  await page.getByRole('button', { name: 'Manage currently processing' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Manage currently processing' });
 
   const add = dialog.getByRole('textbox', { name: 'Add a site to Currently Processing' });
   await add.fill('github');

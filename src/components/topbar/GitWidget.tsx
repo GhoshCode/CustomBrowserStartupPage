@@ -19,13 +19,13 @@ const GAP = 2;
 const MIN_WEEKS = 16;
 const MAX_WEEKS = 52;
 
-// GitHub's dark-theme greens.
+// GitHub's greens; the --gh-* tokens switch to the light palette in light mode.
 const LEVEL_BG: Record<Level, string> = {
-  0: 'rgb(255 255 255 / 0.06)',
-  1: '#0e4429',
-  2: '#006d32',
-  3: '#26a641',
-  4: '#39d353',
+  0: 'var(--gh-0)',
+  1: 'var(--gh-1)',
+  2: 'var(--gh-2)',
+  3: 'var(--gh-3)',
+  4: 'var(--gh-4)',
 };
 
 type State =

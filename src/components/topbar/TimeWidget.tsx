@@ -42,7 +42,7 @@ interface FaceProps {
 function SegmentFace({ parts, showSeconds }: FaceProps) {
   const digits = (value: string, ghost: string, className: string) => (
     <span className={`relative inline-block ${className}`}>
-      <span aria-hidden className="absolute inset-0 text-white/[0.07]">
+      <span aria-hidden className="clock-ghost absolute inset-0">
         {ghost}
       </span>
       <span className="relative">{value}</span>

@@ -82,9 +82,13 @@ export const PinnedStrip = memo(function PinnedStrip({
     const nav = navRef.current;
     if (!nav) return;
     const activePill = nav.querySelector<HTMLElement>(`[data-group-id="${activeId}"]`);
-    if (activePill) {
-      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    }
+    if (!activePill) return;
+    // Scroll only this strip. scrollIntoView would also scroll every ancestor,
+    // including the card row, which shifted the whole row on page load.
+    const pill = activePill.getBoundingClientRect();
+    const box = nav.getBoundingClientRect();
+    const delta = pill.left < box.left ? pill.left - box.left - 8 : pill.right > box.right ? pill.right - box.right + 8 : 0;
+    if (delta) nav.scrollBy({ left: delta, behavior: 'smooth' });
   }, [activeId]);
 
   useEffect(() => {
