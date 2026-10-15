@@ -84,15 +84,17 @@ export const TodoWidget = memo(function TodoWidget() {
     : [...overdueTodos, ...normalTodos].slice(0, 3);
 
   return (
-    <div
-      onMouseMove={resetInactivityTimer}
-      onKeyDown={resetInactivityTimer}
-      className={`glass group relative flex flex-col justify-between overflow-hidden p-3.5 transition-all duration-300 ${
-        isExpanded
-          ? 'fixed inset-x-6 top-16 z-50 max-h-[85vh] bg-[#0f091f]/95 shadow-2xl backdrop-blur-2xl border-white/20 sm:inset-x-auto sm:left-1/2 sm:w-[540px] sm:-translate-x-1/2 rounded-2xl'
-          : 'h-[142px] w-full rounded-2xl border-white/10 hover:border-white/15'
-      }`}
-    >
+    <div data-testid="todo-widget-slot" className="relative h-[142px] w-full">
+      <div
+        data-testid="todo-widget-inner"
+        onMouseMove={resetInactivityTimer}
+        onKeyDown={resetInactivityTimer}
+        className={`glass group flex flex-col justify-between overflow-hidden p-3.5 transition-all duration-300 ${
+          isExpanded
+            ? 'absolute top-0 left-0 right-0 z-50 h-[380px] bg-[#0d0718]/98 shadow-[0_24px_64px_rgba(0,0,0,0.85)] backdrop-blur-2xl border border-white/25 rounded-2xl'
+            : 'h-[142px] w-full rounded-2xl border border-white/10 hover:border-white/15'
+        }`}
+      >
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
@@ -291,5 +293,6 @@ export const TodoWidget = memo(function TodoWidget() {
         </div>
       </div>
     </div>
+  </div>
   );
 });

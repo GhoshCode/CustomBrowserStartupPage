@@ -54,10 +54,10 @@ export const LinksStrip = memo(function LinksStrip() {
             key={link.id}
             type="button"
             onClick={() => handleLinkClick(link.url)}
-            className="flex items-center gap-1.5 rounded-xl bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/[0.1] hover:text-white transition-all border border-white/10 shadow-sm shrink-0"
+            className="flex h-8 items-center gap-2 rounded-xl bg-white/[0.04] px-3 text-xs font-semibold text-white/90 hover:bg-white/[0.1] hover:text-white transition-all border border-white/10 shadow-sm shrink-0"
           >
-            <Favicon url={link.url} name={link.name} className="size-4" />
-            <span className="font-semibold tracking-tight">{link.name}</span>
+            <Favicon url={link.url} name={link.name} className="size-4 shrink-0" />
+            <span className="truncate max-w-[120px]">{link.name}</span>
           </button>
         ))}
       </div>
@@ -69,7 +69,7 @@ export const LinksStrip = memo(function LinksStrip() {
       <div className="relative flex-1 min-w-0 flex items-center">
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth pr-6"
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none scroll-smooth pr-6"
         >
           <span className="text-[10px] font-mono uppercase tracking-widest text-white/40 mr-1 shrink-0">
             RECENT
@@ -79,10 +79,10 @@ export const LinksStrip = memo(function LinksStrip() {
               key={site.id}
               type="button"
               onClick={() => handleLinkClick(site.url, site.id)}
-              className="flex items-center gap-1.5 rounded-xl bg-white/[0.03] px-2.5 py-1 text-xs text-white/75 hover:bg-white/[0.08] hover:text-white transition-all border border-white/5 shrink-0"
+              className="flex h-8 items-center gap-2 rounded-xl bg-white/[0.04] px-3 text-xs font-semibold text-white/80 hover:bg-white/[0.1] hover:text-white transition-all border border-white/10 shadow-sm shrink-0"
             >
-              <Favicon url={site.url} name={site.name} className="size-3.5" />
-              <span className="truncate max-w-[110px] font-medium">{site.name}</span>
+              <Favicon url={site.url} name={site.name} className="size-4 shrink-0" />
+              <span className="truncate max-w-[120px]">{site.name}</span>
             </button>
           ))}
         </div>

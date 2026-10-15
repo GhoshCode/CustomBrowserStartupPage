@@ -75,6 +75,7 @@ export interface WeatherData {
   conditionCode: number;
   conditionText: string;
   city: string;
+  postalCode?: string;
   uvIndex: number;
   uvRisk: 'low' | 'moderate' | 'high' | 'very-high' | 'extreme';
   lastUpdated: number;

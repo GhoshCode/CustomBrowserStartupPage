@@ -70,9 +70,26 @@ export const WeatherWidget = memo(function WeatherWidget() {
       return;
     }
 
-    const fetchWeather = async (lat: number, lon: number, cityName = 'Local') => {
+    const fetchWeather = async (lat: number, lon: number, defaultCity = 'Local', defaultPostcode?: string) => {
       setLoading(true);
       try {
+        // Reverse geocoding for place name & pin code
+        let cityName = defaultCity;
+        let postalCode = defaultPostcode;
+
+        try {
+          const geoRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+          );
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            cityName = geoData.city || geoData.locality || geoData.principalSubdivision || cityName;
+            postalCode = geoData.postcode || postalCode;
+          }
+        } catch {
+          // ignore geocode failure, fallback to defaults
+        }
+
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,uv_index`,
         );
@@ -83,10 +100,11 @@ export const WeatherWidget = memo(function WeatherWidget() {
         const uv = current.uv_index ?? 0;
         const { text } = interpretWeatherCode(code);
         const nextWeather: WeatherData = {
-          temperature: Math.round(current.temperature_2m ?? 22),
+          temperature: Math.round(current.temperature_2m ?? 28),
           conditionCode: code,
           conditionText: text,
           city: cityName,
+          postalCode,
           uvIndex: Math.round(uv * 10) / 10,
           uvRisk: getUvRisk(uv),
           lastUpdated: Date.now(),
@@ -97,11 +115,12 @@ export const WeatherWidget = memo(function WeatherWidget() {
         // Fallback synthetic data if offline/blocked
         if (!weather) {
           setWeather({
-            temperature: 24,
+            temperature: 28,
             conditionCode: 1,
             conditionText: 'Fair',
-            city: 'Local',
-            uvIndex: 3.2,
+            city: 'San Francisco',
+            postalCode: '94107',
+            uvIndex: 4.2,
             uvRisk: 'moderate',
             lastUpdated: Date.now(),
           });
@@ -117,25 +136,26 @@ export const WeatherWidget = memo(function WeatherWidget() {
           fetchWeather(pos.coords.latitude, pos.coords.longitude, 'Nearby');
         },
         () => {
-          // Default coordinates (New York) if geolocation is denied
-          fetchWeather(40.7128, -74.006, 'Default');
+          // Default coordinates if geolocation is denied
+          fetchWeather(22.5726, 88.3639, 'Kolkata', '700001');
         },
         { timeout: 5000 },
       );
     } else {
-      fetchWeather(40.7128, -74.006, 'Default');
+      fetchWeather(22.5726, 88.3639, 'Kolkata', '700001');
     }
   }, [weatherEnabled, useGeolocation, weather]);
 
   if (!weatherEnabled) return null;
 
   const current = weather ?? {
-    temperature: 24,
+    temperature: 28,
     conditionCode: 0,
     conditionText: 'Clear',
-    city: 'Local',
-    uvIndex: 2.5,
-    uvRisk: 'low' as const,
+    city: 'Kolkata',
+    postalCode: '700001',
+    uvIndex: 4.2,
+    uvRisk: 'moderate' as const,
     lastUpdated: Date.now(),
   };
 
@@ -144,24 +164,37 @@ export const WeatherWidget = memo(function WeatherWidget() {
 
   return (
     <div
-      title={`Weather: ${current.conditionText}, ${current.temperature}°C, UV Index: ${current.uvIndex} (${current.uvRisk})`}
-      className="flex items-center gap-2 rounded-xl bg-white/[0.04] px-2.5 py-1 text-xs backdrop-blur-md border border-white/10 select-none shadow-sm transition-all hover:bg-white/[0.07]"
+      title={`Weather: ${current.conditionText}, ${current.temperature}°C, UV Index: ${current.uvIndex} (${current.uvRisk}) - ${current.city}${current.postalCode ? ` ${current.postalCode}` : ''}`}
+      className="flex flex-col items-end justify-center select-none pl-3 border-l border-white/[0.08]"
     >
-      <span className="text-sm">{icon}</span>
-      <span className="font-semibold text-white/90 tracking-tight">
-        {current.temperature}°C
-      </span>
+      {/* Location line: Place and PIN Code */}
+      <div className="flex items-center gap-1 text-[11px] font-medium text-white/70">
+        <span className="text-[10px] text-cyan-400">📍</span>
+        <span className="truncate max-w-[120px] font-display text-white/80">{current.city}</span>
+        {current.postalCode && (
+          <span className="font-mono text-[10px] text-white/40">· {current.postalCode}</span>
+        )}
+      </div>
 
-      {/* UV Index badge */}
-      <span
-        className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider border ${uvClass}`}
-      >
-        UV {current.uvIndex}
-      </span>
+      {/* Temperature & Weather condition icon */}
+      <div className="flex items-center gap-1.5 my-0.5">
+        <span className="text-xl sm:text-2xl leading-none">{icon}</span>
+        <span className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight leading-none">
+          {current.temperature}°C
+        </span>
+      </div>
 
-      {loading && (
-        <span className="inline-block size-1.5 animate-ping rounded-full bg-cyan-400" />
-      )}
+      {/* UV Index Box placed neatly BELOW temperature */}
+      <div className="flex items-center gap-1 mt-0.5">
+        <span
+          className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border shadow-sm ${uvClass}`}
+        >
+          UV {current.uvIndex} · {current.uvRisk}
+        </span>
+        {loading && (
+          <span className="inline-block size-1.5 animate-ping rounded-full bg-cyan-400" />
+        )}
+      </div>
     </div>
   );
 });

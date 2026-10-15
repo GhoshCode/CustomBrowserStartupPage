@@ -118,6 +118,13 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
     }, 50);
   };
 
+  // Guarantee cards start from the first card on mount and on pinned category change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'instant' });
+    }
+  }, [sortedCategories[0]?.id]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -172,8 +179,8 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
           {/* Header Strip: [E] 4 Fixed Quick Links | [F] Horizontally Scrollable Recent Links */}
           <LinksStrip />
 
-          {/* Horizontal scroll track with 3 vertical category card columns */}
-          <div className="flex flex-1 min-h-0 flex-col p-3 sm:p-4 overflow-hidden">
+          {/* Horizontal scroll track with category card columns */}
+          <div className="flex flex-1 min-h-0 flex-col p-3 sm:p-4 overflow-hidden relative">
             <motion.div
               ref={scrollRef}
               variants={containerVariants}
@@ -186,13 +193,13 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
               tabIndex={0}
               role="region"
               aria-label="Scrollable category cards"
-              className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-1 scroll-smooth scrollbar-none focus-visible:outline-none select-none cursor-grab active:cursor-grabbing"
+              className="flex flex-1 min-h-0 flex-row gap-5 overflow-x-auto overflow-y-hidden items-stretch py-1 px-0 scroll-pl-0 scroll-smooth snap-x snap-mandatory scrollbar-none no-scrollbar focus-visible:outline-none select-none cursor-grab active:cursor-grabbing"
             >
               {sortedCategories.map((category) => (
                 <motion.div
                   key={category.id}
                   variants={cardVariants}
-                  className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
+                  className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0 snap-start"
                 >
                   <CategoryCard category={category} />
                 </motion.div>

@@ -47,14 +47,14 @@ export const TimeWidget = memo(function TimeWidget() {
       {clockStyle === 'cyberpunk' ? (
         /* Cyberpunk style — bold blocky Orbitron with stacked seconds on right flank, no cities below */
         <div className="flex items-baseline gap-1.5 font-['Orbitron',sans-serif] tracking-wider text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.5)]">
-          <span className="text-3xl sm:text-4xl font-black tracking-widest text-white drop-shadow-[0_0_14px_rgba(255,46,154,0.6)]">
+          <span className="text-4xl sm:text-5xl font-black tracking-widest text-white drop-shadow-[0_0_16px_rgba(255,46,154,0.6)]">
             {displayHours}:{displayMinutes}
           </span>
           {showSeconds && (
-            <span className="flex flex-col text-xs sm:text-sm font-bold text-cyan-400/90 leading-tight">
+            <span className="flex flex-col text-sm sm:text-base font-bold text-cyan-400/90 leading-tight">
               <span>:{displaySeconds}</span>
               {!clock24h && (
-                <span className="text-[9px] text-pink-400/90 tracking-widest font-semibold uppercase">
+                <span className="text-[10px] text-pink-400/90 tracking-widest font-semibold uppercase">
                   {ampm}
                 </span>
               )}
@@ -69,16 +69,16 @@ export const TimeWidget = memo(function TimeWidget() {
       ) : clockStyle === 'macos' ? (
         /* macOS Minimalist style — clean Apple-grade typography */
         <div className="flex items-baseline gap-1 font-sans text-white/95">
-          <span className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          <span className="text-3xl sm:text-4xl font-semibold tracking-tight">
             {displayHours}:{displayMinutes}
           </span>
           {showSeconds && (
-            <span className="text-xs sm:text-sm font-medium text-white/50">
+            <span className="text-sm sm:text-base font-medium text-white/50">
               :{displaySeconds}
             </span>
           )}
           {!clock24h && (
-            <span className="ml-1 text-[10px] font-semibold text-white/40 tracking-wider uppercase">
+            <span className="ml-1 text-xs font-semibold text-white/40 tracking-wider uppercase">
               {ampm}
             </span>
           )}
@@ -86,16 +86,16 @@ export const TimeWidget = memo(function TimeWidget() {
       ) : (
         /* DSEG7 Classic Retro 7-Segment style */
         <div className="flex items-baseline gap-1.5 font-clock text-white/90 drop-shadow-md">
-          <span className="text-2xl sm:text-3xl tracking-widest">
+          <span className="text-3xl sm:text-4xl tracking-widest">
             {displayHours}:{displayMinutes}
           </span>
           {showSeconds && (
-            <span className="text-xs sm:text-sm font-sans tracking-wide text-white/60">
+            <span className="text-sm sm:text-base font-sans tracking-wide text-white/60">
               :{displaySeconds}
             </span>
           )}
           {!clock24h && (
-            <span className="ml-1 text-[10px] font-sans text-white/50 uppercase tracking-wider font-semibold">
+            <span className="ml-1 text-xs font-sans text-white/50 uppercase tracking-wider font-semibold">
               {ampm}
             </span>
           )}

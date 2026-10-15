@@ -46,13 +46,30 @@ function generateSyntheticDays(days = 112) {
   return result;
 }
 
+interface ExtendedGitStats extends GitStats {
+  publicRepos: number;
+  followers: number;
+  stars: number;
+  prsMerged: number;
+  topLanguages: Array<{ name: string; color: string }>;
+}
+
 export const GitCommitsWidget = memo(function GitCommitsWidget() {
   const githubUsername = useStore((s) => s.settings.githubUsername);
-  const [stats, setStats] = useState<GitStats>(() => ({
-    username: githubUsername || 'Developer',
+  const [stats, setStats] = useState<ExtendedGitStats>(() => ({
+    username: githubUsername || 'GhoshCode',
     totalCommitsYear: 1420,
-    currentStreak: 12,
-    longestStreak: 38,
+    currentStreak: 14,
+    longestStreak: 42,
+    publicRepos: 28,
+    followers: 64,
+    stars: 118,
+    prsMerged: 32,
+    topLanguages: [
+      { name: 'TypeScript', color: '#3178c6' },
+      { name: 'Rust', color: '#dea584' },
+      { name: 'Go', color: '#00add8' },
+    ],
     contributions: generateSyntheticDays(112), // 16 weeks * 7 days
     lastFetched: Date.now(),
   }));
@@ -64,6 +81,17 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
     let isMounted = true;
     const fetchGitHub = async () => {
       try {
+        // Fetch user metadata for repos and followers
+        const userRes = await fetch(`https://api.github.com/users/${githubUsername}`).catch(() => null);
+        let publicRepos = 28;
+        let followers = 64;
+        if (userRes && userRes.ok) {
+          const userData = await userRes.json();
+          publicRepos = userData.public_repos ?? 28;
+          followers = userData.followers ?? 64;
+        }
+
+        // Fetch contribution history
         const res = await fetch(
           `https://github-contributions-api.jogruber.de/v4/${githubUsername}?y=last`,
         );
@@ -77,17 +105,18 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
         }));
 
         if (isMounted) {
-          setStats({
+          setStats((prev) => ({
+            ...prev,
             username: githubUsername,
-            totalCommitsYear: data.total?.[Object.keys(data.total)[0]] ?? 1250,
-            currentStreak: 14,
-            longestStreak: 42,
+            totalCommitsYear: data.total?.[Object.keys(data.total)[0]] ?? 1420,
+            publicRepos,
+            followers,
             contributions: recentDays,
             lastFetched: Date.now(),
-          });
+          }));
         }
       } catch {
-        // Fallback to synthetic
+        // Keep synthetic fallback
       }
     };
 
@@ -98,26 +127,34 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
   }, [githubUsername]);
 
   return (
-    <div className="glass group relative flex h-[142px] w-full flex-col justify-between overflow-hidden rounded-2xl p-3.5 border border-white/10 hover:border-white/15 transition-all select-none">
+    <div className="glass group relative flex h-[142px] w-full flex-col justify-between overflow-hidden rounded-2xl p-3 border border-white/10 hover:border-white/15 transition-all select-none">
       {/* Header row */}
-      <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-        <div className="flex items-center gap-1.5">
-          <svg className="size-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor">
+      <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <svg className="size-3.5 text-emerald-400 shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
           </svg>
           <span className="font-display text-xs font-bold tracking-wider text-white/90 uppercase truncate">
             {stats.username}
           </span>
+          <span className="text-[10px] text-white/40 font-mono hidden sm:inline">
+            · {stats.publicRepos} repos
+          </span>
         </div>
 
-        {/* Annual commits badge */}
-        <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/25">
-          {stats.totalCommitsYear.toLocaleString()} commits
-        </span>
+        {/* Stats badges */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-amber-300/90 hidden sm:inline">
+            ⭐ {stats.stars}
+          </span>
+          <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/25">
+            {stats.totalCommitsYear.toLocaleString()} commits
+          </span>
+        </div>
       </div>
 
       {/* Contribution Grid — 16 columns (weeks) x 7 rows (days) */}
-      <div className="my-auto flex items-center justify-center gap-[3px] py-1">
+      <div className="my-auto flex items-center justify-center gap-[3px] py-0.5">
         {Array.from({ length: 16 }).map((_, weekIdx) => {
           const weekDays = stats.contributions.slice(weekIdx * 7, weekIdx * 7 + 7);
           return (
@@ -127,7 +164,7 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
                   key={day.date}
                   onMouseEnter={() => setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
-                  className={`size-[9.5px] rounded-[2px] transition-transform hover:scale-125 cursor-pointer ${
+                  className={`size-[9px] rounded-[2px] transition-transform hover:scale-125 cursor-pointer ${
                     LEVEL_COLORS[day.level]
                   }`}
                 />
@@ -137,16 +174,24 @@ export const GitCommitsWidget = memo(function GitCommitsWidget() {
         })}
       </div>
 
-      {/* Footer stats row */}
+      {/* Footer stats row: Repos, Streaks, Languages */}
       <div className="flex items-center justify-between pt-1 text-[10px] text-white/40 border-t border-white/[0.04]">
         {hoveredDay ? (
           <span className="font-mono text-emerald-300">
             {hoveredDay.count} commits on {hoveredDay.date}
           </span>
         ) : (
-          <div className="flex items-center gap-3">
-            <span>Streak: <strong className="text-emerald-400 font-semibold">{stats.currentStreak}d</strong></span>
-            <span>Best: <strong className="text-white/60 font-semibold">{stats.longestStreak}d</strong></span>
+          <div className="flex items-center gap-2.5">
+            <span>🔥 <strong className="text-emerald-400 font-semibold">{stats.currentStreak}d</strong> streak</span>
+            <span className="text-white/20">|</span>
+            <div className="flex items-center gap-1.5">
+              {stats.topLanguages.map((lang) => (
+                <span key={lang.name} className="flex items-center gap-1 text-[9px] text-white/60">
+                  <span className="size-1.5 rounded-full" style={{ backgroundColor: lang.color }} />
+                  <span>{lang.name}</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

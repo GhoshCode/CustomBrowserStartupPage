@@ -87,8 +87,8 @@ export default function App() {
         <SearchBar onOpenPalette={() => setIsPaletteOpen(true)} />
 
         {/* Lower Cockpit: 3-Column Spatial Grid */}
-        <div className="flex flex-1 min-h-0 w-full gap-4 px-6 pb-4 overflow-hidden">
-          {/* Left Column: D (Currently Processing - 2 stacked cards with mini cog [⚙]) */}
+        <div className="flex flex-1 min-h-0 w-full gap-4 px-6 pb-2 overflow-hidden">
+          {/* Left Column: D (Currently Working Sites partitioned by section) */}
           <CurrentlyProcessingPanel
             onOpenSettings={(tab) => openSettings(tab as SettingsTabId)}
           />
@@ -103,17 +103,17 @@ export default function App() {
           </aside>
         </div>
 
-        {/* Floating Settings Gear Button in bottom right */}
-        <div className="fixed bottom-6 right-6 z-40 flex items-center">
+        {/* Main Settings Button in bottom left */}
+        <div className="fixed bottom-3 left-6 z-40 flex items-center">
           <button
             type="button"
             onClick={() => openSettings('library')}
             title="Open Settings (,)"
             aria-label="Settings"
-            className="glass-raised group flex size-11 items-center justify-center rounded-2xl bg-white/5 text-white/60 shadow-xl backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/10 hover:text-white border border-white/15"
+            className="glass-raised group flex h-9 items-center gap-2 rounded-xl bg-white/[0.06] px-3 text-xs font-semibold text-white/75 shadow-xl backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/[0.12] hover:text-white border border-white/15"
           >
             <svg
-              className="size-5 transition-transform duration-500 group-hover:rotate-90"
+              className="size-4 transition-transform duration-500 group-hover:rotate-90 text-cyan-400"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -123,6 +123,8 @@ export default function App() {
                 clipRule="evenodd"
               />
             </svg>
+            <span>Settings</span>
+            <kbd className="font-mono text-[9px] text-white/40 bg-white/10 px-1 py-0.2 rounded">,</kbd>
           </button>
         </div>
 
