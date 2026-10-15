@@ -1,10 +1,13 @@
 import { memo, useEffect, useRef } from 'react';
 import { useStore } from '../store';
+import { skinFor } from '../lib/skin';
 
 export const Backdrop = memo(function Backdrop() {
   const { backgroundImage, overlayOpacity, backgroundBlur, themeMode } = useStore((s) => s.settings);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isLight = themeMode === 'light';
+  // Sonoma Glass paints its own calm backdrop in CSS: no mesh, no particles.
+  const skin = useStore((s) => skinFor(s.settings));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,7 +104,7 @@ export const Backdrop = memo(function Backdrop() {
       window.removeEventListener('resize', init);
       cancelAnimationFrame(animationFrame);
     };
-  }, [isLight]);
+  }, [isLight, skin]);
 
   const isGradient =
     backgroundImage &&
@@ -113,9 +116,10 @@ export const Backdrop = memo(function Backdrop() {
 
   return (
     <div
+      data-backdrop
       className="fixed inset-0 -z-10 bg-[var(--color-base)] transition-colors duration-300"
       style={{
-        backgroundImage: !backgroundImage && isLight ? defaultLightMesh : undefined,
+        backgroundImage: !backgroundImage && isLight && !skin ? defaultLightMesh : undefined,
       }}
     >
       {backgroundImage && (
@@ -131,10 +135,7 @@ export const Backdrop = memo(function Backdrop() {
         className="absolute inset-0 bg-[var(--color-base)] transition-opacity duration-300" 
         style={{ opacity: backgroundImage ? (isLight ? 0.06 : overlayOpacity) : 0 }} 
       />
-      <canvas 
-        ref={canvasRef} 
-        className="absolute inset-0 pointer-events-none" 
-      />
+      {!skin && <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />}
     </div>
   );
 });

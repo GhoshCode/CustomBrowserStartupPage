@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ProcessingPanel } from './components/processing/ProcessingPanel';
 import { useReminderMirror, useWebReminders } from './lib/reminders';
+import { skinFor } from './lib/skin';
 import { Backdrop } from './components/Backdrop';
 import { CategoryGrid } from './components/CategoryGrid';
 import { TopBar } from './components/topbar/TopBar';
@@ -36,13 +37,17 @@ export default function App() {
   useReminderMirror(processing);
   useWebReminders(processing);
 
-  // Dynamically update root accent variable and theme attribute
+  const skin = useStore((s) => skinFor(s.settings));
+
+  // Dynamically update root accent variable, theme and skin attributes
   useEffect(() => {
     if (accentColor) {
       document.documentElement.style.setProperty('--color-accent', accentColor);
     }
     document.documentElement.setAttribute('data-theme', themeMode);
-  }, [accentColor, themeMode]);
+    if (skin) document.documentElement.setAttribute('data-skin', skin);
+    else document.documentElement.removeAttribute('data-skin');
+  }, [accentColor, themeMode, skin]);
 
   // Ensure active deck always contains 10+ categories and 200+ sites
   useEffect(() => {
