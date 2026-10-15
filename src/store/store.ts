@@ -86,7 +86,7 @@ const normalizeProcessing = (raw: unknown, i: number): ProcessingItem | null => 
     name: typeof p.name === 'string' ? p.name : p.url,
     url: p.url,
     siteId: typeof p.siteId === 'string' ? p.siteId : null,
-    section: typeof p.section === 'string' ? p.section : 'Active',
+    section: typeof p.section === 'string' && p.section ? p.section : 'Focus',
     order: typeof p.order === 'number' ? p.order : i,
     schedule: { ...defaultSchedule(), ...(asRecord(p.schedule) as Partial<Schedule>) },
   };
@@ -460,7 +460,7 @@ export const useStore = create<Store>()(
         set((s) => ({ todos: s.todos.filter((t) => t.archivedAt === null) })),
 
       // ---- Currently Processing -----------------------------------------
-      addProcessingItem: ({ name, url, siteId = null, section = 'Active', schedule }) => {
+      addProcessingItem: ({ name, url, siteId = null, section = 'Focus', schedule }) => {
         const item: ProcessingItem = {
           id: newId(),
           name,

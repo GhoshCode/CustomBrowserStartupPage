@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { ProcessingPanel } from './components/processing/ProcessingPanel';
+import { useReminderMirror, useWebReminders } from './lib/reminders';
 import { Backdrop } from './components/Backdrop';
 import { CategoryGrid } from './components/CategoryGrid';
 import { TopBar } from './components/topbar/TopBar';
@@ -29,6 +31,9 @@ export default function App() {
 
 
   const themeMode = useStore((s) => s.settings.themeMode ?? 'dark');
+  const processing = useStore((s) => s.processing);
+  useReminderMirror(processing);
+  useWebReminders(processing);
 
   // Dynamically update root accent variable and theme attribute
   useEffect(() => {
@@ -115,12 +120,7 @@ export default function App() {
             <BookmarkButton />
           </div>
         }
-        left={
-          <>
-            <ZonePlaceholder zone="D" title="Processing" note="Active workspaces land here in Phase 4." />
-            <ZonePlaceholder zone="D" title="Processing" note="Second stack · mini settings cog." />
-          </>
-        }
+        left={<ProcessingPanel />}
         leftFooter={settingsButton}
         center={
           <div data-testid="center-frame" className="glass flex h-full min-h-0 flex-col overflow-hidden">
