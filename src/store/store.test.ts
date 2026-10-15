@@ -346,3 +346,23 @@ test('clearRecentHistory forgets lastVisited but keeps visit counts', () => {
   expect(byId('a').lastVisited).toBeNull();
   expect(byId('a').visits).toBe(1);
 });
+
+describe('feeds config', () => {
+  test('topic and source CRUD, and reset to defaults', () => {
+    const t = st().addTopic({ label: '#Rust', query: 'rust,cargo' });
+    expect(t.label).toBe('Rust');
+    st().updateTopic(t.id, { label: '#Systems' });
+    expect(st().feeds.topics.at(-1)!.label).toBe('Systems');
+
+    const src = st().addFeedSource({ name: 'Blog', kind: 'rss', url: 'https://b.dev/feed', category: 'news' });
+    expect(src.enabled).toBe(true);
+    st().updateFeedSource(src.id, { enabled: false });
+    expect(st().feeds.sources.find((s) => s.id === src.id)!.enabled).toBe(false);
+    st().deleteFeedSource(src.id);
+    st().deleteTopic(t.id);
+    expect(st().feeds.sources.some((s) => s.id === src.id)).toBe(false);
+
+    st().resetFeeds();
+    expect(st().feeds).toEqual(DEFAULT_FEEDS);
+  });
+});

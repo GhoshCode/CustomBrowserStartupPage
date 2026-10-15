@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type {
   Category,
   ClockStyle,
+  FeedSource,
   FeedsConfig,
   ImportResult,
   PersistedState,
@@ -162,6 +163,7 @@ export type NewProcessingItem = {
   schedule?: Partial<Schedule>;
 };
 export type NewTopic = { label: string; query: string };
+export type NewFeedSource = Omit<FeedSource, 'id' | 'enabled'> & { enabled?: boolean };
 
 export interface StoreActions {
   // Category CRUD
@@ -204,7 +206,13 @@ export interface StoreActions {
   deleteProcessingItem: (id: string) => void;
   // Feed topics (J)
   addTopic: (input: NewTopic) => Topic;
+  updateTopic: (id: string, patch: Partial<Omit<Topic, 'id'>>) => void;
   deleteTopic: (id: string) => void;
+  // Feed sources (I)
+  addFeedSource: (input: NewFeedSource) => FeedSource;
+  updateFeedSource: (id: string, patch: Partial<Omit<FeedSource, 'id'>>) => void;
+  deleteFeedSource: (id: string) => void;
+  resetFeeds: () => void;
   // Data
   importState: (json: string) => ImportResult;
   exportState: () => string;
@@ -486,10 +494,35 @@ export const useStore = create<Store>()(
         set((s) => ({ feeds: { ...s.feeds, topics: [...s.feeds.topics, topic] } }));
         return topic;
       },
+      updateTopic: (id, patch) =>
+        set((s) => ({
+          feeds: {
+            ...s.feeds,
+            topics: s.feeds.topics.map((t) =>
+              t.id === id ? { ...t, ...patch, label: (patch.label ?? t.label).replace(/^#/, '') } : t,
+            ),
+          },
+        })),
       deleteTopic: (id) =>
         set((s) => ({
           feeds: { ...s.feeds, topics: s.feeds.topics.filter((t) => t.id !== id) },
         })),
+
+      // ---- Feed sources --------------------------------------------------
+      addFeedSource: (input) => {
+        const source: FeedSource = { id: newId(), enabled: true, ...input };
+        set((s) => ({ feeds: { ...s.feeds, sources: [...s.feeds.sources, source] } }));
+        return source;
+      },
+      updateFeedSource: (id, patch) =>
+        set((s) => ({
+          feeds: { ...s.feeds, sources: s.feeds.sources.map((src) => (src.id === id ? { ...src, ...patch } : src)) },
+        })),
+      deleteFeedSource: (id) =>
+        set((s) => ({
+          feeds: { ...s.feeds, sources: s.feeds.sources.filter((src) => src.id !== id) },
+        })),
+      resetFeeds: () => set(() => ({ feeds: structuredClone(DEFAULT_FEEDS) })),
 
       // ---- Data ----------------------------------------------------------
       importState: (json) => {

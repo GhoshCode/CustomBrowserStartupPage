@@ -100,7 +100,8 @@ export interface Topic {
   query: string; // comma-separated keywords matched against feed titles/tags
 }
 
-export type FeedKind = 'hn' | 'devto' | 'remoteok' | 'rss';
+// hn = HN front page, hnjobs = HN "who's hiring" posts, rss = any RSS/Atom URL.
+export type FeedKind = 'hn' | 'hnjobs' | 'devto' | 'remotive' | 'remoteok' | 'rss';
 export type FeedCategory = 'news' | 'jobs';
 
 export interface FeedSource {

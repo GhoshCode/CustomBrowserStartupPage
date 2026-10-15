@@ -5,9 +5,19 @@ import { SitemapTab } from './SitemapTab';
 import { QuickLinksTab } from './QuickLinksTab';
 import { AppearanceTab } from './AppearanceTab';
 import { ProfileTab } from './ProfileTab';
+import { ProcessingTab } from './ProcessingTab';
+import { ScrapingTab } from './ScrapingTab';
 import { DataTab } from './DataTab';
 
-export type SettingsTabId = 'library' | 'sitemap' | 'quicklinks' | 'appearance' | 'profile' | 'data';
+export type SettingsTabId =
+  | 'library'
+  | 'sitemap'
+  | 'quicklinks'
+  | 'appearance'
+  | 'profile'
+  | 'processing'
+  | 'scraping'
+  | 'data';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,6 +33,8 @@ const TABS: Array<{ id: SettingsTabId; label: string; icon: string }> = [
   { id: 'quicklinks', label: 'Quick Links', icon: '⚡' },
   { id: 'appearance', label: 'Appearance', icon: '🎨' },
   { id: 'profile', label: 'Profile', icon: '👤' },
+  { id: 'processing', label: 'Processing', icon: '⏰' },
+  { id: 'scraping', label: 'Scraping', icon: '📰' },
   { id: 'data', label: 'Data', icon: '💾' },
 ];
 
@@ -146,6 +158,8 @@ export default function SettingsModal({
                 {activeTab === 'quicklinks' && <QuickLinksTab />}
                 {activeTab === 'appearance' && <AppearanceTab />}
                 {activeTab === 'profile' && <ProfileTab />}
+                {activeTab === 'processing' && <ProcessingTab />}
+                {activeTab === 'scraping' && <ScrapingTab />}
                 {activeTab === 'data' && <DataTab />}
               </div>
             </section>

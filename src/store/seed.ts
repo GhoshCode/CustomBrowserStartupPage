@@ -40,9 +40,10 @@ export const DEFAULT_FEEDS: FeedsConfig = {
     { id: 'topic-devops', label: 'DevOps', query: 'kubernetes,docker,devops,ci,cloud' },
   ],
   sources: [
-    { id: 'src-hn', name: 'Hacker News', kind: 'hn', url: 'https://hn.algolia.com/api/v1/search?tags=front_page', category: 'news', enabled: true },
-    { id: 'src-devto', name: 'Dev.to', kind: 'devto', url: 'https://dev.to/api/articles?top=1', category: 'news', enabled: true },
-    { id: 'src-remoteok', name: 'RemoteOK', kind: 'remoteok', url: 'https://remoteok.com/api', category: 'jobs', enabled: true },
+    { id: 'src-hn', name: 'Hacker News', kind: 'hn', url: 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=30', category: 'news', enabled: true },
+    { id: 'src-devto', name: 'Dev.to', kind: 'devto', url: 'https://dev.to/api/articles?top=1&per_page=30', category: 'news', enabled: true },
+    { id: 'src-remotive', name: 'Remotive', kind: 'remotive', url: 'https://remotive.com/api/remote-jobs?category=software-dev&limit=30', category: 'jobs', enabled: true },
+    { id: 'src-hnjobs', name: 'HN Jobs', kind: 'hnjobs', url: 'https://hn.algolia.com/api/v1/search_by_date?tags=job', category: 'jobs', enabled: true },
   ],
 };
 
