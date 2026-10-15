@@ -119,7 +119,14 @@ export const TodoWidget = memo(function TodoWidget() {
             {/* Visual Calendar & Clock trigger button */}
             <button
               type="button"
-              onClick={() => setShowScheduleModal((prev) => !prev)}
+              onClick={() => {
+                setShowScheduleModal((prev) => {
+                  const next = !prev;
+                  if (next) setIsExpanded(true);
+                  return next;
+                });
+                resetInactivityTimer();
+              }}
               title="Attach Due Date (Calendar 📅) & Time (Clock 🕒)"
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-medium transition-all ${
                 newDate || newTime || showScheduleModal
@@ -171,7 +178,7 @@ export const TodoWidget = memo(function TodoWidget() {
 
         {/* Visual Calendar & Clock Popover / Drawer */}
         {showScheduleModal && (
-          <div className="my-1 rounded-xl border border-rose-500/30 bg-[#160a1e] p-2.5 shadow-2xl backdrop-blur-2xl space-y-2 z-20 shrink-0">
+          <div data-testid="todo-schedule-drawer" className="my-1 rounded-xl border border-rose-500/30 bg-[#160a1e] p-2.5 shadow-2xl backdrop-blur-2xl space-y-2 z-20 shrink-0">
             <div className="flex items-center justify-between text-[11px] font-semibold text-rose-300">
               <span className="flex items-center gap-1">
                 <span>📅 Due Date</span> & <span>🕒 Clock Time</span>

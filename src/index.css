@@ -267,6 +267,32 @@ html[data-theme='light'] .glass-raised {
               inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
 }
 
+/* Todo widget expanded panel and schedule popover in Light Mode */
+html[data-theme='light'] [data-testid="todo-widget-inner"] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(203, 213, 225, 0.85) !important;
+  box-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.14) !important;
+}
+html[data-theme='light'] [data-testid="todo-widget-inner"] input {
+  color: #0f172a !important;
+  background-color: rgba(241, 245, 249, 0.9) !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+html[data-theme='light'] [data-testid="todo-schedule-drawer"] {
+  background-color: #f8fafc !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12) !important;
+}
+html[data-theme='light'] [data-testid="todo-schedule-drawer"] input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+}
+html[data-theme='light'] [data-testid="todo-schedule-drawer"] button {
+  background-color: rgba(226, 232, 240, 0.8) !important;
+  color: #1e293b !important;
+}
+
 /* 2. Top Bar & Search Input */
 html[data-theme='light'] .glass-raised a.glass-inner {
   background-color: rgba(255, 255, 255, 0.85) !important;
