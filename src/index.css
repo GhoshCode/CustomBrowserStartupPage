@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Seven-segment digital clock face from dseg npm package */
@@ -38,6 +38,9 @@
   --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-clock: 'DSEG7', 'Share Tech Mono', ui-monospace, monospace;
+  --font-cyber: 'Rajdhani', 'Bahnschrift', 'Arial Narrow', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font-mac: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
 
   /* Radius */
   --radius-card: 24px;
@@ -676,3 +679,112 @@ html[data-theme='light'] .ultra-thin-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 
+
+/* ---------------------------------------------------------------------------
+   v2 top bar — TIME widget faces
+   --------------------------------------------------------------------------- */
+@keyframes clock-colon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.clock-colon {
+  animation: clock-colon-pulse 2s steps(1, end) infinite;
+}
+
+/* Chromatic split on the Cyberpunk digits: red and cyan offsets. */
+.cyber-digits {
+  text-shadow: -2px 0 0 rgb(255 0 60 / 0.55), 2px 0 0 rgb(0 240 255 / 0.35),
+    0 0 18px rgb(252 238 10 / 0.25);
+}
+.cyber-face {
+  background-image: linear-gradient(rgb(252 238 10 / 0.04) 1px, transparent 1px);
+  background-size: 100% 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-colon {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   v2 to-do — Red Danger Zone (spec §3.4): overdue rows get a crimson wash
+   that breathes slowly.
+   --------------------------------------------------------------------------- */
+@keyframes todo-danger-pulse {
+  0%, 100% { background-color: rgb(239 68 68 / 0.25); }
+  50% { background-color: rgb(239 68 68 / 0.14); }
+}
+.todo-danger {
+  background-color: rgb(239 68 68 / 0.25);
+  box-shadow: inset 2px 0 0 rgb(248 113 113 / 0.9);
+  animation: todo-danger-pulse 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .todo-danger {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   v2 widgets — theme tokens and light-mode contrast fixes. The global light
+   rules above repaint every text-white* class dark, which is right for most
+   text but wrong for the few elements below.
+   --------------------------------------------------------------------------- */
+:root {
+  /* GitHub contribution greens (dark theme) */
+  --gh-0: rgb(255 255 255 / 0.06);
+  --gh-1: #0e4429;
+  --gh-2: #006d32;
+  --gh-3: #26a641;
+  --gh-4: #39d353;
+}
+html[data-theme='light'] {
+  --gh-0: rgb(15 23 42 / 0.08);
+  --gh-1: #9be9a8;
+  --gh-2: #40c463;
+  --gh-3: #30a14e;
+  --gh-4: #216e39;
+}
+
+/* DSEG7 unlit segments: a faint ghost, never solid. */
+.clock-ghost {
+  color: rgb(255 255 255 / 0.07);
+}
+html[data-theme='light'] .clock-ghost {
+  color: rgb(15 23 42 / 0.06);
+}
+
+/* Placeholders are styled per input with placeholder:text-white/30, which the
+   light rules don't reach. */
+html[data-theme='light'] input::placeholder,
+html[data-theme='light'] textarea::placeholder {
+  color: rgb(71 85 105 / 0.6);
+}
+
+/* Red Danger Zone and status badges need darker text on light surfaces. */
+html[data-theme='light'] .todo-danger,
+html[data-theme='light'] .todo-danger [class*='text-red'] {
+  color: #b91c1c !important;
+}
+html[data-theme='light'] [class*='text-red-200'],
+html[data-theme='light'] [class*='text-red-300'] {
+  color: #b91c1c !important;
+}
+html[data-theme='light'] [class*='text-yellow-200'] {
+  color: #854d0e !important;
+}
+html[data-theme='light'] [class*='text-orange-300'] {
+  color: #c2410c !important;
+}
+html[data-theme='light'] [class*='text-emerald-300'],
+html[data-theme='light'] [class*='text-emerald-200'] {
+  color: #047857 !important;
+}
+html[data-theme='light'] [class*='text-purple-300'] {
+  color: #7e22ce !important;
+}
+html[data-theme='light'] [class*='text-amber-300'],
+html[data-theme='light'] [class*='text-amber-200'] {
+  color: #b45309 !important;
+}

@@ -1,6 +1,14 @@
 import type { ChangeEvent } from 'react';
 import { useStore } from '../../store';
 import { PRESET_THEMES } from '../../store/themes';
+import type { ClockStyle } from '../../types';
+
+// TIME widget faces (spec §3.1); each label previews its own typeface.
+const CLOCK_STYLES: Array<{ id: ClockStyle; label: string; fontClass: string }> = [
+  { id: 'dseg7', label: 'Digital (DSEG7)', fontClass: '' },
+  { id: 'cyberpunk', label: 'Cyberpunk 2077', fontClass: 'font-cyber font-bold tracking-wide' },
+  { id: 'macos', label: 'macOS Minimal', fontClass: 'font-mac font-light' },
+];
 
 const PRESET_ACCENTS = [
   { name: 'Magenta', hex: '#ff2e9a' },
@@ -355,6 +363,40 @@ export function AppearanceTab() {
             </button>
           </div>
         </div>
+
+        <div className="space-y-2 pt-2">
+          <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+            Clock Style
+          </label>
+          <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Clock style">
+            {CLOCK_STYLES.map((style) => (
+              <button
+                key={style.id}
+                type="button"
+                role="radio"
+                aria-checked={settings.clockStyle === style.id}
+                onClick={() => updateSettings({ clockStyle: style.id })}
+                className={`rounded-xl px-4 py-2 text-xs font-medium transition-colors ${
+                  settings.clockStyle === style.id
+                    ? 'bg-white/15 text-white ring-1 ring-white/20'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                <span className={style.fontClass}>{style.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2.5 pt-2 text-xs text-white/70">
+          <input
+            type="checkbox"
+            checked={settings.showSeconds}
+            onChange={(e) => updateSettings({ showSeconds: e.target.checked })}
+            className="accent-[var(--color-accent)]"
+          />
+          Show seconds
+        </label>
       </section>
     </div>
   );

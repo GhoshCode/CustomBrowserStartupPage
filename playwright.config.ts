@@ -29,6 +29,10 @@ export default defineConfig({
   // Retrying once catches most "flaky" failures.
   retries: 1,
 
+  // Two workers: with the default (half the CPU threads) the heavier visual
+  // tests starve each other and time out on a 16-thread machine.
+  workers: 2,
+
   // ─── REPORTER ─────────────────────────────────────────────────
   // "html" generates a pretty report you can open in your browser.
   // After tests run, do: npx playwright show-report

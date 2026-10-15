@@ -1,5 +1,6 @@
 import type {
   Category,
+  FeedsConfig,
   PersistedState,
   QuickLink,
   Settings,
@@ -19,7 +20,44 @@ export const DEFAULT_SETTINGS: Settings = {
   backgroundBlur: 0,
   clock24h: false,
   greetingName: '',
+  clockStyle: 'dseg7',
+  showSeconds: true,
+  githubUsername: '',
+  githubToken: '',
+  autoQuickLinkCount: 6,
+  recentLinkCount: 8,
+  weatherEnabled: true,
+  useGeolocation: true,
+  manualCity: '',
 };
+
+// Default scraping config (§7 Q13): the blueprint's three topic chips plus the
+// zero-key, CORS-open sources. Users edit both in Settings → Scraping.
+export const DEFAULT_FEEDS: FeedsConfig = {
+  topics: [
+    { id: 'topic-ai', label: 'AI', query: 'ai,llm,gpt,claude,machine learning' },
+    { id: 'topic-frontend', label: 'Frontend', query: 'react,css,javascript,typescript,frontend' },
+    { id: 'topic-devops', label: 'DevOps', query: 'kubernetes,docker,devops,ci,cloud' },
+  ],
+  sources: [
+    { id: 'src-hn', name: 'Hacker News', kind: 'hn', url: 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=30', category: 'news', enabled: true },
+    { id: 'src-devto', name: 'Dev.to', kind: 'devto', url: 'https://dev.to/api/articles?top=1&per_page=30', category: 'news', enabled: true },
+    { id: 'src-remotive', name: 'Remotive', kind: 'remotive', url: 'https://remotive.com/api/remote-jobs?category=software-dev&limit=30', category: 'jobs', enabled: true },
+    { id: 'src-hnjobs', name: 'HN Jobs', kind: 'hnjobs', url: 'https://hn.algolia.com/api/v1/search_by_date?tags=job', category: 'jobs', enabled: true },
+  ],
+};
+
+// The v2 collections every fresh or reset state starts with. A function so
+// callers never share (and accidentally mutate) the same arrays.
+export const emptyV2Collections = (): Pick<
+  PersistedState,
+  'pinnedCategoryId' | 'todos' | 'processing' | 'feeds'
+> => ({
+  pinnedCategoryId: null,
+  todos: [],
+  processing: [],
+  feeds: structuredClone(DEFAULT_FEEDS),
+});
 
 // Built-in rotating dev quotes (SPEC §2 header — one per page load, ~20).
 // The first ten are the user's real v1 quotes (`js/widgets.js`); the rest round
@@ -805,6 +843,7 @@ export function getBenchmark200State(): PersistedState {
     sites,
     quickLinks,
     settings: { ...DEFAULT_SETTINGS },
+    ...emptyV2Collections(),
   };
 }
 

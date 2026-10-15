@@ -10,7 +10,12 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     rollupOptions: {
+      // src/background.ts is the MV3 service worker; the manifest expects it
+      // at the root of dist/ under a stable name.
+      input: { main: 'index.html', background: 'src/background.ts' },
       output: {
+        entryFileNames: (chunk) =>
+          chunk.name === 'background' ? 'background.js' : 'assets/[name]-[hash].js',
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('zustand')) {

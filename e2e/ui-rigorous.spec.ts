@@ -49,44 +49,32 @@ test.describe('Rigorous UI, Layout & Benchmark Testing', () => {
     }
   });
 
-  test('Top bar has Quick Links and Search Bar inside single outer thin-border container, with search button inside search bar and Google-style suggestions', async ({ page }) => {
-    // 1. Single outer container with glass-raised class, thin border, and outer shadow
-    const topBarContainer = page.locator('div.glass-raised').filter({
-      has: page.locator('input[aria-label="Direct search bar"]'),
-    });
-    await expect(topBarContainer).toBeVisible();
+  test('Search row has the search bar with an inner Search button and G1 outside it; links strip heads the centre frame', async ({ page }) => {
+    // 1. Search bar with its Search button inside the same glass shell
+    const input = page.getByRole('combobox', { name: 'Search' });
+    const shell = page.locator('div.glass-raised').filter({ has: input });
+    await expect(shell).toBeVisible();
+    await expect(shell.getByRole('button', { name: 'Search the web' })).toBeVisible();
 
-    // 2. Contains Quick Links inside
-    const quickLinks = topBarContainer.locator('div.flex.flex-wrap a');
-    await expect(quickLinks.first()).toBeVisible();
+    // 2. G1 bookmark button sits outside the search shell, to its right
+    const g1 = page.getByRole('button', { name: 'Bookmarks and site map' });
+    await expect(shell.getByRole('button', { name: 'Bookmarks and site map' })).toHaveCount(0);
+    const [shellBox, g1Box] = [await shell.boundingBox(), await g1.boundingBox()];
+    expect(g1Box!.x).toBeGreaterThan(shellBox!.x + shellBox!.width - 1);
 
-    // 3. Contains Search Bar inside the same single container
-    const searchInput = topBarContainer.locator('input[aria-label="Direct search bar"]');
-    await expect(searchInput).toBeVisible();
-
-    // 4. Command palette search button is inside the search bar
-    const searchOptionBtn = topBarContainer.getByRole('button', { name: 'Open command palette' });
-    await expect(searchOptionBtn).toBeVisible();
-    await expect(searchOptionBtn).toContainText('⌘K');
-
-    // 5. Test typing in the search bar displays Google-style suggestions dropdown
-    await searchInput.fill('git');
-    const suggestionsDropdown = topBarContainer.locator('text=Web Suggestions');
-    await expect(suggestionsDropdown).toBeVisible();
-
-    // Navigate suggestions with arrow down
+    // 3. Typing shows the suggestions dropdown; Escape closes it
+    await input.fill('git');
+    await expect(page.getByRole('listbox', { name: 'Search suggestions' })).toBeVisible();
     await page.keyboard.press('ArrowDown');
-
-    // Clear search bar
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('listbox', { name: 'Search suggestions' })).toHaveCount(0);
 
-    // 6. Test clicking the search option button opens Command Palette
-    await searchOptionBtn.click();
-    const palette = page.locator('[role="dialog"][aria-label="Command palette"]');
-    await expect(palette).toBeVisible();
-
-    await page.keyboard.press('Escape');
-    await expect(palette).not.toBeVisible();
+    // 4. The links strip is the first child of the centre frame, above the cards
+    const frame = page.getByTestId('center-frame');
+    const strip = frame.getByTestId('links-strip');
+    await expect(strip.locator('[data-chip=fixed]')).toHaveCount(4);
+    const [stripBox, cardBox] = [await strip.boundingBox(), await frame.locator('[data-category-id]').first().boundingBox()];
+    expect(stripBox!.y + stripBox!.height).toBeLessThanOrEqual(cardBox!.y);
   });
 
   test('Subcategory navigation has sleek indicator dots; switches smoothly back and forth 10 times; thin scroll space below cards with no scroll buttons', async ({ page }) => {
