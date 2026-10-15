@@ -60,7 +60,7 @@ export const TodoRow = memo(function TodoRow({ todo, now, expanded }: TodoRowPro
           onClick={() => completeTodo(todo.id)}
           aria-label={`Complete "${todo.text}"`}
           title="Mark complete (archives it)"
-          className={`flex size-3.5 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors ${
+          className={`todo-bullet flex size-3.5 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors ${
             overdue
               ? 'border-red-400 hover:bg-red-400/40'
               : 'border-white/40 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/30'

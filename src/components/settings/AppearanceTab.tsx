@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
 import { useStore } from '../../store';
 import { PRESET_THEMES } from '../../store/themes';
+import { SONOMA_ACCENT } from '../../lib/skin';
 import type { ClockStyle } from '../../types';
 
 // TIME widget faces (spec §3.1); each label previews its own typeface.
@@ -34,10 +35,9 @@ export function AppearanceTab() {
     } else {
       updateSettings({
         themeMode: 'light',
-        presetTheme: 'default-light',
-        backgroundImage:
-          'radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.75) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(254, 205, 211, 0.6) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(224, 231, 255, 0.6) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.7) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.45) 0px, transparent 50%), linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)',
-        accentColor: '#7c3aed',
+        presetTheme: 'default-light', // Sonoma Glass
+        backgroundImage: null,
+        accentColor: SONOMA_ACCENT,
       });
     }
   };
