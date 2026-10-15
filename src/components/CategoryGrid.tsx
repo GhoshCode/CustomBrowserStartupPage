@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useStore } from '../store';
 import { CategoryCard } from './CategoryCard';
+import { orderWithPin } from '../lib/categories';
 
 interface CategoryGridProps {
   onOpenSettings?: () => void;
@@ -9,12 +10,15 @@ interface CategoryGridProps {
 
 export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
   const categories = useStore((s) => s.categories);
+  const pinnedId = useStore((s) => s.pinnedCategoryId);
   const shouldReduceMotion = useReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const sortedCategories = useMemo(
-    () => [...categories].sort((a, b) => a.order - b.order),
-    [categories],
-  );
+  const sortedCategories = useMemo(() => orderWithPin(categories, pinnedId), [categories, pinnedId]);
+
+  // Bring the row back to the start when a card is pinned so it is seen landing first.
+  useEffect(() => {
+    if (pinnedId) scrollRef.current?.scrollTo({ left: 0, behavior: shouldReduceMotion ? 'auto' : 'smooth' });
+  }, [pinnedId, shouldReduceMotion]);
 
   const handleThinSpaceWheel = (e: React.WheelEvent) => {
     e.stopPropagation();
@@ -170,8 +174,12 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
             {sortedCategories.map((category) => (
               <motion.div
                 key={category.id}
+                layout={shouldReduceMotion ? false : 'position'}
                 variants={cardVariants}
-                className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
+                data-pinned={category.id === pinnedId || undefined}
+                className={`w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0 ${
+                  category.id === pinnedId ? PINNED_CLASS : ''
+                }`}
               >
                 <CategoryCard category={category} />
               </motion.div>
@@ -210,8 +218,12 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
             {sortedCategories.map((category) => (
               <motion.div
                 key={category.id}
+                layout={shouldReduceMotion ? false : 'position'}
                 variants={cardVariants}
-                className="w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0"
+                data-pinned={category.id === pinnedId || undefined}
+                className={`w-[330px] sm:w-[370px] lg:w-[400px] shrink-0 h-full flex flex-col min-h-0 ${
+                  category.id === pinnedId ? PINNED_CLASS : ''
+                }`}
               >
                 <CategoryCard category={category} />
               </motion.div>
@@ -230,3 +242,8 @@ export function CategoryGrid({ onOpenSettings }: CategoryGridProps) {
     </main>
   );
 }
+
+// The pinned card stays anchored at the left edge while the others scroll
+// underneath; the solid backing and right-edge shadow keep it legible.
+const PINNED_CLASS =
+  'sticky left-0 z-10 rounded-2xl bg-[var(--color-base-elevated)] shadow-[12px_0_24px_-8px_rgba(0,0,0,0.55)]';

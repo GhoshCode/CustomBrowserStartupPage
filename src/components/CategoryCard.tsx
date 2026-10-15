@@ -253,6 +253,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
           </h2>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
+          <PinButton categoryId={category.id} name={category.name} />
           <span className="text-xs sm:text-sm font-medium text-white/50 tabular-nums">
             {totalSites} {totalSites === 1 ? 'site' : 'sites'}
           </span>
@@ -488,3 +489,39 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
     </article>
   );
 });
+
+// Single-card pin (§7 Q6): pinning this card unpins any other. The grid moves
+// the pinned card to the front and anchors it while the rest scroll; the
+// card's stored order never changes, so unpinning restores its position.
+function PinButton({ categoryId, name }: { categoryId: string; name: string }) {
+  const pinned = useStore((s) => s.pinnedCategoryId === categoryId);
+  const pinCategory = useStore((s) => s.pinCategory);
+  return (
+    <button
+      type="button"
+      onClick={() => pinCategory(pinned ? null : categoryId)}
+      aria-pressed={pinned}
+      aria-label={pinned ? `Unpin ${name}` : `Pin ${name}`}
+      title={pinned ? 'Unpin — return to its usual place' : 'Pin to the front (one card at a time)'}
+      className={`flex size-7 items-center justify-center rounded-lg transition-all ${
+        pinned
+          ? 'bg-[var(--color-accent)]/25 text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/60'
+          : 'text-white/35 hover:bg-white/10 hover:text-white/80'
+      }`}
+    >
+      <svg
+        className={`size-4 transition-transform ${pinned ? '' : 'rotate-45'}`}
+        viewBox="0 0 24 24"
+        fill={pinned ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 17v5" />
+        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+      </svg>
+    </button>
+  );
+}
