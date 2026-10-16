@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react';
 import { useStore } from '../../store';
 import { PRESET_THEMES } from '../../store/themes';
 import { SONOMA_ACCENT } from '../../lib/skin';
+import { withThemeTransition } from '../../lib/themeTransition';
 import type { ClockStyle } from '../../types';
 
 // TIME widget faces (spec §3.1); each label previews its own typeface.
@@ -24,7 +25,7 @@ export function AppearanceTab() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
 
-  const handleModeChange = (mode: 'dark' | 'light') => {
+  const handleModeChange = (mode: 'dark' | 'light') => withThemeTransition(() => {
     if (mode === 'dark') {
       updateSettings({
         themeMode: 'dark',
@@ -40,18 +41,20 @@ export function AppearanceTab() {
         accentColor: SONOMA_ACCENT,
       });
     }
-  };
+  });
 
   const handleSelectPreset = (presetId: string) => {
     const preset = PRESET_THEMES.find((p) => p.id === presetId);
     if (!preset) return;
 
-    updateSettings({
-      presetTheme: preset.id,
-      themeMode: preset.mode,
-      accentColor: preset.accentColor,
-      backgroundImage: preset.gradient,
-    });
+    withThemeTransition(() =>
+      updateSettings({
+        presetTheme: preset.id,
+        themeMode: preset.mode,
+        accentColor: preset.accentColor,
+        backgroundImage: preset.gradient,
+      }),
+    );
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {

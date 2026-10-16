@@ -54,7 +54,7 @@ const DroppablePill = memo(function DroppablePill({
           : 'text-white/50 hover:bg-white/5 hover:text-white/85'
       }`}
       style={{
-        boxShadow: isActive ? `0 0 12px ${categoryColor}35` : undefined,
+        boxShadow: isActive ? `0 0 12px color-mix(in srgb, ${categoryColor} 21%, transparent)` : undefined,
       }}
     >
       <span className="relative z-10">{group.name}</span>

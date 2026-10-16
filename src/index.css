@@ -815,7 +815,7 @@ html[data-theme='light'][data-skin='sonoma'] {
     radial-gradient(900px 700px at 0% 100%, rgba(140, 220, 230, 0.4), transparent 60%),
     linear-gradient(160deg, #e9eefb 0%, #f1ecf8 55%, #f7eef2 100%);
   --sk-panel: rgba(255, 255, 255, 0.58);
-  --sk-blur: blur(44px) saturate(180%);
+  --sk-blur: blur(24px) saturate(170%); /* 44px cost ~2x the frame time for little visible gain */
   --sk-edge: rgba(255, 255, 255, 0.75);
   --sk-hairline: rgba(30, 40, 90, 0.07);
   --sk-highlight: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 0.5px rgba(0, 0, 0, 0.04);
@@ -1052,4 +1052,36 @@ html[data-theme='light'] #search-suggestions [role='option']:hover {
     width: 24px;
     height: 24px;
   }
+}
+
+/* Category colour by theme: each card sets --cat-dark and --cat-light once
+   (the light one darkened to WCAG AA); CSS picks one so a theme switch never
+   re-renders the cards. */
+article[data-category-id] {
+  --cat: var(--cat-dark);
+}
+html[data-theme='light'] article[data-category-id] {
+  --cat: var(--cat-light);
+}
+
+/* Set for the two frames of a theme switch (App.tsx). */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+/* Theme crossfade (lib/themeTransition.ts). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Cards scrolled out of the row are skipped for layout and paint until they
+   approach the viewport — makes pinning, theme switches and scrolling
+   cheaper with 13+ heavy cards. Their size stays reserved. */
+[aria-label='Scrollable category cards'] > div:not([data-pinned]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px auto 600px;
 }

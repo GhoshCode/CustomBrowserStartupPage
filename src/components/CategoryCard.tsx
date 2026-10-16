@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +16,10 @@ import { PinnedStrip, type GroupItem } from './PinnedStrip';
 import { SubcategoryRail, type RailGroup } from './SubcategoryRail';
 import { SiteRow } from './SiteRow';
 import { getCategoryDisplayColor } from '../utils';
+
+// Theme-resolved category colour (see --cat in index.css) and its soft glow.
+const CATEGORY_COLOR = 'var(--cat)';
+const CATEGORY_GLOW = 'color-mix(in srgb, var(--cat) 50%, transparent)';
 
 interface CategoryCardProps {
   category: Category;
@@ -202,12 +206,18 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
 
   const totalSites = categorySites.length;
 
-  const themeMode = useStore((s) => s.settings.themeMode ?? 'dark');
-  const isLight = themeMode === 'light';
-  const displayColor = useMemo(
-    () => getCategoryDisplayColor(category.color, isLight),
-    [category.color, isLight],
+  // Both theme variants are set once as CSS variables and CSS picks one
+  // (index.css: --cat). The card never subscribes to the theme, so a theme
+  // switch restyles it without re-rendering ~300 site rows.
+  const colorVars = useMemo(
+    () =>
+      ({
+        '--cat-dark': category.color,
+        '--cat-light': getCategoryDisplayColor(category.color, true),
+      }) as CSSProperties,
+    [category.color],
   );
+  const displayColor = CATEGORY_COLOR;
 
   const handlePrevSubcategory = useCallback(() => {
     const idx = railGroups.findIndex((g) => g.id === activeGroupId);
@@ -235,6 +245,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
   return (
     <article
       data-category-id={category.id}
+      style={colorVars}
       className="glass flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:border-white/20 shadow-lg select-none"
     >
       {/* 1. Header Region: colored label + site count + segmented view switcher */}
@@ -244,7 +255,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
             className="size-2.5 rounded-full shrink-0"
             style={{
               backgroundColor: displayColor,
-              boxShadow: `0 0 10px ${displayColor}80`,
+              boxShadow: `0 0 10px ${CATEGORY_GLOW}`,
             }}
           />
           <h2
@@ -466,7 +477,7 @@ export const CategoryCard = memo(function CategoryCard({ category }: CategoryCar
                       }`}
                       style={{
                         backgroundColor: g.id === activeGroupId ? displayColor : undefined,
-                        boxShadow: g.id === activeGroupId ? `0 0 8px ${displayColor}80` : undefined,
+                        boxShadow: g.id === activeGroupId ? `0 0 8px ${CATEGORY_GLOW}` : undefined,
                       }}
                     />
                   ))}

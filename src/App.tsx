@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ProcessingPanel } from './components/processing/ProcessingPanel';
 import { useReminderMirror, useWebReminders } from './lib/reminders';
 import { skinFor } from './lib/skin';
@@ -40,13 +40,29 @@ export default function App() {
   const skin = useStore((s) => skinFor(s.settings));
 
   // Dynamically update root accent variable, theme and skin attributes
-  useEffect(() => {
+  // (layout effect: it must land inside a theme View Transition — see
+  // lib/themeTransition.ts)
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const switching = html.getAttribute('data-theme') !== themeMode || (html.getAttribute('data-skin') ?? null) !== skin;
+    // A theme switch restyles thousands of elements; letting each one run its
+    // own colour transition turns that into ~300ms of janky frames. Suspend
+    // transitions for the switch itself (index.css: .theme-switching).
+    if (switching) html.classList.add('theme-switching');
     if (accentColor) {
-      document.documentElement.style.setProperty('--color-accent', accentColor);
+      html.style.setProperty('--color-accent', accentColor);
     }
-    document.documentElement.setAttribute('data-theme', themeMode);
-    if (skin) document.documentElement.setAttribute('data-skin', skin);
-    else document.documentElement.removeAttribute('data-skin');
+    html.setAttribute('data-theme', themeMode);
+    if (skin) html.setAttribute('data-skin', skin);
+    else html.removeAttribute('data-skin');
+    if (!switching) return;
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => html.classList.remove('theme-switching'));
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      html.classList.remove('theme-switching');
+    };
   }, [accentColor, themeMode, skin]);
 
   // Ensure active deck always contains 10+ categories and 200+ sites
