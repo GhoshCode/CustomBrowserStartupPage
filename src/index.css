@@ -822,9 +822,10 @@ html[data-theme='light'][data-skin='sonoma'] {
   --sk-shadow: 0 1px 2px rgba(30, 40, 90, 0.05), 0 20px 44px -20px rgba(30, 40, 90, 0.25);
   --sk-shadow-sm: 0 1px 2px rgba(30, 40, 90, 0.06), 0 6px 14px -8px rgba(30, 40, 90, 0.14);
   --sk-text-1: #1d1d1f;
-  --sk-text-2: rgba(60, 60, 67, 0.85);
-  --sk-text-3: rgba(60, 60, 67, 0.62);
-  --sk-text-4: rgba(60, 60, 67, 0.38);
+  --sk-text-2: rgba(60, 60, 67, 0.9);
+  --sk-text-3: rgba(60, 60, 67, 0.78);
+  --sk-text-4: rgba(60, 60, 67, 0.7);
+  --sk-accent-strong: #0058c4; /* accent as text on tinted fills (AA) */
   --sk-accent: #007aff;
   --sk-accent-2: #5e5ce6;
   --sk-accent-soft: rgba(0, 122, 255, 0.12);
@@ -928,7 +929,7 @@ html[data-theme='light'][data-skin='sonoma'] [data-group-id] {
 html[data-theme='light'][data-skin='sonoma'] [data-group-id][aria-current='true'],
 html[data-theme='light'][data-skin='sonoma'] [data-group-id][aria-current='true'] span {
   background: var(--sk-accent-soft) !important;
-  color: var(--sk-accent) !important;
+  color: var(--sk-accent-strong) !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -981,4 +982,74 @@ html[data-theme='light'][data-skin='sonoma'] .clock-ghost {
 }
 html[data-theme='light'][data-skin='sonoma'] [role='timer'] .font-clock {
   text-shadow: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Floating surfaces in light mode (QA): dropdowns, popovers and overlay
+   panels must be opaque — the frosted panel style let the content underneath
+   bleed through the search suggestions — and the keyboard-selected option
+   needs a visible highlight (bg-white/12 is invisible on white).
+   --------------------------------------------------------------------------- */
+html[data-theme='light'] [role='listbox'].glass-raised,
+html[data-theme='light'] [role='dialog'].glass-raised,
+html[data-theme='light'] [role='status'].glass-raised {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid rgba(30, 40, 90, 0.1) !important;
+  box-shadow: 0 1px 2px rgba(30, 40, 90, 0.06), 0 24px 48px -16px rgba(30, 40, 90, 0.3) !important;
+}
+html[data-theme='light'] #search-suggestions [role='option'][aria-selected='true'] {
+  background: rgba(0, 122, 255, 0.1) !important;
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+html[data-theme='light'] #search-suggestions [role='option']:hover {
+  background: rgba(120, 120, 128, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Short screens (13" laptops, 768p) — QA: at 1280×800 a card showed about
+   one site row. Tighter chrome gives the cards ~60px more height. Plain
+   (unlayered) CSS so it reliably overrides the Tailwind utilities.
+   --------------------------------------------------------------------------- */
+@media (max-height: 860px) and (min-width: 1024px) {
+  [data-testid='dashboard'] {
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  [data-topbar-grid] {
+    height: 128px;
+  }
+  /* Collapsed to-do still shows three rows at the shorter height. */
+  [data-testid='todo-widget'] > div:first-child {
+    padding-top: 8px;
+    padding-bottom: 26px;
+    gap: 4px;
+  }
+  [data-testid='todo-widget'] li[data-todo-id] > div {
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+  [data-testid='git-widget'] {
+    gap: 6px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  [data-categories-container] {
+    padding: 10px !important;
+  }
+  [data-center-body] {
+    padding: 8px;
+  }
+  [aria-label='Primary sites rail'] a {
+    width: 72px;
+    height: 72px;
+    padding: 6px;
+    gap: 4px;
+  }
+  [aria-label='Primary sites rail'] a > :first-child {
+    width: 24px;
+    height: 24px;
+  }
 }

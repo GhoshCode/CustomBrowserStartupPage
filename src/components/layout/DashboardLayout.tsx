@@ -65,7 +65,7 @@ export function DashboardLayout({
   return (
     <div
       data-testid="dashboard"
-      className="relative z-0 flex h-screen w-screen flex-col gap-3 overflow-hidden px-4 pt-4 pb-4 sm:px-6"
+      className="relative z-0 flex h-screen w-screen flex-col gap-3 overflow-x-hidden overflow-y-auto px-4 pt-4 pb-4 sm:px-6 lg:overflow-y-hidden"
     >
       <div data-zone="top-bar" className="shrink-0">
         {topBar}
@@ -74,7 +74,9 @@ export function DashboardLayout({
         {searchRow}
       </div>
 
-      <div data-zone="cockpit" className={`grid min-h-0 flex-1 gap-3 ${columns}`}>
+      {/* Below 1024px the dashboard scrolls inside itself (never the page) so the
+          cockpit keeps a usable height instead of being squeezed. */}
+      <div data-zone="cockpit" className={`grid min-h-0 flex-1 gap-3 max-lg:min-h-[600px] ${columns}`}>
         {leftInline && (
           <aside data-zone="left" aria-label="Currently processing" className="min-h-0">
             {leftColumn}

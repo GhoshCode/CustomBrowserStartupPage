@@ -130,7 +130,7 @@ export function AppearanceTab() {
                 )}
               </div>
               <p className="text-[11px] text-white/50 truncate">
-                High-contrast frosted daylight with pearl glass
+                Sonoma Glass — macOS-style frosted light
               </p>
             </div>
           </button>
@@ -206,6 +206,7 @@ export function AppearanceTab() {
                   style={{
                     background:
                       preset.gradient ||
+                      preset.swatch ||
                       'radial-gradient(ellipse at 50% 0%, #1c0e35 0%, #0b0713 100%)',
                   }}
                 >

@@ -14,7 +14,8 @@ import {
 // widget (16–52 weeks), plus current streak, longest streak and the
 // calendar-year total. With no username it shows an inline setup field.
 
-const CELL = 9;
+const CELL = 9; // largest tile size (px)
+const MIN_CELL = 6;
 const GAP = 2;
 const MIN_WEEKS = 16;
 const MAX_WEEKS = 52;
@@ -120,17 +121,21 @@ function Stat({ value, unit = '', label, accent = false }: { value?: number; uni
   );
 }
 
-// Columns are Sunday-first weeks, newest on the right; the count of weeks
-// follows the widget's width.
+// Columns are Sunday-first weeks, newest on the right. Tile size follows the
+// available height (7 rows must fit) and the week count follows the width.
 function Heatmap({ days, loading }: { days: readonly ContributionDay[]; loading: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [weeks, setWeeks] = useState(MIN_WEEKS);
+  const [cell, setCell] = useState(CELL);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const measure = () => {
-      const fit = Math.floor((el.clientWidth + GAP) / (CELL + GAP));
+      const byHeight = Math.floor((el.clientHeight + GAP) / 7) - GAP;
+      const size = Math.max(MIN_CELL, Math.min(CELL, byHeight || CELL));
+      setCell(size);
+      const fit = Math.floor((el.clientWidth + GAP) / (size + GAP));
       setWeeks(Math.max(MIN_WEEKS, Math.min(MAX_WEEKS, fit)));
     };
     measure();
@@ -152,8 +157,8 @@ function Heatmap({ days, loading }: { days: readonly ContributionDay[]; loading:
                 title={day ? `${day.count} contribution${day.count === 1 ? '' : 's'} on ${day.date}` : undefined}
                 className={loading ? 'animate-pulse' : undefined}
                 style={{
-                  width: CELL,
-                  height: CELL,
+                  width: cell,
+                  height: cell,
                   borderRadius: 2,
                   background: day ? LEVEL_BG[day.level] : 'transparent',
                 }}

@@ -103,15 +103,18 @@ function ItemRow({ item, now }: { item: ProcessingItem; now: Date }) {
         <Favicon url={item.url} name={item.name} className="size-[18px] shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px] font-semibold text-white/90">{item.name}</span>
-          <span className="block truncate text-[10px] text-white/40">
-            {item.schedule.enabled ? `⏰ ${describeSchedule(item.schedule)}` : 'No reminders'}
+          {/* The countdown leads the subtitle so the name keeps the full width. */}
+          <span className="flex min-w-0 items-center gap-1.5 text-[10px] text-white/45">
+            {next && (
+              <span className="shrink-0 font-mono" title={next.toLocaleString()}>
+                ⏰ in {relativeAge(now.getTime(), next.getTime()).replace('now', '<1m')}
+              </span>
+            )}
+            <span className="truncate">
+              {item.schedule.enabled ? `${next ? '· ' : ''}${describeSchedule(item.schedule)}` : 'No reminders'}
+            </span>
           </span>
         </span>
-        {next && (
-          <span className="shrink-0 rounded-md bg-white/[0.06] px-1.5 font-mono text-[9px] text-white/45" title={next.toLocaleString()}>
-            in {relativeAge(now.getTime(), next.getTime()).replace('now', '<1m')}
-          </span>
-        )}
       </a>
     </li>
   );

@@ -6,6 +6,9 @@ export interface PresetTheme {
   mode: ThemeMode;
   accentColor: string;
   gradient: string | null;
+  // Thumbnail for the preset picker when `gradient` is null (skins draw
+  // their own backdrop, so there is nothing to copy into backgroundImage).
+  swatch?: string;
   description: string;
 }
 
@@ -26,6 +29,8 @@ export const PRESET_THEMES: readonly PresetTheme[] = [
     mode: 'light',
     accentColor: '#007aff',
     gradient: null,
+    swatch:
+      'radial-gradient(at 0% 0%, rgba(120, 170, 255, 0.75), transparent 60%), radial-gradient(at 100% 0%, rgba(190, 160, 255, 0.6), transparent 60%), radial-gradient(at 100% 100%, rgba(255, 170, 200, 0.55), transparent 60%), linear-gradient(160deg, #e9eefb, #f7eef2)',
     description: 'macOS-style frosted glass with clear, layered depth',
   },
   {

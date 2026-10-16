@@ -131,7 +131,7 @@ export default function App() {
         center={
           <div data-testid="center-frame" className="glass flex h-full min-h-0 flex-col overflow-hidden">
             <LinksStrip />
-            <div className="flex min-h-0 flex-1 p-3">
+            <div data-center-body className="flex min-h-0 flex-1 p-3">
               <CategoryGrid onOpenSettings={() => openSettings('library')} />
             </div>
           </div>

@@ -156,25 +156,51 @@ export function searchSites(
   return scored.sort((a, b) => b.score - a.score);
 }
 
+// ---- Colour contrast ---------------------------------------------------------
+
+const hexToRgb = (hex: string): [number, number, number] | null => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+const channel = (c: number) => {
+  const s = c / 255;
+  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+};
+
+export const relativeLuminance = ([r, g, b]: [number, number, number]): number =>
+  0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+
+export function contrastRatio(a: string, b: string): number {
+  const ra = hexToRgb(a);
+  const rb = hexToRgb(b);
+  if (!ra || !rb) return 1;
+  const [l1, l2] = [relativeLuminance(ra), relativeLuminance(rb)].sort((x, y) => y - x);
+  return (l1 + 0.05) / (l2 + 0.05);
+}
+
+// Darkens `hex` in small steps toward black (keeping its hue) until it reaches
+// `min` contrast against `bg` — WCAG AA for body text is 4.5:1.
+export function ensureContrast(hex: string, bg = '#ffffff', min = 4.5): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  let [r, g, b] = rgb;
+  const toHex = () => `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('')}`;
+  for (let i = 0; i < 40 && contrastRatio(toHex(), bg) < min; i++) {
+    r *= 0.94;
+    g *= 0.94;
+    b *= 0.94;
+  }
+  return toHex();
+}
+
 /**
- * Ensures category accent colors have sufficient contrast against light mode surfaces (WCAG AAA).
+ * Category accent as text colour. On light surfaces it is darkened just enough
+ * to meet WCAG AA on white cards; dark mode uses the colour as chosen.
  */
 export function getCategoryDisplayColor(hex: string, isLight: boolean): string {
   if (!isLight || !hex) return hex;
-  const map: Record<string, string> = {
-    '#fbbf24': '#b45309', // yellow -> deep amber
-    '#38bdf8': '#0284c7', // light sky -> ocean blue
-    '#4ade80': '#15803d', // neon green -> forest green
-    '#f472b6': '#be185d', // light pink -> ruby rose
-    '#a78bfa': '#6d28d9', // lavender -> deep purple
-    '#fb923c': '#c2410c', // peach orange -> rich orange
-    '#22d3ee': '#0e7490', // cyan -> deep teal
-    '#e879f9': '#a21caf', // light fuchsia -> rich fuchsia
-    '#818cf8': '#4338ca', // periwinkle -> deep indigo
-    '#f87171': '#b91c1c', // salmon red -> crimson red
-    '#34d399': '#047857', // mint -> emerald
-    '#60a5fa': '#1d4ed8', // light blue -> royal blue
-    '#94a3b8': '#334155', // slate -> dark slate
-  };
-  return map[hex.toLowerCase()] || hex;
+  return ensureContrast(hex, '#ffffff', 4.6);
 }
