@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useStore } from '../../store';
-import { complete, detectPlatform, runCommand, type CommandResult } from '../../services/commands';
+import { COMMANDS, complete, detectPlatform, parseCommand, runCommand, type CommandResult } from '../../services/commands';
 
 // C — slim CLI bar under TIME + A/B (spec §3.3). Enter runs, Ctrl+Enter opens
 // links in a new tab, Tab completes, ↑/↓ walk history. The admin toggle is
@@ -13,6 +13,8 @@ export const CommandPrompt = memo(function CommandPrompt() {
   const [value, setValue] = useState('');
   const [admin, setAdmin] = useState(false);
   const [result, setResult] = useState<CommandResult | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<string[]>([]);
   const cursorRef = useRef(-1);
   const platform = useMemo(() => detectPlatform(), []);
@@ -24,12 +26,24 @@ export const CommandPrompt = memo(function CommandPrompt() {
     return () => clearTimeout(t);
   }, [result]);
 
+  // It is a popover: any click outside it dismisses it.
+  useEffect(() => {
+    if (!result) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setResult(null);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [result]);
+
   const execute = async (newTab: boolean) => {
     const input = value.trim();
     if (!input) return;
     historyRef.current = [input, ...historyRef.current.filter((h) => h !== input)].slice(0, HISTORY_LIMIT);
     cursorRef.current = -1;
     const res = runCommand(input, { admin, platform, sites });
+    const { name } = parseCommand(input);
+    setShowHelp(name === 'help' || name === '?');
     if (res.kind === 'open') {
       if (newTab) window.open(res.url, '_blank', 'noopener');
       else window.location.assign(res.url);
@@ -69,7 +83,7 @@ export const CommandPrompt = memo(function CommandPrompt() {
   };
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       <div
         className={`glass-inner flex h-9 items-center gap-2 rounded-xl pr-1 pl-3 font-mono text-xs transition-colors ${
           admin ? 'border-amber-400/60 shadow-[0_0_0_1px_rgba(251,191,36,0.25),0_0_18px_rgba(251,191,36,0.15)]' : ''
@@ -80,7 +94,10 @@ export const CommandPrompt = memo(function CommandPrompt() {
         </span>
         <input
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setResult(null); // typing dismisses the previous result
+          }}
           onKeyDown={onKeyDown}
           spellCheck={false}
           autoComplete="off"
@@ -108,11 +125,22 @@ export const CommandPrompt = memo(function CommandPrompt() {
         <div
           role="status"
           data-testid="command-result"
-          className={`glass-raised absolute top-full right-0 left-0 z-40 mt-1.5 rounded-xl px-3 py-2 font-mono text-[11px] leading-snug break-words select-text ${
+          className={`glass-raised absolute top-full left-0 z-40 mt-1.5 min-w-full rounded-xl px-3 py-2 font-mono text-[11px] leading-snug break-words select-text ${showHelp ? 'w-max max-w-[480px]' : 'right-0'} ${
             result.kind === 'error' ? 'text-red-300' : result.kind === 'copy' ? 'text-amber-200' : 'text-white/85'
           }`}
         >
-          {result.message}
+          {showHelp && result.kind === 'output' ? (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+              {COMMANDS.map((c) => (
+                <div key={c.name} className="contents">
+                  <dt className="whitespace-nowrap text-[var(--color-accent)]">{c.usage}</dt>
+                  <dd className="font-sans text-white/60">{c.help}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            result.message
+          )}
         </div>
       )}
     </div>
