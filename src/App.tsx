@@ -114,7 +114,7 @@ export default function App() {
       <DashboardLayout
         topBar={
           <TopBar
-            weather={<WeatherUV />}
+            weather={<WeatherUV onSetup={() => openSettings('profile')} />}
             command={<CommandPrompt />}
             todo={<TodoWidget />}
             git={<GitWidget />}

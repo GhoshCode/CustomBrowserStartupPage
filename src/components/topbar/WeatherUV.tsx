@@ -38,7 +38,8 @@ type State =
   | { status: 'ready'; data: WeatherData }
   | { status: 'error'; data: WeatherData | null; error: string };
 
-export const WeatherUV = memo(function WeatherUV() {
+// onSetup: opens Settings → Profile when there is no usable location.
+export const WeatherUV = memo(function WeatherUV({ onSetup }: { onSetup?: () => void }) {
   const enabled = useStore((s) => s.settings.weatherEnabled);
   const useGeolocation = useStore((s) => s.settings.useGeolocation);
   const manualCity = useStore((s) => s.settings.manualCity);
@@ -84,6 +85,25 @@ export const WeatherUV = memo(function WeatherUV() {
 
   const { data } = state;
   const error = state.status === 'error' ? state.error : null;
+
+  // First run with location denied and no city: say what to do instead of
+  // showing a bare warning and "--°C".
+  if (!data && error && !manualCity.trim() && onSetup) {
+    return (
+      <button
+        type="button"
+        onClick={onSetup}
+        title={`${error} — set a city in Settings → Profile`}
+        aria-label="Set your location for weather"
+        data-testid="weather-uv"
+        className="glass-inner flex h-full flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center"
+      >
+        <span aria-hidden className="text-base leading-none">📍</span>
+        <span className="text-[11px] leading-tight font-semibold text-white/90">Set location</span>
+        <span className="text-[9px] leading-tight text-white/50">for weather &amp; UV</span>
+      </button>
+    );
+  }
   const title = error
     ? `${error} — click to retry`
     : data
