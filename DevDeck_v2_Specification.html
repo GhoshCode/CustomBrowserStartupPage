@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DevDeck v2 — Complete Architectural & Component Specification</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      --bg: #0b0f17;
+      --card-bg: rgba(22, 30, 46, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--sans);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 40px;
+      -webkit-font-smoothing: antialiased;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Cover / Header */
+    .doc-header {
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 28px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .meta-item strong {
+      display: block;
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .meta-item span {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Headings */
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #38bdf8;
+      border-left: 4px solid var(--accent);
+      padding-left: 14px;
+      margin-top: 44px;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-top: 26px;
+      margin-bottom: 12px;
+    }
+
+    p, li {
+      color: #cbd5e1;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+      margin-bottom: 18px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Cards & Sections */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 24px;
+      page-break-inside: avoid;
+    }
+
+    .card-highlight {
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.08);
+    }
+
+    /* Wireframe Diagram Container */
+    .wireframe-box {
+      background: #06090e;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 14px;
+      padding: 24px;
+      margin: 24px 0 32px 0;
+      page-break-inside: avoid;
+    }
+
+    .wireframe-title {
+      font-size: 12px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Wireframe Grid Layout — Faithful to Hand-Drawn Sketch */
+    .wf-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Top Bar: 4 Units */
+    .wf-top-bar {
+      display: grid;
+      grid-template-columns: 290px 1fr 1fr 170px;
+      gap: 12px;
+    }
+
+    .wf-time-unit {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .wf-time-top {
+      display: grid;
+      grid-template-columns: 1fr 85px;
+      gap: 8px;
+    }
+
+    .wf-cmd-bar {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .wf-block {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      color: #e2e8f0;
+      position: relative;
+    }
+
+    .wf-block-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .wf-block-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .wf-tag {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    /* Search Row: Search Bar + G */
+    .wf-search-row {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 12px;
+    }
+
+    /* Lower Section: 3 Columns (Left D, Center Frame, Right I+J) */
+    .wf-cockpit {
+      display: grid;
+      grid-template-columns: 210px 1fr 240px;
+      gap: 12px;
+      min-height: 400px;
+    }
+
+    .wf-left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wf-center-frame {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(56, 189, 248, 0.4);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wf-strip-header {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wf-strip-pills {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .wf-pill-e {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .wf-pill-f {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .wf-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      margin: 0 4px;
+    }
+
+    .wf-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      flex: 1;
+    }
+
+    .wf-card-col {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .wf-right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0 24px 0;
+      font-size: 13px;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: rgba(30, 41, 59, 0.9);
+      color: #f8fafc;
+      text-align: left;
+      padding: 12px 14px;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 12px 14px;
+      border: 1px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.6);
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #070c14;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.5;
+      color: #e2e8f0;
+      margin: 16px 0 24px 0;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* Callout Alerts */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 18px 0;
+      font-size: 13px;
+      border-left: 4px solid;
+      page-break-inside: avoid;
+    }
+
+    .callout-info {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--accent);
+      color: #e0f2fe;
+    }
+
+    .callout-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: var(--amber);
+      color: #fef3c7;
+    }
+
+    .callout-danger {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: var(--rose);
+      color: #ffe4e6;
+    }
+
+    .callout-success {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--emerald);
+      color: #d1fae5;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #0b0f17 !important;
+        color: #f1f5f9 !important;
+        padding: 20px;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Document Header -->
+  <div class="doc-header">
+    <div class="badge-pill">Architectural Blueprint & Implementation Guide</div>
+    <h1>DevDeck v2 — Full Technical Specification</h1>
+    <div class="subtitle">Complete component architecture, interaction behaviors, and implementation roadmap prepared for Claude Opus engineering execution.</div>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>Project</strong>
+        <span>DevDeck v2</span>
+      </div>
+      <div class="meta-item">
+        <strong>Target Model</strong>
+        <span>Claude Opus 4.6</span>
+      </div>
+      <div class="meta-item">
+        <strong>Architecture</strong>
+        <span>Chrome Ext MV3 / Vite</span>
+      </div>
+      <div class="meta-item">
+        <strong>Status</strong>
+        <span>Approved & Frozen</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Executive Overview -->
+  <h2>1. Executive Summary & Philosophy</h2>
+  <div class="card card-highlight">
+    <p><strong>DevDeck v2</strong> elevates the developer browser startup cockpit into a state-of-the-art dashboard blending rich developer telemetry (real-time GitHub contribution matrix, local weather & UV index, cron task reminders) with keyboard-first bookmarks, smart autocomplete search, and live tech intelligence.</p>
+    <p>The system adheres to an <strong>Apple-grade minimalist aesthetic</strong> with Obsidian Glass styling, <code>backdrop-filter: blur(24px)</code>, custom cubic-bezier transitions, and zero mandatory backend dependencies (pure client-side Manifest V3 Chrome Extension compatibility).</p>
+  </div>
+
+  <!-- Section 2: Visual Wireframe Layout -->
+  <h2>2. Dashboard Layout & Spatial Architecture</h2>
+  <p>The dashboard grid strictly maps to the user's hand-drawn schematic (<code>media_1792007261268.jpg</code>). The lower half of the screen is structured as a <strong>3-column cockpit</strong> where <strong>Quick Links (E) & Recent Links (F)</strong> are integrated <em>inside the top header of the Center Card Container</em>, flanked by <strong>Currently Processing (D)</strong> on the left and <strong>Scraped Intelligence (I) & Topics (J)</strong> on the right:</p>
+
+  <div class="wireframe-box">
+    <div class="wireframe-title">
+      <span>FIG 1.0 — DEVDECK v2 ARCHITECTURAL BLUEPRINT (1:1 SKETCH RECONSTRUCTION)</span>
+      <span>1920 &times; 1080 VIEWPORT</span>
+    </div>
+
+    <!-- High-Resolution Vector Blueprint matching the hand-drawn sketch 100% -->
+    <svg viewBox="0 0 1000 620" width="100%" height="auto" style="border-radius: 8px; background: #080d16; border: 1px solid rgba(56, 189, 248, 0.25); margin-bottom: 20px;">
+      <!-- Subtle Grid Pattern -->
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(56, 189, 248, 0.05)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="1000" height="620" fill="url(#grid)" />
+
+      <!-- ==================== ZONE 1: TOP BAR ==================== -->
+      <!-- Left Unit: TIME + A/B + C -->
+      <g>
+        <!-- TIME Box -->
+        <rect x="25" y="20" width="180" height="68" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="#38bdf8" stroke-width="1.5" />
+        <text x="35" y="42" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">TIME WIDGET</text>
+        <text x="35" y="68" fill="#ffffff" font-family="'Inter', sans-serif" font-size="18" font-weight="800">10:42<tspan font-size="12" fill="#94a3b8">:58</tspan></text>
+        <text x="135" y="76" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">3 STYLES</text>
+
+        <!-- A: Weather -->
+        <rect x="212" y="20" width="78" height="31" rx="4" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="218" y="34" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">A: WEATHER</text>
+        <text x="218" y="46" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="600">⛅ 24°C</text>
+
+        <!-- B: UV Index -->
+        <rect x="212" y="57" width="78" height="31" rx="4" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="218" y="70" fill="#f59e0b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">B: UV INDEX</text>
+        <text x="218" y="83" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="600">☀️ 4.2 Mod</text>
+
+        <!-- C: Command Prompt (directly below TIME + A/B) -->
+        <rect x="25" y="96" width="265" height="34" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#38bdf8" stroke-width="1" stroke-dasharray="3,3" />
+        <text x="35" y="117" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">&gt; C: COMMAND PROMPT</text>
+        <rect x="262" y="102" width="20" height="20" rx="3" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="1" />
+        <text x="267" y="116" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11">⚙</text>
+      </g>
+
+      <!-- Center-Left Unit: TO DO -->
+      <g>
+        <rect x="305" y="20" width="250" height="110" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <text x="318" y="42" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">TO DO WIDGET</text>
+        <rect x="318" y="50" width="224" height="20" rx="3" fill="rgba(244, 63, 94, 0.2)" stroke="#f43f5e" stroke-width="1" />
+        <text x="326" y="64" fill="#fecdd3" font-family="'Inter', sans-serif" font-size="10">🔴 Overdue Task (Red Danger Zone)</text>
+        <rect x="318" y="74" width="224" height="18" rx="3" fill="rgba(255, 255, 255, 0.05)" />
+        <text x="326" y="87" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">⚪ Active Task (Due 18:00)</text>
+        <!-- Bottom Controls: Archive & Expand -->
+        <text x="495" y="122" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">📦</text>
+        <text x="532" y="122" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="12">▾</text>
+      </g>
+
+      <!-- Center-Right Unit: GIT COMMITS -->
+      <g>
+        <rect x="570" y="20" width="250" height="110" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <text x="582" y="42" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">GIT COMMITS</text>
+        <text x="735" y="42" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">14d STREAK</text>
+        <!-- Mini Commit Heatmap Grid -->
+        <g transform="translate(582, 52)">
+          <rect x="0" y="0" width="10" height="10" rx="2" fill="#0e4429" /><rect x="13" y="0" width="10" height="10" rx="2" fill="#006d32" /><rect x="26" y="0" width="10" height="10" rx="2" fill="#26a641" /><rect x="39" y="0" width="10" height="10" rx="2" fill="#39d353" />
+          <rect x="0" y="13" width="10" height="10" rx="2" fill="#006d32" /><rect x="13" y="13" width="10" height="10" rx="2" fill="#39d353" /><rect x="26" y="13" width="10" height="10" rx="2" fill="#26a641" /><rect x="39" y="13" width="10" height="10" rx="2" fill="#0e4429" />
+          <rect x="0" y="26" width="10" height="10" rx="2" fill="#26a641" /><rect x="13" y="26" width="10" height="10" rx="2" fill="#39d353" /><rect x="26" y="26" width="10" height="10" rx="2" fill="#39d353" /><rect x="39" y="26" width="10" height="10" rx="2" fill="#26a641" />
+        </g>
+        <text x="645" y="75" fill="#f1f5f9" font-family="'Inter', sans-serif" font-size="12" font-weight="700">482 commits</text>
+        <text x="645" y="90" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="10">in current year</text>
+      </g>
+
+      <!-- Far-Right Unit: DATE & GREET -->
+      <g>
+        <rect x="835" y="20" width="140" height="110" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <rect x="842" y="26" width="126" height="42" rx="4" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="852" y="44" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">DATE</text>
+        <text x="852" y="58" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700">OCT 15, 2026</text>
+
+        <rect x="842" y="74" width="126" height="48" rx="4" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="852" y="92" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">GREET</text>
+        <text x="852" y="108" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="700">EVENING, DEV</text>
+      </g>
+
+      <!-- ==================== ZONE 2: SEARCH ROW ==================== -->
+      <g>
+        <!-- Search Bar -->
+        <rect x="180" y="145" width="640" height="46" rx="8" fill="rgba(15, 23, 42, 0.9)" stroke="#38bdf8" stroke-width="1.5" />
+        <text x="200" y="173" fill="#38bdf8" font-size="16">🔍</text>
+        <text x="230" y="173" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="13">SEARCH BAR (Live Autocomplete Suggestions)</text>
+        <!-- Inner Search Button [Q SEARCH] -->
+        <rect x="710" y="152" width="100" height="32" rx="6" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="1" />
+        <text x="725" y="172" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">🔍 SEARCH</text>
+
+        <!-- G: Bookmark Button -->
+        <rect x="835" y="145" width="140" height="46" rx="8" fill="rgba(30, 41, 59, 0.8)" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1.5" />
+        <text x="855" y="173" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">📑 G: BOOKMARK</text>
+      </g>
+
+      <!-- ==================== ZONE 3: 3-COLUMN COCKPIT ==================== -->
+      <!-- LEFT COLUMN: D (Currently Processing Stack) -->
+      <g>
+        <!-- Top D -->
+        <rect x="25" y="205" width="150" height="185" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <text x="35" y="225" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">D: PROCESSING (1)</text>
+        <rect x="35" y="235" width="130" height="40" rx="4" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="42" y="252" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="600">DevDeck Core</text>
+        <text x="42" y="265" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="9">⏰ Every Hour</text>
+        <rect x="35" y="285" width="130" height="90" rx="4" fill="rgba(15, 23, 42, 0.4)" stroke-dasharray="2,2" stroke="rgba(255,255,255,0.1)" />
+        <text x="45" y="335" fill="#64748b" font-family="'Inter', sans-serif" font-size="10">Active Site / Repo</text>
+
+        <!-- Bottom D -->
+        <rect x="25" y="400" width="150" height="200" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <text x="35" y="420" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">D: PROCESSING (2)</text>
+        <rect x="35" y="430" width="130" height="40" rx="4" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="42" y="447" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="600">API Gateway</text>
+        <text x="42" y="460" fill="#f59e0b" font-family="'Inter', sans-serif" font-size="9">⏰ Mon, Wed, Fri</text>
+        <!-- Mini Settings Cog at Bottom-Right of D -->
+        <rect x="145" y="570" width="22" height="22" rx="4" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="1" />
+        <text x="151" y="585" fill="#38bdf8" font-size="12">⚙</text>
+      </g>
+
+      <!-- CENTER COLUMN: UNIFIED CARD FRAME (Containing E/F Strip at Top + Category Cards Below) -->
+      <g>
+        <!-- Outer Center Container Frame -->
+        <rect x="188" y="205" width="564" height="395" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#38bdf8" stroke-width="2" />
+        
+        <!-- Header Strip INSIDE Center Container: E (Quick Links) | F (Recent Links) -->
+        <rect x="198" y="215" width="544" height="44" rx="6" fill="rgba(30, 41, 59, 0.85)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <!-- Pinned 1-4 FIXED [E] -->
+        <rect x="206" y="222" width="40" height="30" rx="4" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="1" />
+        <text x="221" y="241" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">E</text>
+        <rect x="252" y="222" width="40" height="30" rx="4" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="1" />
+        <text x="267" y="241" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">E</text>
+        <rect x="298" y="222" width="40" height="30" rx="4" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="1" />
+        <text x="313" y="241" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">E</text>
+        <rect x="344" y="222" width="40" height="30" rx="4" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="1" />
+        <text x="359" y="241" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">E</text>
+
+        <!-- Divider Line | -->
+        <line x1="396" y1="220" x2="396" y2="254" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" />
+
+        <!-- Recent Links [F] (Horizontally Scrollable) -->
+        <rect x="408" y="222" width="45" height="30" rx="4" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="426" y="241" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">F</text>
+        <rect x="459" y="222" width="45" height="30" rx="4" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="477" y="241" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">F</text>
+        <rect x="510" y="222" width="45" height="30" rx="4" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="528" y="241" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">F</text>
+        <text x="565" y="241" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">...</text>
+
+        <!-- Category Cards Inside Center Container (Below E/F Strip) -->
+        <!-- Card 1: Pinned Card (Fixed at 1st position) -->
+        <rect x="198" y="268" width="172" height="320" rx="6" fill="rgba(30, 41, 59, 0.75)" stroke="#38bdf8" stroke-width="1.5" />
+        <text x="210" y="290" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="700">📌 CARD 1 (Pinned)</text>
+        <rect x="210" y="302" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="218" y="318" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">GitHub</text>
+        <rect x="210" y="332" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="218" y="348" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">Stack Overflow</text>
+        <rect x="210" y="362" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.6)" />
+        <text x="218" y="378" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">Documentation</text>
+
+        <!-- Card 2 -->
+        <rect x="384" y="268" width="172" height="320" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="396" y="290" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">CARD 2 (Dev Tools)</text>
+        <rect x="396" y="302" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="404" y="318" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">Linear</text>
+        <rect x="396" y="332" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="404" y="348" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">Figma</text>
+        <rect x="396" y="362" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="404" y="378" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">Vercel</text>
+
+        <!-- Card 3 (Scrollable) -->
+        <rect x="570" y="268" width="172" height="320" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+        <text x="582" y="290" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">CARD 3 (AI / Cloud) →</text>
+        <rect x="582" y="302" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="590" y="318" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">ChatGPT</text>
+        <rect x="582" y="332" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="590" y="348" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">Claude</text>
+        <rect x="582" y="362" width="148" height="24" rx="3" fill="rgba(15, 23, 42, 0.4)" />
+        <text x="590" y="378" fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10">AWS Console</text>
+      </g>
+
+      <!-- RIGHT COLUMN: I (Scraped Data 1-4, 5-8) & J (Topics) -->
+      <g>
+        <!-- Top I (Items 1. 2. 3. 4.) -->
+        <rect x="764" y="205" width="211" height="155" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <line x1="774" y1="218" x2="965" y2="218" stroke="#38bdf8" stroke-width="1.5" />
+        <text x="774" y="235" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">I: TECH NEWS (1–4)</text>
+        <text x="774" y="258" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">1. Next.js 16 Released</text>
+        <text x="774" y="278" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">2. Claude Opus 4.6 Benchmark</text>
+        <text x="774" y="298" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">3. Tailwind v4 Engine</text>
+        <text x="774" y="318" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">4. GitHub Copilot Workspace</text>
+
+        <!-- Middle I (Items 5. 6. 7. 8.) -->
+        <rect x="764" y="368" width="211" height="155" rx="6" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <line x1="774" y1="381" x2="965" y2="381" stroke="#f59e0b" stroke-width="1.5" />
+        <text x="774" y="398" fill="#f59e0b" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">I: DEV JOBS &amp; FEEDS (5–8)</text>
+        <text x="774" y="421" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">5. Senior Frontend — Stripe</text>
+        <text x="774" y="441" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">6. AI Systems Eng — OpenAI</text>
+        <text x="774" y="461" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">7. Fullstack Dev — Linear</text>
+        <text x="774" y="481" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10">8. Remote Rust Engineer</text>
+
+        <!-- Bottom J: Topics Strip -->
+        <rect x="764" y="532" width="211" height="68" rx="6" fill="rgba(15, 23, 42, 0.9)" stroke="#38bdf8" stroke-width="1" />
+        <text x="774" y="549" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">J: TOPIC CHIPS</text>
+        <g transform="translate(774, 558)">
+          <rect x="0" y="0" width="38" height="20" rx="3" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="1" />
+          <text x="6" y="14" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">#AI</text>
+
+          <rect x="44" y="0" width="46" height="20" rx="3" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+          <text x="50" y="14" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="9">#Front</text>
+
+          <rect x="96" y="0" width="44" height="20" rx="3" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+          <text x="102" y="14" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="9">#Dev</text>
+
+          <text x="146" y="15" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">...</text>
+        </g>
+      </g>
+    </svg>
+
+    <!-- Structural CSS Layout Mirroring the Sketch -->
+    <div class="wf-grid">
+      <!-- 1. Top Bar: 4 Units -->
+      <div class="wf-top-bar">
+        <!-- Left Unit: TIME + A/B + C -->
+        <div class="wf-time-unit">
+          <div class="wf-time-top">
+            <div class="wf-block" style="min-height: 70px;">
+              <span class="wf-tag">TIME</span>
+              <div class="wf-block-title">🕒 Clock</div>
+              <div class="wf-block-desc">DSEG7 / Cyber / macOS</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div class="wf-block" style="padding: 4px 6px;">
+                <span class="wf-tag" style="top: 2px; right: 2px; font-size: 8px;">A</span>
+                <div style="font-weight: 700; font-size: 10px;">⛅ Weather</div>
+              </div>
+              <div class="wf-block" style="padding: 4px 6px;">
+                <span class="wf-tag" style="top: 2px; right: 2px; font-size: 8px;">B</span>
+                <div style="font-weight: 700; font-size: 10px; color: var(--amber);">☀️ UV</div>
+              </div>
+            </div>
+          </div>
+          <!-- C: Directly beneath TIME + A/B -->
+          <div class="wf-cmd-bar">
+            <span><strong>C:</strong> &gt; Terminal Prompt</span>
+            <span style="color: var(--accent); font-weight: 700;">⚙ Admin</span>
+          </div>
+        </div>
+
+        <!-- Center-Left: TO DO -->
+        <div class="wf-block">
+          <span class="wf-tag">TO DO</span>
+          <div class="wf-block-title">✅ To Do Task Manager</div>
+          <div class="wf-block-desc">Overdue red danger zone, 30s auto-shrink overlay, bottom-right archive icon 📦 &amp; expand ▾</div>
+        </div>
+
+        <!-- Center-Right: GIT COMMITS -->
+        <div class="wf-block">
+          <span class="wf-tag">GIT</span>
+          <div class="wf-block-title">🟩 Git Commits Heatmap</div>
+          <div class="wf-block-desc">Classic green contribution tiles, current &amp; longest streak, annual commit tally</div>
+        </div>
+
+        <!-- Far-Right: DATE & GREET -->
+        <div class="wf-block" style="text-align: right;">
+          <span class="wf-tag">DATE/GREET</span>
+          <div style="font-weight: 700; font-size: 11px; margin-top: 6px;">WED, OCT 15</div>
+          <div style="font-weight: 700; font-size: 11px; color: var(--accent);">GOOD EVENING</div>
+        </div>
+      </div>
+
+      <!-- 2. Search Row: Search Bar + G -->
+      <div class="wf-search-row">
+        <div class="wf-block" style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="wf-tag">SEARCH</span>
+          <div class="wf-block-title" style="margin: 0;">🔍 Always-Visible Search Bar (Live Google Autocomplete)</div>
+          <div style="background: rgba(56, 189, 248, 0.2); border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">🔍 SEARCH</div>
+        </div>
+        <div class="wf-block" style="text-align: center; display: flex; align-items: center; justify-content: center;">
+          <span class="wf-tag">G₁</span>
+          <div class="wf-block-title" style="margin: 0;">📑 Bookmarks / Site Map</div>
+        </div>
+      </div>
+
+      <!-- 3. Lower Cockpit: 3 Columns (Left D, Center Card Frame with E/F at Top, Right I+J) -->
+      <div class="wf-cockpit">
+        <!-- Left Column: D (Stacked 1 and 2) -->
+        <div class="wf-left-col">
+          <div class="wf-block" style="flex: 1;">
+            <span class="wf-tag">D</span>
+            <div class="wf-block-title">⚙ Processing (1)</div>
+            <div class="wf-block-desc">Active target site with cron schedule</div>
+          </div>
+          <div class="wf-block" style="flex: 1; position: relative;">
+            <span class="wf-tag">D</span>
+            <div class="wf-block-title">⚙ Processing (2)</div>
+            <div class="wf-block-desc">Active target site with cron schedule</div>
+            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(56, 189, 248, 0.2); border: 1px solid var(--accent); color: var(--accent); padding: 2px 6px; border-radius: 3px; font-size: 10px;">⚙ Mini Settings</div>
+          </div>
+        </div>
+
+        <!-- Center Column: Unified Frame (E/F Strip at Top + Category Cards Below) -->
+        <div class="wf-center-frame">
+          <!-- E/F Strip INSIDE Center Frame -->
+          <div class="wf-strip-header">
+            <div class="wf-strip-pills">
+              <span class="wf-pill-e">E</span>
+              <span class="wf-pill-e">E</span>
+              <span class="wf-pill-e">E</span>
+              <span class="wf-pill-e">E (Fixed 1-4)</span>
+            </div>
+            <div class="wf-divider"></div>
+            <div class="wf-strip-pills">
+              <span class="wf-pill-f">F</span>
+              <span class="wf-pill-f">F</span>
+              <span class="wf-pill-f">F (Recent Links → scroll)</span>
+            </div>
+          </div>
+
+          <!-- Category Cards Directly Below E/F Strip -->
+          <div class="wf-cards-grid">
+            <div class="wf-card-col" style="border-color: var(--accent); background: rgba(56, 189, 248, 0.08);">
+              <div style="font-weight: 700; font-size: 11px; color: var(--accent); margin-bottom: 6px;">📌 CARD 1 (Pinned)</div>
+              <div class="wf-block-desc">Anchored to 1st place while pinned</div>
+            </div>
+            <div class="wf-card-col">
+              <div style="font-weight: 700; font-size: 11px; margin-bottom: 6px;">CARD 2</div>
+              <div class="wf-block-desc">Scrolls horizontally</div>
+            </div>
+            <div class="wf-card-col">
+              <div style="font-weight: 700; font-size: 11px; margin-bottom: 6px;">CARD 3 &rarr;</div>
+              <div class="wf-block-desc">Scrolls horizontally</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: I (1-4, 5-8) & J (Topics) -->
+        <div class="wf-right-col">
+          <div class="wf-block" style="flex: 1;">
+            <span class="wf-tag">I</span>
+            <div class="wf-block-title">📰 News (1–4)</div>
+            <div class="wf-block-desc">Top breaking tech articles</div>
+          </div>
+          <div class="wf-block" style="flex: 1;">
+            <span class="wf-tag">I</span>
+            <div class="wf-block-title">💼 Jobs (5–8)</div>
+            <div class="wf-block-desc">Dev roles &amp; hiring feeds</div>
+          </div>
+          <div class="wf-block" style="padding: 8px;">
+            <span class="wf-tag">J</span>
+            <div style="font-weight: 700; font-size: 10px; margin-bottom: 4px;">🏷️ Topics</div>
+            <div style="display: flex; gap: 4px;">
+              <span style="background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 700;">#AI</span>
+              <span style="background: rgba(255, 255, 255, 0.1); color: #cbd5e1; padding: 2px 5px; border-radius: 3px; font-size: 9px;">#Front</span>
+              <span style="background: rgba(255, 255, 255, 0.1); color: #cbd5e1; padding: 2px 5px; border-radius: 3px; font-size: 9px;">#Dev</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Break for Clean Printing -->
+  <div class="page-break"></div>
+
+  <!-- Section 3: Component Detailed Breakdown -->
+  <h2>3. Component-by-Component Detailed Specifications</h2>
+
+  <!-- 3.1 Clock -->
+  <div class="card">
+    <h3>3.1. TIME Widget (Top-Left)</h3>
+    <p>Provides primary temporal telemetry with 3 distinct user-selectable styles in Settings &rarr; Appearance:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Style Variant</th>
+          <th>Visual Characteristics</th>
+          <th>User Constraints & Specs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Existing Digital (DSEG7)</strong></td>
+          <td>Classic 7-segment digital font, glowing active segments with faint unlit backdrop segments, pulsing colon.</td>
+          <td>Preserve existing 12/24h toggle and accent color glow.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Cyberpunk 2077</strong></td>
+          <td>Massive, ultra-bold, condensed futuristic display font. Monospace <code>// WORLD TIME</code> header top-left, matrix dots top-right.</td>
+          <td><strong style="color: var(--rose);">STRICT RULE:</strong> Do NOT show multiple timezone cities below (LA, New York, London, Paris, Kyiv). Render only massive Hours/Minutes with small, half-height Seconds on the right flank.</td>
+        </tr>
+        <tr>
+          <td><strong>3. macOS Plain Digital</strong></td>
+          <td>Clean San Francisco / Inter Apple-style typography (weights 300/400). Minimalist glass backing, tabular numbers.</td>
+          <td>Subtle specular highlights, elegant modern aesthetic.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 3.2 Weather & UV -->
+  <div class="card">
+    <h3>3.2. A & B: Local Weather & UV Index Widgets</h3>
+    <p>Positioned immediately adjacent to the TIME widget in a split glass card:</p>
+    <ul>
+      <li><strong>Component A (Weather):</strong> Displays temperature in Celsius (&deg;C) and weather condition icon (Sun, Cloud, Rain, Snow). Uses the browser's HTML5 Geolocation API with graceful fallback to manual coordinates/city. Fetches from the open Open-Meteo Forecast API (no API key required).</li>
+      <li><strong>Component B (UV Index):</strong> Displays the solar ultraviolet radiation index with color-coded risk badge:
+        <code>0-2 Low (Green)</code>, <code>3-5 Mod (Yellow)</code>, <code>6-7 High (Orange)</code>, <code>8-10 Very High (Red)</code>, <code>11+ Extreme (Purple)</code>.
+      </li>
+    </ul>
+    <div class="callout callout-info">
+      <div class="callout-title">📡 Network Strategy</div>
+      Data is cached in <code>localStorage</code> for 45 minutes to prevent redundant network queries on every new tab open.
+    </div>
+  </div>
+
+  <!-- 3.3 Terminal Prompt -->
+  <div class="card">
+    <h3>3.3. C: Command Prompt & Terminal Launcher</h3>
+    <p>A slim, responsive CLI input positioned directly below the TIME and Weather/UV widget box.</p>
+    <ul>
+      <li><strong>Input Field:</strong> Monospace prompt (<code>&gt; enter command or shortcut...</code>) with tab completion.</li>
+      <li><strong>System Administrator Icon:</strong> A small wrench-and-gear / admin shield icon (matching reference image <code>media_1792009911738.png</code>) located on the right side of the input.</li>
+      <li><strong>Elevated Admin Execution:</strong> When the admin icon is toggled active (glowing amber/red ring), pressing Enter triggers the terminal launch in elevated / Administrator mode (PowerShell on Windows, Bash/Sudo on Linux).</li>
+      <li><strong>In-Browser Emulated Commands:</strong> Built-in instant shortcuts: <code>gh &lt;repo&gt;</code>, <code>npm &lt;pkg&gt;</code>, <code>open &lt;url&gt;</code>, <code>calc &lt;math&gt;</code>, <code>b64e/b64d</code>.</li>
+    </ul>
+  </div>
+
+  <!-- 3.4 To Do -->
+  <div class="card">
+    <h3>3.4. TO DO Widget with Overdue Red Danger Zone & Auto-Shrink</h3>
+    <p>Centrally positioned top-row productivity manager featuring four critical interaction behaviors:</p>
+    <div class="callout callout-danger">
+      <div class="callout-title">🚨 Red Danger Zone Escalation</div>
+      If a to-do item exceeds its specified Due Date and Due Time (<code>now &gt; task.dueTimestamp</code>), it is automatically pinned to the very top of the list and highlighted with an animated crimson danger background (<code>rgba(239, 68, 68, 0.25)</code>).
+    </div>
+    <div class="callout callout-warning">
+      <div class="callout-title">⏱️ 30-Second Inactivity Auto-Shrink</div>
+      Clicking the expand button in the bottom-right corner reveals the full task list as a high-z-index overlay over the content below. <strong>If the user does not interact with the list for 30 seconds, it automatically shrinks back to its collapsed preview state.</strong> Any click or keystroke resets the 30-second timer.
+    </div>
+    <ul>
+      <li><strong>Bullet Completion to Archive:</strong> Clicking the leading circular bullet marks the task complete with a slide animation, moving it into the Archive.</li>
+      <li><strong>Archive Drawer Icon:</strong> A mini settings/archive icon positioned <strong>immediately to the left of the expand button</strong> in the bottom-right corner allows viewing, restoring, or purging archived tasks.</li>
+    </ul>
+  </div>
+
+  <!-- 3.5 Git Commits -->
+  <div class="card">
+    <h3>3.5. GIT COMMITS Widget (GitHub Activity Matrix)</h3>
+    <p>Displays a live GitHub contribution graph styled with classic green tiles:</p>
+    <ul>
+      <li><strong>Contribution Heatmap:</strong> 16-to-52 week compact grid with 5 level shades of emerald green.</li>
+      <li><strong>Telemetry Metrics:</strong> Current Active Streak (days), Longest Streak (days), and Total Commits in current calendar year.</li>
+      <li><strong>Settings Integration:</strong> Accepts user's GitHub username and optional Personal Access Token (PAT) for private repo visibility.</li>
+    </ul>
+  </div>
+
+  <!-- Page Break for Clean Printing -->
+  <div class="page-break"></div>
+
+  <!-- 3.6 Search & Site Map -->
+  <div class="card">
+    <h3>3.6. Search Bar & G₁ Visual Site Map Browser</h3>
+    <ul>
+      <li><strong>Always-Visible Search Bar:</strong> Centered horizontal anchor. Includes an integrated <strong>[🔍 SEARCH]</strong> button inside the right edge of the input.</li>
+      <li><strong>Live Autocomplete Suggestions:</strong> As the user types, a multi-tier dropdown provides matching saved bookmarks, Google web autocomplete predictions, and direct search engine query triggers.</li>
+      <li><strong>G₁ Bookmark Button & Site Map:</strong> Located outside to the right of the search bar. Clicking opens an elongated panel with a visual tree site map enabling users to:
+        <ul>
+          <li>Drag-and-drop or move sites between category folders.</li>
+          <li>Add, rename, or delete category folders.</li>
+          <li>Instant live search across all nested bookmarks.</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 3.7 Quick Links & Recent -->
+  <div class="card">
+    <h3>3.7. E (Quick Links) & F (Recent Opened Links) Strips</h3>
+    <ul>
+      <li><strong>Pinned First 4 Links FIXED:</strong> The first 4 links in Strip E are permanently anchored on the left and do not scroll.</li>
+      <li><strong>Auto-Populated Links:</strong> Positions 5 onward are dynamically computed based on visit frequency (<code>visits</code>) and recency (<code>lastVisited</code>). The count is adjustable via a slider in Settings (2 to 12).</li>
+      <li><strong>Horizontal Scroll:</strong> Pinned links stay fixed while auto-picked links scroll horizontally underneath a gradient fade mask.</li>
+      <li><strong>Recent Strip (F):</strong> Separated from Quick Links by a clean glass divider (<code>|</code>). Displays recently opened destinations as chips with favicons and relative visit timestamps.</li>
+    </ul>
+  </div>
+
+  <!-- 3.8 Currently Processing -->
+  <div class="card">
+    <h3>3.8. D: Currently Processing (Left Sidebar & Cron Engine)</h3>
+    <p>A dedicated vertical panel for active workspaces and repositories under active development:</p>
+    <ul>
+      <li>Holds $N$ active project sites.</li>
+      <li><strong>Mini Settings Cog:</strong> Dedicated button at the bottom of the panel to add/remove active sites.</li>
+      <li><strong>Per-Site Cron Reminder Schedule:</strong>
+        <table>
+          <thead>
+            <tr>
+              <th>Scheduling Parameter</th>
+              <th>Supported Options</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Frequency</td>
+              <td>Hourly, Daily, or Custom Interval</td>
+            </tr>
+            <tr>
+              <td>Weekly Filter</td>
+              <td>Specific Days of the Week (Mon, Tue, Wed, Thu, Fri, Sat, Sun)</td>
+            </tr>
+            <tr>
+              <td>Active Date Span</td>
+              <td>From Month-Year to Month-Year (e.g. 2026-10 to 2026-12)</td>
+            </tr>
+            <tr>
+              <td>Notification Delivery</td>
+              <td>Browser Notification / <code>chrome.alarms</code> API with 1-click tab launch</td>
+            </tr>
+          </tbody>
+        </table>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 3.9 Main Cards Single Pinning -->
+  <div class="card">
+    <h3>3.9. Main Category Cards — Single-Card Pinning Mechanism</h3>
+    <p>Center stage horizontal scrollable card stack with strict pinning rules:</p>
+    <div class="callout callout-warning">
+      <div class="callout-title">📌 Single-Card Pin Constraint</div>
+      <strong>User can pin EXACTLY ONE category card at any time.</strong> Pinning a card moves it temporarily to the FIRST position in the row and anchors it during horizontal scroll. Unpinning immediately restores the card to its original sequenced position.
+    </div>
+  </div>
+
+  <!-- 3.10 News & Topics -->
+  <div class="card">
+    <h3>3.10. I & J: Tech News, Job Intelligence & Topic Chips (Right Sidebar)</h3>
+    <ul>
+      <li><strong>Dual-Section News Feed (I):</strong> Upper section renders items 1–4 (breaking news/repos); lower section renders items 5–8 (developer jobs/trending). Sources include HackerNews, Dev.to, GitHub Trending, and RemoteOK.</li>
+      <li><strong>Numbered List & Sliders:</strong> Each panel has a top accent slider bar and items numbered 1–4 and 5–8. Clickable destination links with source badge and relative timestamp.</li>
+      <li><strong>Topic Filter Chips (J):</strong> Interactive pills (<code>#AI</code>, <code>#Frontend</code>, <code>#DevOps</code>, <code>#Security</code>, <code>#Career</code>) at the bottom of the sidebar. Clicking any chip immediately filters the news feed.</li>
+      <li><strong>Dedicated Scraping Settings:</strong> Full CRUD in Settings to manage source RSS feeds and topic keywords.</li>
+    </ul>
+  </div>
+
+  <!-- 3.11 Settings Modal Overhaul -->
+  <div class="card">
+    <h3>3.11. ⚙️ Central Settings Modal Architecture</h3>
+    <p>The main Settings overlay is expanded into a multi-tab developer preferences center:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Settings Tab</th>
+          <th>Configuration Controls & Fields</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Appearance</strong></td>
+          <td>Clock Style Picker (DSEG7, Cyberpunk, macOS), 12h/24h toggle, Show seconds toggle, Accent colors (Cyan, Emerald, Amber, Violet, Rose), Background wallpaper (Image URL, presets, blur, opacity).</td>
+        </tr>
+        <tr>
+          <td><strong>2. Profile & Git</strong></td>
+          <td>User greeting name (for top-right greeting), GitHub username (for contribution tiles matrix), optional GitHub Personal Access Token (PAT).</td>
+        </tr>
+        <tr>
+          <td><strong>3. Weather & UV</strong></td>
+          <td>Auto-detect location toggle (GPS / Geolocation), Manual city / coordinate override, Celsius/Fahrenheit toggle, Cache refresh duration.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Currently Processing</strong></td>
+          <td>Manager for active project workspaces. Per-site cron reminder schedule: Frequency (hourly, daily, custom), Weekday filters (Mon-Sun), Active date span (Month-Year to Month-Year).</td>
+        </tr>
+        <tr>
+          <td><strong>5. Quick & Recent Links</strong></td>
+          <td>Selection of the 4 permanently fixed Quick Links, Auto-picked links count slider (2 to 12), Clear recent history action.</td>
+        </tr>
+        <tr>
+          <td><strong>6. Bookmarks & Site Map</strong></td>
+          <td>Visual Site Map manager, category folder hierarchy editor, drag-and-drop site moving, JSON data backup & restore.</td>
+        </tr>
+        <tr>
+          <td><strong>7. Scraping & News</strong></td>
+          <td>Manage custom RSS/news endpoints, configure topic filter tags (CRUD for <code>#AI</code>, <code>#DevOps</code>, etc.), toggle dev jobs feed visibility.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Page Break for Clean Printing -->
+  <div class="page-break"></div>
+
+  <!-- Section 4: Data Schema -->
+  <h2>4. Complete TypeScript Domain Schemas for Claude Opus</h2>
+  <pre><code>// Core Domain Models for DevDeck v2
+export type ClockStyle = 'dseg7' | 'cyberpunk' | 'macos';
+
+export interface WeatherData {
+  temperature: number; // in Celsius
+  conditionCode: number;
+  conditionText: string;
+  city: string;
+  uvIndex: number;
+  uvRisk: 'low' | 'moderate' | 'high' | 'very-high' | 'extreme';
+  lastUpdated: number;
+}
+
+export interface TodoItem {
+  id: string;
+  text: string;
+  dueDate?: string; // YYYY-MM-DD
+  dueTime?: string; // HH:mm
+  dueTimestamp?: number; // unix epoch ms
+  isOverdue: boolean; // true if now > dueTimestamp
+  completed: boolean;
+  completedAt?: number;
+  archived: boolean;
+  priority: 'low' | 'normal' | 'urgent';
+}
+
+export interface GitStats {
+  username: string;
+  totalCommitsYear: number;
+  currentStreak: number;
+  longestStreak: number;
+  contributions: {
+    date: string;
+    count: number;
+    level: 0 | 1 | 2 | 3 | 4;
+  }[];
+  lastFetched: number;
+}
+
+export interface ProcessingSite {
+  id: string;
+  name: string;
+  url: string;
+  icon?: string;
+  notes?: string;
+  schedule: {
+    enabled: boolean;
+    frequency: 'hourly' | 'daily' | 'weekly';
+    daysOfWeek: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+    timeOfDay?: string; // HH:mm
+    startMonthYear: string; // YYYY-MM
+    endMonthYear: string; // YYYY-MM
+  };
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  order: number;
+  isPinned?: boolean; // EXACTLY ONE category card may be pinned at a time
+}
+
+export interface SiteBookmark {
+  id: string;
+  title: string;
+  url: string;
+  icon?: string;
+  categoryId: string;
+  visits: number;
+  lastVisited: number;
+  isQuickLinkPinned?: boolean; // for first 4 fixed links
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  url: string;
+  source: 'HackerNews' | 'Dev.to' | 'GitHub' | 'RemoteOK';
+  category: 'tech' | 'job' | 'trending';
+  tags: string[];
+  publishedAt: number;
+}
+
+export interface TopicChip {
+  id: string;
+  label: string; // e.g. "AI"
+  tagQuery: string; // e.g. "ai,llm"
+}
+
+export interface AppSettings {
+  clockStyle: ClockStyle;
+  timeFormat24h: boolean;
+  showSeconds: boolean;
+  accentColor: string;
+  backgroundType: 'gradient' | 'image';
+  backgroundImageUrl: string;
+  backdropBlurPx: number;
+  userName: string;
+  githubUsername: string;
+  githubToken?: string;
+  weatherEnabled: boolean;
+  useGeolocation: boolean;
+  manualCityName?: string;
+  searchEngine: 'google' | 'duckduckgo' | 'github' | 'perplexity';
+  quickLinksAutoPickCount: number; // 2 to 12
+  enabledTopics: string[];
+}
+</code></pre>
+
+  <!-- Section 5: Implementation Roadmap -->
+  <h2>5. Claude Opus Implementation Roadmap</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>Primary Deliverables</th>
+          <th>Key Target Files</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Stage 1</strong></td>
+          <td>Data models & Zustand store slices (Todos, Weather, Cron, Single-Pin)</td>
+          <td><code>src/types.ts</code>, <code>src/store/useStore.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Stage 2</strong></td>
+          <td>Top Telemetry Bar: 3 Clock styles, Weather & UV, Admin Terminal Prompt, Overdue Todo with 30s auto-shrink, Git Heatmap</td>
+          <td><code>src/components/Clock/*</code>, <code>WeatherWidget.tsx</code>, <code>TodoWidget.tsx</code>, <code>GitWidget.tsx</code></td>
+        </tr>
+        <tr>
+          <td><strong>Stage 3</strong></td>
+          <td>Search Bar with inner button, Google autocomplete, G₁ Bookmark Site Map</td>
+          <td><code>src/components/Search/SearchBar.tsx</code>, <code>SiteMapModal.tsx</code></td>
+        </tr>
+        <tr>
+          <td><strong>Stage 4</strong></td>
+          <td>Quick Links (4 fixed + scrollable auto-picked) & Currently Processing left sidebar with cron reminders</td>
+          <td><code>QuickLinksStrip.tsx</code>, <code>CurrentlyProcessingPanel.tsx</code></td>
+        </tr>
+        <tr>
+          <td><strong>Stage 5</strong></td>
+          <td>Category Cards single-pin state, News dual panel with Topic chips, Settings modal expansion</td>
+          <td><code>CategoryCard.tsx</code>, <code>ScrapedNewsPanel.tsx</code>, <code>SettingsModal.tsx</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">✅ Specification Verified</div>
+    This document constitutes the frozen, complete specification for DevDeck v2. All architectural questions and user constraints are fully resolved.
+  </div>
+
+</div>
+
+</body>
+</html>

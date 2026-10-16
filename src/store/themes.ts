@@ -6,6 +6,9 @@ export interface PresetTheme {
   mode: ThemeMode;
   accentColor: string;
   gradient: string | null;
+  // Thumbnail for the preset picker when `gradient` is null (skins draw
+  // their own backdrop, so there is nothing to copy into backgroundImage).
+  swatch?: string;
   description: string;
 }
 
@@ -20,12 +23,15 @@ export const PRESET_THEMES: readonly PresetTheme[] = [
   },
   {
     id: 'default-light',
-    name: 'Pearlescent Day',
+    // Id kept so existing light-mode users move to Sonoma Glass automatically.
+    // No gradient: the skin (src/lib/skin.ts) paints its own backdrop.
+    name: 'Sonoma Glass',
     mode: 'light',
-    accentColor: '#7c3aed',
-    gradient:
-      'radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.75) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(254, 205, 211, 0.6) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(224, 231, 255, 0.6) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.7) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.45) 0px, transparent 50%), linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)',
-    description: 'Crisp, high-contrast light mode with frosted glass',
+    accentColor: '#007aff',
+    gradient: null,
+    swatch:
+      'radial-gradient(at 0% 0%, rgba(120, 170, 255, 0.75), transparent 60%), radial-gradient(at 100% 0%, rgba(190, 160, 255, 0.6), transparent 60%), radial-gradient(at 100% 100%, rgba(255, 170, 200, 0.55), transparent 60%), linear-gradient(160deg, #e9eefb, #f7eef2)',
+    description: 'macOS-style frosted glass with clear, layered depth',
   },
   {
     id: 'pure-light',

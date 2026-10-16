@@ -6,8 +6,18 @@ export type {
   NewSubcategory,
   NewSite,
   NewQuickLink,
+  NewTodo,
+  NewProcessingItem,
+  NewTopic,
+  NewFeedSource,
 } from './store';
-export { migrate, normalizePersisted, SCHEMA_VERSION } from './store';
-export { getSeedState, getBenchmark200State, DEFAULT_SETTINGS, QUOTES } from './seed';
+export { migrate, normalizePersisted, defaultSchedule, SCHEMA_VERSION } from './store';
+export {
+  getSeedState,
+  getBenchmark200State,
+  DEFAULT_SETTINGS,
+  DEFAULT_FEEDS,
+  QUOTES,
+} from './seed';
 export { PRESET_THEMES, type PresetTheme } from './themes';
 

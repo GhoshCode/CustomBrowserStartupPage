@@ -1,6 +1,16 @@
 import type { ChangeEvent } from 'react';
 import { useStore } from '../../store';
 import { PRESET_THEMES } from '../../store/themes';
+import { SONOMA_ACCENT } from '../../lib/skin';
+import { withThemeTransition } from '../../lib/themeTransition';
+import type { ClockStyle } from '../../types';
+
+// TIME widget faces (spec §3.1); each label previews its own typeface.
+const CLOCK_STYLES: Array<{ id: ClockStyle; label: string; fontClass: string }> = [
+  { id: 'dseg7', label: 'Digital (DSEG7)', fontClass: '' },
+  { id: 'cyberpunk', label: 'Cyberpunk 2077', fontClass: 'font-cyber font-bold tracking-wide' },
+  { id: 'macos', label: 'macOS Minimal', fontClass: 'font-mac font-light' },
+];
 
 const PRESET_ACCENTS = [
   { name: 'Magenta', hex: '#ff2e9a' },
@@ -15,7 +25,7 @@ export function AppearanceTab() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
 
-  const handleModeChange = (mode: 'dark' | 'light') => {
+  const handleModeChange = (mode: 'dark' | 'light') => withThemeTransition(() => {
     if (mode === 'dark') {
       updateSettings({
         themeMode: 'dark',
@@ -26,24 +36,25 @@ export function AppearanceTab() {
     } else {
       updateSettings({
         themeMode: 'light',
-        presetTheme: 'default-light',
-        backgroundImage:
-          'radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.75) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(254, 205, 211, 0.6) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(224, 231, 255, 0.6) 0px, transparent 60%), radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.7) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.45) 0px, transparent 50%), linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)',
-        accentColor: '#7c3aed',
+        presetTheme: 'default-light', // Sonoma Glass
+        backgroundImage: null,
+        accentColor: SONOMA_ACCENT,
       });
     }
-  };
+  });
 
   const handleSelectPreset = (presetId: string) => {
     const preset = PRESET_THEMES.find((p) => p.id === presetId);
     if (!preset) return;
 
-    updateSettings({
-      presetTheme: preset.id,
-      themeMode: preset.mode,
-      accentColor: preset.accentColor,
-      backgroundImage: preset.gradient,
-    });
+    withThemeTransition(() =>
+      updateSettings({
+        presetTheme: preset.id,
+        themeMode: preset.mode,
+        accentColor: preset.accentColor,
+        backgroundImage: preset.gradient,
+      }),
+    );
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +133,7 @@ export function AppearanceTab() {
                 )}
               </div>
               <p className="text-[11px] text-white/50 truncate">
-                High-contrast frosted daylight with pearl glass
+                Sonoma Glass — macOS-style frosted light
               </p>
             </div>
           </button>
@@ -198,6 +209,7 @@ export function AppearanceTab() {
                   style={{
                     background:
                       preset.gradient ||
+                      preset.swatch ||
                       'radial-gradient(ellipse at 50% 0%, #1c0e35 0%, #0b0713 100%)',
                   }}
                 >
@@ -355,6 +367,40 @@ export function AppearanceTab() {
             </button>
           </div>
         </div>
+
+        <div className="space-y-2 pt-2">
+          <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+            Clock Style
+          </label>
+          <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Clock style">
+            {CLOCK_STYLES.map((style) => (
+              <button
+                key={style.id}
+                type="button"
+                role="radio"
+                aria-checked={settings.clockStyle === style.id}
+                onClick={() => updateSettings({ clockStyle: style.id })}
+                className={`rounded-xl px-4 py-2 text-xs font-medium transition-colors ${
+                  settings.clockStyle === style.id
+                    ? 'bg-white/15 text-white ring-1 ring-white/20'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                <span className={style.fontClass}>{style.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2.5 pt-2 text-xs text-white/70">
+          <input
+            type="checkbox"
+            checked={settings.showSeconds}
+            onChange={(e) => updateSettings({ showSeconds: e.target.checked })}
+            className="accent-[var(--color-accent)]"
+          />
+          Show seconds
+        </label>
       </section>
     </div>
   );

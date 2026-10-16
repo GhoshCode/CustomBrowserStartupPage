@@ -10,7 +10,12 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium",
+    "qa": "npm run build && playwright test --project=qa --project=qa-perf",
+    "qa:headed": "npm run build && playwright test --project=qa --headed",
+    "qa:perf": "playwright test --project=qa-perf --no-deps --workers=1",
+    "qa:report": "playwright show-report",
+    "qa:extension": "npm run build && playwright test --project=qa e2e/qa/extension.spec.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -24,6 +29,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",

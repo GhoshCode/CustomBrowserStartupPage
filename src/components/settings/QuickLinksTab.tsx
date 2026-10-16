@@ -161,8 +161,8 @@ export function QuickLinksTab() {
     <div className="max-w-2xl space-y-6 p-6 text-sm text-white/90">
       <div className="flex items-center justify-between pr-12">
         <div>
-          <h3 className="font-display text-base font-semibold text-white">Quick Links</h3>
-          <p className="text-xs text-white/50">Manage the shortcut bar in your header row.</p>
+          <h3 className="font-display text-[1rem] font-semibold text-white">Quick Links</h3>
+          <p className="text-xs text-white/50">The links strip at the top of the centre frame.</p>
         </div>
         {!isAdding && (
           <button
@@ -234,6 +234,65 @@ export function QuickLinksTab() {
           </div>
         </SortableContext>
       </DndContext>
+
+      <StripSettings />
     </div>
+  );
+}
+
+// E/F strip behaviour (§7 Q7/Q8): the first 4 links above stay fixed; this
+// controls what scrolls after them.
+function StripSettings() {
+  const autoCount = useStore((s) => s.settings.autoQuickLinkCount);
+  const recentCount = useStore((s) => s.settings.recentLinkCount);
+  const updateSettings = useStore((s) => s.updateSettings);
+  const clearRecentHistory = useStore((s) => s.clearRecentHistory);
+  const [cleared, setCleared] = useState(false);
+
+  return (
+    <section className="glass-inner space-y-4 rounded-xl p-4">
+      <p className="text-xs text-white/50">
+        The first 4 links are pinned to the left of the strip. After them come auto-picked sites (most visited,
+        boosted by recency), then your recently opened sites.
+      </p>
+      <label className="block space-y-1.5">
+        <span className="flex justify-between text-xs font-semibold tracking-wider text-white/80 uppercase">
+          Auto-picked links <span className="font-mono text-white/60">{autoCount}</span>
+        </span>
+        <input
+          type="range"
+          min={2}
+          max={12}
+          value={autoCount}
+          onChange={(e) => updateSettings({ autoQuickLinkCount: Number(e.target.value) })}
+          aria-label="Auto-picked links"
+          className="w-full accent-[var(--color-accent)]"
+        />
+      </label>
+      <label className="block space-y-1.5">
+        <span className="flex justify-between text-xs font-semibold tracking-wider text-white/80 uppercase">
+          Recent links <span className="font-mono text-white/60">{recentCount}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={24}
+          value={recentCount}
+          onChange={(e) => updateSettings({ recentLinkCount: Number(e.target.value) })}
+          aria-label="Recent links"
+          className="w-full accent-[var(--color-accent)]"
+        />
+      </label>
+      <button
+        type="button"
+        onClick={() => {
+          clearRecentHistory();
+          setCleared(true);
+        }}
+        className="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+      >
+        {cleared ? 'Recent history cleared' : 'Clear recent history'}
+      </button>
+    </section>
   );
 }

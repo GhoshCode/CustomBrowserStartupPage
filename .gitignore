@@ -29,3 +29,6 @@ Thumbs.db
 
 # Loop runtime signal (regenerated every iteration)
 .loop-status
+
+# Manual-QA run output (screenshots, metrics)
+qa-artifacts/

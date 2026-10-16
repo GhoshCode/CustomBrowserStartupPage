@@ -54,7 +54,7 @@ const DroppablePill = memo(function DroppablePill({
           : 'text-white/50 hover:bg-white/5 hover:text-white/85'
       }`}
       style={{
-        boxShadow: isActive ? `0 0 12px ${categoryColor}35` : undefined,
+        boxShadow: isActive ? `0 0 12px color-mix(in srgb, ${categoryColor} 21%, transparent)` : undefined,
       }}
     >
       <span className="relative z-10">{group.name}</span>
@@ -82,9 +82,13 @@ export const PinnedStrip = memo(function PinnedStrip({
     const nav = navRef.current;
     if (!nav) return;
     const activePill = nav.querySelector<HTMLElement>(`[data-group-id="${activeId}"]`);
-    if (activePill) {
-      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    }
+    if (!activePill) return;
+    // Scroll only this strip. scrollIntoView would also scroll every ancestor,
+    // including the card row, which shifted the whole row on page load.
+    const pill = activePill.getBoundingClientRect();
+    const box = nav.getBoundingClientRect();
+    const delta = pill.left < box.left ? pill.left - box.left - 8 : pill.right > box.right ? pill.right - box.right + 8 : 0;
+    if (delta) nav.scrollBy({ left: delta, behavior: 'smooth' });
   }, [activeId]);
 
   useEffect(() => {

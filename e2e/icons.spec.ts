@@ -11,7 +11,7 @@ test.describe('Icons & Favicons Visibility', () => {
 
   test('Quick links render visible favicons', async ({ page }) => {
     // Quick links row contains 4 seed links
-    const quickLinks = page.locator('div.flex.flex-wrap.items-center.gap-4 a');
+    const quickLinks = page.locator('[data-testid=links-strip] [data-chip=fixed]');
     await expect(quickLinks).toHaveCount(4);
 
     // Each quick link must contain either an <img> favicon or fallback initial badge
@@ -85,7 +85,7 @@ test.describe('Icons & Favicons Visibility', () => {
 
   test('Floating controls display SVG search and settings icons', async ({ page }) => {
     // Search button icon
-    const searchBtn = page.getByRole('button', { name: 'Open command palette' });
+    const searchBtn = page.getByRole('button', { name: 'Search the web' });
     await expect(searchBtn).toBeVisible();
     const searchSvg = searchBtn.locator('svg');
     await expect(searchSvg).toBeVisible();

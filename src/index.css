@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Seven-segment digital clock face from dseg npm package */
@@ -38,6 +38,9 @@
   --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-clock: 'DSEG7', 'Share Tech Mono', ui-monospace, monospace;
+  --font-cyber: 'Rajdhani', 'Bahnschrift', 'Arial Narrow', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font-mac: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
 
   /* Radius */
   --radius-card: 24px;
@@ -676,3 +679,409 @@ html[data-theme='light'] .ultra-thin-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 
+
+/* ---------------------------------------------------------------------------
+   v2 top bar — TIME widget faces
+   --------------------------------------------------------------------------- */
+@keyframes clock-colon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.clock-colon {
+  animation: clock-colon-pulse 2s steps(1, end) infinite;
+}
+
+/* Chromatic split on the Cyberpunk digits: red and cyan offsets. */
+.cyber-digits {
+  text-shadow: -2px 0 0 rgb(255 0 60 / 0.55), 2px 0 0 rgb(0 240 255 / 0.35),
+    0 0 18px rgb(252 238 10 / 0.25);
+}
+.cyber-face {
+  background-image: linear-gradient(rgb(252 238 10 / 0.04) 1px, transparent 1px);
+  background-size: 100% 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-colon {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   v2 to-do — Red Danger Zone (spec §3.4): overdue rows get a crimson wash
+   that breathes slowly.
+   --------------------------------------------------------------------------- */
+@keyframes todo-danger-pulse {
+  0%, 100% { background-color: rgb(239 68 68 / 0.25); }
+  50% { background-color: rgb(239 68 68 / 0.14); }
+}
+.todo-danger {
+  background-color: rgb(239 68 68 / 0.25);
+  box-shadow: inset 2px 0 0 rgb(248 113 113 / 0.9);
+  animation: todo-danger-pulse 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .todo-danger {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   v2 widgets — theme tokens and light-mode contrast fixes. The global light
+   rules above repaint every text-white* class dark, which is right for most
+   text but wrong for the few elements below.
+   --------------------------------------------------------------------------- */
+:root {
+  /* GitHub contribution greens (dark theme) */
+  --gh-0: rgb(255 255 255 / 0.06);
+  --gh-1: #0e4429;
+  --gh-2: #006d32;
+  --gh-3: #26a641;
+  --gh-4: #39d353;
+}
+html[data-theme='light'] {
+  --gh-0: rgb(15 23 42 / 0.08);
+  --gh-1: #9be9a8;
+  --gh-2: #40c463;
+  --gh-3: #30a14e;
+  --gh-4: #216e39;
+}
+
+/* DSEG7 unlit segments: a faint ghost, never solid. */
+.clock-ghost {
+  color: rgb(255 255 255 / 0.07);
+}
+html[data-theme='light'] .clock-ghost {
+  color: rgb(15 23 42 / 0.06);
+}
+
+/* Placeholders are styled per input with placeholder:text-white/30, which the
+   light rules don't reach. */
+html[data-theme='light'] input::placeholder,
+html[data-theme='light'] textarea::placeholder {
+  color: rgb(71 85 105 / 0.6);
+}
+
+/* Red Danger Zone and status badges need darker text on light surfaces. */
+html[data-theme='light'] .todo-danger,
+html[data-theme='light'] .todo-danger [class*='text-red'] {
+  color: #b91c1c !important;
+}
+html[data-theme='light'] [class*='text-red-200'],
+html[data-theme='light'] [class*='text-red-300'] {
+  color: #b91c1c !important;
+}
+html[data-theme='light'] [class*='text-yellow-200'] {
+  color: #854d0e !important;
+}
+html[data-theme='light'] [class*='text-orange-300'] {
+  color: #c2410c !important;
+}
+html[data-theme='light'] [class*='text-emerald-300'],
+html[data-theme='light'] [class*='text-emerald-200'] {
+  color: #047857 !important;
+}
+html[data-theme='light'] [class*='text-purple-300'] {
+  color: #7e22ce !important;
+}
+html[data-theme='light'] [class*='text-amber-300'],
+html[data-theme='light'] [class*='text-amber-200'] {
+  color: #b45309 !important;
+}
+
+/* To-do bullets are drawn with border-white/40, invisible on any light surface. */
+html[data-theme='light'] .todo-bullet {
+  border-color: rgba(60, 60, 67, 0.38) !important;
+}
+html[data-theme='light'] .todo-bullet:hover {
+  border-color: var(--color-accent) !important;
+}
+html[data-theme='light'] .todo-danger .todo-bullet {
+  border-color: #dc2626 !important;
+}
+
+/* ===========================================================================
+   Sonoma Glass — the default light theme (src/lib/skin.ts sets
+   html[data-skin='sonoma']). macOS-style frosted glass over a soft,
+   wallpaper-like backdrop, with clearly separated layers:
+     backdrop → panels (frosted) → cards tray (tinted, recessed)
+     → category cards (raised white) → sub-cards and tiles (soft grey).
+   Overrides the generic light rules above, hence !important.
+   =========================================================================== */
+html[data-theme='light'][data-skin='sonoma'] {
+  --sk-bg: radial-gradient(1100px 750px at 0% 0%, rgba(120, 170, 255, 0.55), transparent 62%),
+    radial-gradient(1000px 700px at 100% 0%, rgba(190, 160, 255, 0.45), transparent 60%),
+    radial-gradient(1200px 800px at 100% 100%, rgba(255, 170, 200, 0.38), transparent 60%),
+    radial-gradient(900px 700px at 0% 100%, rgba(140, 220, 230, 0.4), transparent 60%),
+    linear-gradient(160deg, #e9eefb 0%, #f1ecf8 55%, #f7eef2 100%);
+  --sk-panel: rgba(255, 255, 255, 0.58);
+  --sk-blur: blur(24px) saturate(170%); /* 44px cost ~2x the frame time for little visible gain */
+  --sk-edge: rgba(255, 255, 255, 0.75);
+  --sk-hairline: rgba(30, 40, 90, 0.07);
+  --sk-highlight: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --sk-shadow: 0 1px 2px rgba(30, 40, 90, 0.05), 0 20px 44px -20px rgba(30, 40, 90, 0.25);
+  --sk-shadow-sm: 0 1px 2px rgba(30, 40, 90, 0.06), 0 6px 14px -8px rgba(30, 40, 90, 0.14);
+  --sk-text-1: #1d1d1f;
+  --sk-text-2: rgba(60, 60, 67, 0.9);
+  --sk-text-3: rgba(60, 60, 67, 0.78);
+  --sk-text-4: rgba(60, 60, 67, 0.7);
+  --sk-accent-strong: #0058c4; /* accent as text on tinted fills (AA) */
+  --sk-accent: #007aff;
+  --sk-accent-2: #5e5ce6;
+  --sk-accent-soft: rgba(0, 122, 255, 0.12);
+  --sk-fill: rgba(120, 120, 128, 0.1);
+
+  --color-accent: var(--sk-accent) !important;
+  --color-accent-2: var(--sk-accent-2) !important;
+  --color-base: #eef1f8;
+  --color-base-elevated: rgba(255, 255, 255, 0.92);
+}
+html[data-theme='light'][data-skin='sonoma'] body {
+  background: #eef1f8 !important;
+  color: var(--sk-text-1) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [data-backdrop] {
+  background: var(--sk-bg) !important;
+}
+
+/* Panels: frosted glass with a specular top edge. */
+html[data-theme='light'][data-skin='sonoma'] .glass,
+html[data-theme='light'][data-skin='sonoma'] .glass-raised {
+  background: var(--sk-panel) !important;
+  border: 1px solid var(--sk-edge) !important;
+  outline: none !important;
+  backdrop-filter: var(--sk-blur) !important;
+  -webkit-backdrop-filter: var(--sk-blur) !important;
+  box-shadow: var(--sk-shadow), var(--sk-highlight) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] .glass:hover {
+  border-color: var(--sk-edge) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] .glass-inner {
+  background: rgba(255, 255, 255, 0.86) !important;
+  border: 1px solid var(--sk-hairline) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: var(--sk-shadow-sm) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] a.glass-inner:hover {
+  border-color: rgba(0, 122, 255, 0.35) !important;
+  box-shadow: 0 6px 16px -8px rgba(0, 122, 255, 0.35) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [data-testid='center-frame'] {
+  background: rgba(255, 255, 255, 0.42) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [data-testid='links-strip'] {
+  border-color: var(--sk-hairline) !important;
+}
+
+/* Cards tray: a tinted, recessed well so white cards stand out from it. */
+html[data-theme='light'][data-skin='sonoma'] [data-categories-container] {
+  background: linear-gradient(180deg, rgba(214, 222, 238, 0.92), rgba(222, 228, 241, 0.92)) !important;
+  border: 1px solid rgba(30, 40, 90, 0.1) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  box-shadow: inset 0 2px 6px rgba(30, 40, 90, 0.1), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Category cards: raised white with a firm edge and lift. */
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] {
+  background: #ffffff !important;
+  border: 1px solid rgba(30, 40, 90, 0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 1px 2px rgba(30, 40, 90, 0.08), 0 10px 24px -10px rgba(30, 40, 90, 0.3) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] header,
+html[data-theme='light'][data-skin='sonoma'] [data-category-card-bottom] {
+  border-color: var(--sk-hairline) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [data-category-card-bottom] {
+  background: transparent !important;
+}
+/* The pinned card's sticky backing must match the card. */
+html[data-theme='light'][data-skin='sonoma'] [data-pinned] {
+  background: #ffffff !important;
+}
+
+/* Inside a card: sub-cards and tiles sit one step down, in soft grey. */
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] .glass-inner,
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] [aria-label='Primary sites rail'] a {
+  background: #f3f5f9 !important;
+  border: 1px solid rgba(30, 40, 90, 0.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] [aria-label='Primary sites rail'] a:hover {
+  background: #ffffff !important;
+  border-color: rgba(0, 122, 255, 0.35) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] article[data-category-id] [data-site-id]:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Pills: soft fills; the active one takes the accent instead of solid black. */
+html[data-theme='light'][data-skin='sonoma'] [data-group-id] {
+  background: var(--sk-fill) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: var(--sk-text-2) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [data-group-id][aria-current='true'],
+html[data-theme='light'][data-skin='sonoma'] [data-group-id][aria-current='true'] span {
+  background: var(--sk-accent-soft) !important;
+  color: var(--sk-accent-strong) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [role='group'][aria-label*='View mode'] {
+  background: var(--sk-fill) !important;
+  border: none !important;
+}
+
+/* Accent surfaces */
+html[data-theme='light'][data-skin='sonoma'] .accent-gradient,
+html[data-theme='light'][data-skin='sonoma'] .text-gradient {
+  background-image: linear-gradient(120deg, var(--sk-accent), var(--sk-accent-2)) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] button[aria-label='Settings'] {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid var(--sk-edge) !important;
+  box-shadow: var(--sk-shadow), var(--sk-highlight) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] button[aria-label='Settings'] svg {
+  color: var(--sk-text-2) !important;
+  fill: var(--sk-text-2) !important;
+}
+
+/* Text: Apple's four-step label scale. */
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/95'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/90'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/85'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/80'] {
+  color: var(--sk-text-1) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/70'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/65'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/60'] {
+  color: var(--sk-text-2) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/55'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/50'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/45'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/40'] {
+  color: var(--sk-text-3) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/35'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/30'],
+html[data-theme='light'][data-skin='sonoma'] [class*='text-white/25'] {
+  color: var(--sk-text-4) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] .clock-ghost {
+  color: rgba(29, 29, 31, 0.06) !important;
+}
+html[data-theme='light'][data-skin='sonoma'] [role='timer'] .font-clock {
+  text-shadow: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Floating surfaces in light mode (QA): dropdowns, popovers and overlay
+   panels must be opaque — the frosted panel style let the content underneath
+   bleed through the search suggestions — and the keyboard-selected option
+   needs a visible highlight (bg-white/12 is invisible on white).
+   --------------------------------------------------------------------------- */
+html[data-theme='light'] [role='listbox'].glass-raised,
+html[data-theme='light'] [role='dialog'].glass-raised,
+html[data-theme='light'] [role='status'].glass-raised {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid rgba(30, 40, 90, 0.1) !important;
+  box-shadow: 0 1px 2px rgba(30, 40, 90, 0.06), 0 24px 48px -16px rgba(30, 40, 90, 0.3) !important;
+}
+html[data-theme='light'] #search-suggestions [role='option'][aria-selected='true'] {
+  background: rgba(0, 122, 255, 0.1) !important;
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+html[data-theme='light'] #search-suggestions [role='option']:hover {
+  background: rgba(120, 120, 128, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Short screens (13" laptops, 768p) — QA: at 1280×800 a card showed about
+   one site row. Tighter chrome gives the cards ~60px more height. Plain
+   (unlayered) CSS so it reliably overrides the Tailwind utilities.
+   --------------------------------------------------------------------------- */
+@media (max-height: 860px) and (min-width: 1024px) {
+  [data-testid='dashboard'] {
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  [data-topbar-grid] {
+    height: 128px;
+  }
+  /* Collapsed to-do still shows three rows at the shorter height. */
+  [data-testid='todo-widget'] > div:first-child {
+    padding-top: 8px;
+    padding-bottom: 26px;
+    gap: 4px;
+  }
+  [data-testid='todo-widget'] li[data-todo-id] > div {
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+  [data-testid='git-widget'] {
+    gap: 6px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  [data-categories-container] {
+    padding: 10px !important;
+  }
+  [data-center-body] {
+    padding: 8px;
+  }
+  [aria-label='Primary sites rail'] a {
+    width: 72px;
+    height: 72px;
+    padding: 6px;
+    gap: 4px;
+  }
+  [aria-label='Primary sites rail'] a > :first-child {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Category colour by theme: each card sets --cat-dark and --cat-light once
+   (the light one darkened to WCAG AA); CSS picks one so a theme switch never
+   re-renders the cards. */
+article[data-category-id] {
+  --cat: var(--cat-dark);
+}
+html[data-theme='light'] article[data-category-id] {
+  --cat: var(--cat-light);
+}
+
+/* Set for the two frames of a theme switch (App.tsx). */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+/* Theme crossfade (lib/themeTransition.ts). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Cards scrolled out of the row are skipped for layout and paint until they
+   approach the viewport — makes pinning, theme switches and scrolling
+   cheaper with 13+ heavy cards. Their size stays reserved. */
+[aria-label='Scrollable category cards'] > div:not([data-pinned]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px auto 600px;
+}
