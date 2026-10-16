@@ -79,6 +79,7 @@ export default defineConfig({
     {
       name: 'qa',
       testMatch: 'qa/**/*.spec.ts',
+      testIgnore: 'qa/perf.spec.ts',
       timeout: 120_000,
       retries: 0,
       use: {
@@ -88,6 +89,21 @@ export default defineConfig({
         video: 'on',
         trace: 'on',
         screenshot: 'on',
+      },
+    },
+    // Frame-timing budgets are only meaningful with nothing else running:
+    // this project starts after `qa` finishes, so no other worker is
+    // recording video or screenshots while frames are measured.
+    {
+      name: 'qa-perf',
+      testMatch: 'qa/perf.spec.ts',
+      dependencies: ['qa'],
+      fullyParallel: false,
+      timeout: 180_000,
+      retries: 0,
+      use: {
+        channel: 'msedge',
+        viewport: { width: 1512, height: 982 },
       },
     },
   ],

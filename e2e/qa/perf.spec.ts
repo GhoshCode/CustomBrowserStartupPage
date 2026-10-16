@@ -6,6 +6,8 @@ import { measureFrames, report, seedDeck, type FrameStats } from './qa';
 // reported, and the budget below is what a tester would call "smooth".
 
 test.use({ video: 'off', trace: 'off', screenshot: 'off' });
+// One theme at a time: two measurements in parallel would skew each other.
+test.describe.configure({ mode: 'serial' });
 
 const RUNS = 5;
 // Per-interaction budgets. Theme switch runs inside a View Transition: the

@@ -11,8 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test --project=chromium",
-    "qa": "npm run build && playwright test --project=qa",
+    "qa": "npm run build && playwright test --project=qa --project=qa-perf",
     "qa:headed": "npm run build && playwright test --project=qa --headed",
+    "qa:perf": "playwright test --project=qa-perf --no-deps --workers=1",
     "qa:report": "playwright show-report",
     "qa:extension": "npm run build && playwright test --project=qa e2e/qa/extension.spec.ts"
   },
