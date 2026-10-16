@@ -6,13 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>DevDeck</title>
-  <script>
-    try {
-      var d = JSON.parse(localStorage.getItem('devdeck') || '{}');
-      var m = (d && d.state && d.state.settings && d.state.settings.themeMode) || 'dark';
-      document.documentElement.setAttribute('data-theme', m);
-    } catch (e) {}
-  </script>
+  <!-- Applies the saved theme before first paint (external: MV3 CSP blocks inline scripts). -->
+  <script src="theme-init.js"></script>
 </head>
 
 <body>

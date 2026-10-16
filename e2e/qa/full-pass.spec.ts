@@ -1,5 +1,12 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { measureFrames, report, seedDeck, step, watchConsole, type FrameStats } from './qa';
+import { contrastAudit, measureFrames, report, seedDeck, step, watchConsole, type FrameStats } from './qa';
+
+// Contrast inside an open overlay; recorded, and any violation fails softly.
+async function auditOpen(page: Page, info: TestInfo, name: string, selector: string) {
+  const issues = await contrastAudit(page, selector);
+  await report(info, `contrast: ${name}`, { violations: issues.length, issues });
+  expect.soft(issues, `${name}: contrast violations`).toEqual([]);
+}
 
 // Full manual-QA pass: every feature, one function at a time, in both themes.
 // Each transition is timed (smoothness) and every step is screenshotted for
@@ -75,6 +82,7 @@ for (const theme of THEMES) {
       await step(page, info, 'task added', async () => {});
       await expect(panel.getByText('Write QA report')).toBeVisible();
       await expect(panel.locator('li', { hasText: 'Write QA report' })).toContainText('Jan 15');
+      await auditOpen(page, info, 'to-do overlay', '[role="dialog"][aria-label="All tasks"]');
 
       await t.run('complete slides out', () => panel.getByRole('button', { name: 'Complete "Write QA report"' }).click(), 800);
       await expect(panel.getByText('Write QA report')).toHaveCount(0);
@@ -98,6 +106,7 @@ for (const theme of THEMES) {
       await t.run('dropdown opens while typing', () => input.pressSequentially('react', { delay: 60 }), 900);
       const list = page.getByRole('listbox', { name: 'Search suggestions' });
       await expect(list.getByText('Your sites')).toBeVisible();
+      await auditOpen(page, info, 'search dropdown', '#search-suggestions');
       await page.keyboard.press('ArrowDown');
       await page.keyboard.press('ArrowDown');
       await step(page, info, 'second option highlighted', async () => {});
@@ -114,6 +123,7 @@ for (const theme of THEMES) {
       await expect(drawer).toBeVisible();
       await t.run('expand Frontend folder', () => drawer.getByRole('treeitem', { name: 'Frontend' }).getByRole('button', { name: 'Expand folder' }).click());
       await expect(drawer.getByRole('treeitem', { name: 'GitHub' }).first()).toBeVisible();
+      await auditOpen(page, info, 'bookmarks drawer', '[role="dialog"][aria-label="Bookmarks and site map"]');
       await t.run('filter as you type', () => drawer.getByRole('textbox', { name: 'Filter bookmarks' }).pressSequentially('postgres', { delay: 50 }));
       await expect(drawer.getByRole('treeitem', { name: 'PostgreSQL' })).toBeVisible();
       await t.run('drawer slides out', () => page.keyboard.press('Escape'));
@@ -160,6 +170,7 @@ for (const theme of THEMES) {
       await dialog.getByRole('radio', { name: 'Daily' }).click();
       await step(page, info, 'schedule editor', async () => {});
       await expect(dialog.getByText(/Next reminder:/)).toBeVisible();
+      await auditOpen(page, info, 'processing editor', '[role="dialog"][aria-label="Manage currently processing"]');
       await t.run('editor closes', () => page.keyboard.press('Escape'));
       await expect(page.getByRole('region', { name: 'Processing: Focus' }).getByText('Supabase')).toBeVisible();
       await t.done();
@@ -183,6 +194,7 @@ for (const theme of THEMES) {
       await t.run('settings opens', () => page.getByRole('button', { name: 'Settings', exact: true }).click());
       const modal = page.getByRole('dialog', { name: 'DevDeck Settings' });
       await modal.getByRole('button', { name: /Appearance/ }).click();
+      await auditOpen(page, info, 'settings appearance', '[role="dialog"][aria-label="DevDeck Settings"]');
       const other = theme === 'light' ? 'dark' : 'light';
       await t.run(`switch to ${other}`, () => modal.getByRole('button', { name: new RegExp(`Default ${other}`, 'i') }).first().click(), 800);
       await expect(page.locator('html')).toHaveAttribute('data-theme', other);
